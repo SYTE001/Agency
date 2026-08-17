@@ -1,15 +1,17 @@
 // TikTok Agency OS — relational schema
 // Multi-tenant: every business record belongs to an Agency via agencyId.
-// SQLite connector: no native enums, so statuses/roles are String fields
-// whose allowed values live in `lib/constants.ts`.
+// PostgreSQL is the production provider (Supabase/Vercel). No native enums are
+// used, so statuses/roles stay String fields whose allowed values live in
+// `lib/constants.ts` — this keeps the schema valid for the SQLite twin
+// (`prisma/schema.sqlite.prisma`) used in local dev and tests.
 
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../generated/prisma-pg"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 // ---------------------------------------------------------------------------

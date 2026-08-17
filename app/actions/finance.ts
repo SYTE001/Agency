@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import {
   createCommission,
   createPayout,
@@ -53,7 +52,7 @@ export async function createCommissionAction(
   formData: FormData,
 ): Promise<CommissionFormState> {
   const user = await requireUser();
-  if (!can(user.role as Role, "finance", "write")) {
+  if (!can(user.role, "finance", "write")) {
     return { error: "Anda tidak memiliki izin untuk mencatat komisi." };
   }
 
@@ -123,7 +122,7 @@ export async function createPayoutAction(
   formData: FormData,
 ): Promise<PayoutFormState> {
   const user = await requireUser();
-  if (!can(user.role as Role, "finance", "write")) {
+  if (!can(user.role, "finance", "write")) {
     return { error: "Anda tidak memiliki izin untuk mencatat payout." };
   }
 
@@ -161,7 +160,7 @@ export async function createPayoutAction(
 /** Mark a pending payout as Paid. */
 export async function markPayoutPaidAction(payoutId: string, formData: FormData): Promise<void> {
   const user = await requireUser();
-  if (!can(user.role as Role, "finance", "write")) return;
+  if (!can(user.role, "finance", "write")) return;
 
   try {
     await markPayoutPaid(user.agencyId, payoutId);
@@ -205,7 +204,7 @@ export async function createSettlementAction(
   formData: FormData,
 ): Promise<SettlementFormState> {
   const user = await requireUser();
-  if (!can(user.role as Role, "finance", "write")) {
+  if (!can(user.role, "finance", "write")) {
     return { error: "Anda tidak memiliki izin untuk mencatat settlement." };
   }
 
@@ -244,7 +243,7 @@ export async function createSettlementAction(
 /** Mark a pending/overdue settlement as Paid. */
 export async function markSettlementPaidAction(settlementId: string, formData: FormData): Promise<void> {
   const user = await requireUser();
-  if (!can(user.role as Role, "finance", "write")) return;
+  if (!can(user.role, "finance", "write")) return;
 
   try {
     await markSettlementPaid(user.agencyId, settlementId);

@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { SETTLEMENT_STATUS } from "@/lib/constants";
 import { listSettlements, refreshOverdueSettlements } from "@/lib/services/finance";
 import type { SettlementFilters } from "@/lib/services/finance";
@@ -39,7 +38,7 @@ function flattenParams(params: Record<string, string | string[] | undefined>): R
 
 export default async function SettlementsPage(props: PageProps<"/finance/settlements">) {
   const user = await requireUser();
-  if (!can(user.role as Role, "finance", "read")) notFound();
+  if (!can(user.role, "finance", "read")) notFound();
   const searchParams = await props.searchParams;
 
   // Deterministic overdue flag (no AI) before listing — PLAN §12.
@@ -61,7 +60,7 @@ export default async function SettlementsPage(props: PageProps<"/finance/settlem
       take: 100,
     }),
   ]);
-  const canWrite = can(user.role as Role, "finance", "write");
+  const canWrite = can(user.role, "finance", "write");
   const now = new Date();
 
   return (

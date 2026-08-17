@@ -1,6 +1,5 @@
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { getInternalReport, PERIODS } from "@/lib/services/reports";
 import type { Period } from "@/lib/services/reports";
 import { PageHeader } from "@/components/page-header";
@@ -18,7 +17,7 @@ function str(v: string | string[] | undefined): string | undefined {
 
 export default async function InternalReportPage(props: PageProps<"/reports/internal">) {
   const user = await requireUser();
-  if (!can(user.role as Role, "report", "read")) {
+  if (!can(user.role, "report", "read")) {
     return (
       <div className="p-6">
         <EmptyState title="Tidak ada akses" description="Role Anda tidak memiliki akses ke laporan." />

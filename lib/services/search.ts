@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { readableResources } from "@/lib/authorization";
+import { containsInsensitive } from "@/lib/services/common";
 import type { Resource, Role } from "@/lib/constants";
 
 /**
@@ -35,37 +36,37 @@ export async function globalSearch(agencyId: string, role: Role, query: string):
 
   const [creators, brands, campaigns, products, contents, lives, tasks] = await Promise.all([
     prisma.creator.findMany({
-      where: { agencyId, OR: [{ displayName: { contains: q } }, { username: { contains: q } }] },
+      where: { agencyId, OR: [{ displayName: containsInsensitive(q) }, { username: containsInsensitive(q) }] },
       select: { id: true, displayName: true, username: true },
       orderBy: { displayName: "asc" },
       take: TAKE,
     }),
     prisma.brand.findMany({
-      where: { agencyId, name: { contains: q } },
+      where: { agencyId, name: containsInsensitive(q) },
       select: { id: true, name: true, industry: true },
       orderBy: { name: "asc" },
       take: TAKE,
     }),
     prisma.campaign.findMany({
-      where: { agencyId, name: { contains: q } },
+      where: { agencyId, name: containsInsensitive(q) },
       select: { id: true, name: true, brand: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
       take: TAKE,
     }),
     prisma.product.findMany({
-      where: { agencyId, name: { contains: q } },
+      where: { agencyId, name: containsInsensitive(q) },
       select: { id: true, name: true, brand: { select: { name: true } } },
       orderBy: { name: "asc" },
       take: TAKE,
     }),
     prisma.contentItem.findMany({
-      where: { agencyId, OR: [{ title: { contains: q } }, { brief: { contains: q } }] },
+      where: { agencyId, OR: [{ title: containsInsensitive(q) }, { brief: containsInsensitive(q) }] },
       select: { id: true, title: true, creator: { select: { displayName: true } } },
       orderBy: { createdAt: "desc" },
       take: TAKE,
     }),
     prisma.liveSession.findMany({
-      where: { agencyId, OR: [{ room: { contains: q } }, { creator: { displayName: { contains: q } } }] },
+      where: { agencyId, OR: [{ room: containsInsensitive(q) }, { creator: { displayName: containsInsensitive(q) } }] },
       select: {
         id: true,
         room: true,
@@ -78,7 +79,7 @@ export async function globalSearch(agencyId: string, role: Role, query: string):
     prisma.task.findMany({
       where: {
         agencyId,
-        OR: [{ title: { contains: q } }, { notes: { contains: q } }],
+        OR: [{ title: containsInsensitive(q) }, { notes: containsInsensitive(q) }],
         status: { not: "Done" },
       },
       select: { id: true, title: true },

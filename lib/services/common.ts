@@ -2,6 +2,9 @@
 // agencyId and applies it to the query — this is the server-side enforcement
 // of multi-tenant isolation (PLAN §18).
 
+import prisma from "@/lib/prisma";
+import { DEFAULT_TIMEZONE, normalizeTimezone } from "@/lib/timezone";
+
 export type ListResult<T> = {
   items: T[];
   total: number;
@@ -22,20 +25,26 @@ export function totalPages(total: number, pageSize: number): number {
 
 export type SortDir = "asc" | "desc";
 
-export function daysAgoDate(n: number): Date {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d;
+/**
+ * Resolve the tenant's business timezone (Agency.timezone, default
+ * Asia/Jakarta). DB columns stay UTC; only the day-boundary interpretation of
+ * filters/reports uses this. Invalid stored values fall back to the default.
+ */
+export async function getAgencyTimezone(agencyId: string): Promise<string> {
+  const agency = await prisma.agency.findUnique({
+    where: { id: agencyId },
+    select: { timezone: true },
+  });
+  return normalizeTimezone(agency?.timezone ?? DEFAULT_TIMEZONE);
 }
 
-export function startOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-
-export function endOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(23, 59, 59, 999);
-  return x;
+/**
+ * String filter for user search. Case-insensitive on PostgreSQL via
+ * `mode: "insensitive"` (ILIKE). The SQLite dev/test client has no `mode`
+ * option in its generated types, but SQLite `LIKE` is case-insensitive for
+ * ASCII by default and Prisma ignores unknown filter keys there — so the same
+ * object literal works on both providers.
+ */
+export function containsInsensitive(q: string): { contains: string; mode: "insensitive" } {
+  return { contains: q, mode: "insensitive" };
 }

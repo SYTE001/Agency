@@ -1,7 +1,6 @@
 import { Plug, RefreshCw, Upload } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { getOrCreateIntegration, listSyncJobs } from "@/lib/services/integrations";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
@@ -13,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 export default async function IntegrationsPage() {
   const user = await requireUser();
-  if (!can(user.role as Role, "integration", "read")) {
+  if (!can(user.role, "integration", "read")) {
     return (
       <div className="p-6">
         <EmptyState

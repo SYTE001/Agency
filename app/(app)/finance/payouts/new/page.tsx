@@ -2,14 +2,13 @@ import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PayoutForm } from "@/components/finance/payout-form";
 
 export default async function NewPayoutPage() {
   const user = await requireUser();
-  if (!can(user.role as Role, "finance", "write")) notFound();
+  if (!can(user.role, "finance", "write")) notFound();
 
   const [creators, campaigns] = await Promise.all([
     prisma.creator.findMany({

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Clapperboard, KanbanSquare } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { getContentBoard } from "@/lib/services/content";
 import type { ContentRow } from "@/lib/services/content";
 import { PageHeader } from "@/components/page-header";
@@ -16,7 +15,7 @@ const REVIEW_STATUSES = ["DraftSubmitted", "Revision"] as const;
 
 export default async function ReviewQueuePage() {
   const user = await requireUser();
-  const canWrite = can(user.role as Role, "content", "write");
+  const canWrite = can(user.role, "content", "write");
 
   const queue: ContentRow[] = [];
   for (const status of REVIEW_STATUSES) {

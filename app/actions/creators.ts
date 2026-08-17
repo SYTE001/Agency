@@ -6,7 +6,6 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
 import { isCreatorStatus } from "@/lib/constants";
-import type { Role } from "@/lib/constants";
 import { createCreator } from "@/lib/services/creators";
 import { logActivity } from "@/lib/services/activity";
 
@@ -31,7 +30,7 @@ export async function createCreatorAction(
   formData: FormData,
 ): Promise<CreatorFormState> {
   const user = await requireUser();
-  if (!can(user.role as Role, "creator", "write")) {
+  if (!can(user.role, "creator", "write")) {
     return { error: "Anda tidak memiliki izin untuk menambah creator." };
   }
 

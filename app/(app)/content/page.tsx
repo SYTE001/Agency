@@ -3,7 +3,6 @@ import { Clapperboard, ListChecks, Search } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { KANBAN_COLUMNS, getContentBoard } from "@/lib/services/content";
 import type { ContentFilters, ContentRow } from "@/lib/services/content";
 import { PageHeader } from "@/components/page-header";
@@ -57,7 +56,7 @@ export default async function ContentPage(props: PageProps<"/content">) {
       orderBy: { displayName: "asc" },
     }),
   ]);
-  const canWrite = can(user.role as Role, "content", "write");
+  const canWrite = can(user.role, "content", "write");
   const now = new Date();
   const hasFilter = Boolean(filters.q || filters.campaignId || filters.creatorId || filters.overdue);
 

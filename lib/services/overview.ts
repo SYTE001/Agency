@@ -1,15 +1,18 @@
 import prisma from "@/lib/prisma";
-import { daysAgoDate, startOfDay } from "@/lib/services/common";
+import { getAgencyTimezone } from "@/lib/services/common";
+import { daysAgoStartInTz, dayStartInTz } from "@/lib/timezone";
 import { getOperationalAlerts } from "@/lib/services/alerts";
 
 /**
  * Overview aggregation layer (PLAN §5). Built on top of the module services —
  * all numbers are derived from the same tables the module pages read.
+ * Day boundaries use the tenant's timezone (Agency.timezone); DB stays UTC.
  */
 export async function getOverview(agencyId: string) {
-  const since30 = daysAgoDate(30);
-  const since60 = daysAgoDate(60);
-  const todayStart = startOfDay(new Date());
+  const tz = await getAgencyTimezone(agencyId);
+  const since30 = daysAgoStartInTz(tz, 30);
+  const since60 = daysAgoStartInTz(tz, 60);
+  const todayStart = dayStartInTz(tz);
 
   const [
     gmvCur,

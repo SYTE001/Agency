@@ -3,7 +3,6 @@ import { AlertTriangle, CalendarDays, Radio, ShoppingCart } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { LIVE_STATUS } from "@/lib/constants";
 import { getLiveDashboard, listLiveSessions } from "@/lib/services/live";
 import { PageHeader } from "@/components/page-header";
@@ -42,7 +41,7 @@ export default async function LivePage(props: PageProps<"/live">) {
       take: 100,
     }),
   ]);
-  const canWrite = can(user.role as Role, "live", "write");
+  const canWrite = can(user.role, "live", "write");
 
   const kpis = [
     { label: "Sesi Hari Ini", value: String(dashboard.todaySessions), icon: CalendarDays },

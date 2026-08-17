@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import prisma from "@/lib/prisma";
 import { getCampaignDetail } from "@/lib/services/campaigns";
 import { getNotes } from "@/lib/services/activity";
@@ -47,7 +46,7 @@ export default async function CampaignDetailPage(props: PageProps<"/campaigns/[i
   if (!detail) notFound();
 
   const { campaign, creators, products, content, lives, commissions, tasks, activity, contentStatusCounts, finance } = detail;
-  const canWrite = can(user.role as Role, "campaign", "write");
+  const canWrite = can(user.role, "campaign", "write");
 
   const notes = await getNotes("Campaign", campaign.id, user.agencyId);
 

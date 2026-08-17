@@ -1,7 +1,6 @@
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +9,7 @@ import { formatDate } from "@/lib/format";
 
 export default async function SettingsAgencyPage() {
   const user = await requireUser();
-  if (!can(user.role as Role, "setting", "read")) {
+  if (!can(user.role, "setting", "read")) {
     return (
       <div className="p-6">
         <EmptyState title="Tidak ada akses" description="Role Anda tidak memiliki akses ke pengaturan." />

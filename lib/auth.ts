@@ -2,11 +2,19 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import prisma from "@/lib/prisma";
-import type { Role } from "@/lib/constants";
+import { isRole, type Role } from "@/lib/constants";
 
 export { hashPassword, verifyPassword } from "@/lib/password";
 
 export const SESSION_COOKIE = "taos_session";
+
+// Token issuer/audience: binding a session token to this app prevents tokens
+// signed for (or by) another service with a shared secret from being accepted.
+const TOKEN_ISSUER = "agency-os";
+const TOKEN_AUDIENCE = "agency-os-app";
+// Only HS256 is ever issued or accepted — pinned on both sign and verify so a
+// token with a swapped algorithm header (e.g. "none") can never pass.
+const TOKEN_ALGORITHM = "HS256";
 
 function secretKey(): Uint8Array {
   const secret = process.env.AUTH_SECRET;
@@ -50,20 +58,56 @@ export async function createSessionToken(user: {
     email: user.email,
     name: user.name,
   })
-    .setProtectedHeader({ alg: "HS256" })
+    .setProtectedHeader({ alg: TOKEN_ALGORITHM })
     .setSubject(user.id)
+    .setIssuer(TOKEN_ISSUER)
+    .setAudience(TOKEN_AUDIENCE)
     .setIssuedAt()
     .setExpirationTime("7d")
     .sign(secretKey());
 }
 
-async function verifySessionToken(token: string): Promise<TokenPayload | null> {
+// Exported for tests only (lib/auth.test.ts) so the verifier's HS256/iss/aud
+// pinning can be exercised directly; app code must use getSessionUser().
+export async function verifySessionToken(token: string): Promise<TokenPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, secretKey());
+    const { payload } = await jwtVerify(token, secretKey(), {
+      algorithms: [TOKEN_ALGORITHM],
+      issuer: TOKEN_ISSUER,
+      audience: TOKEN_AUDIENCE,
+    });
     return { sub: payload.sub as string };
   } catch {
     return null;
   }
+}
+
+/**
+ * Verify a session token and re-resolve the user from the database. Session
+ * data (agencyId/role) always comes from the DB row, never from the token
+ * claims — tampered or stale claims still resolve to the current row.
+ * Exported so tests can exercise the full resolution path without the Next
+ * cookie transport.
+ */
+export async function resolveSessionUser(token: string): Promise<SessionUser | null> {
+  const payload = await verifySessionToken(token);
+  if (!payload?.sub) return null;
+
+  const user = await prisma.user.findUnique({ where: { id: payload.sub } });
+  if (!user) return null;
+
+  // Validate the role against the known union before trusting it — the column
+  // is a free String in the DB, so an unexpected value must never flow into
+  // authorization as if it were a Role.
+  if (!isRole(user.role)) return null;
+
+  return {
+    id: user.id,
+    agencyId: user.agencyId,
+    role: user.role,
+    email: user.email,
+    name: user.name,
+  };
 }
 
 /**
@@ -74,19 +118,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const payload = await verifySessionToken(token);
-  if (!payload?.sub) return null;
-
-  const user = await prisma.user.findUnique({ where: { id: payload.sub } });
-  if (!user) return null;
-
-  return {
-    id: user.id,
-    agencyId: user.agencyId,
-    role: user.role as Role,
-    email: user.email,
-    name: user.name,
-  };
+  return resolveSessionUser(token);
 }
 
 /** Require a signed-in user; redirect to /login otherwise. */

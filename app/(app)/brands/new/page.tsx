@@ -3,13 +3,12 @@ import { redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { PageHeader } from "@/components/page-header";
 import { BrandForm } from "@/components/brands/brand-form";
 
 export default async function NewBrandPage() {
   const user = await requireUser();
-  if (!can(user.role as Role, "brand", "write")) redirect("/brands");
+  if (!can(user.role, "brand", "write")) redirect("/brands");
 
   return (
     <div className="space-y-4 p-6">

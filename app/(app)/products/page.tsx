@@ -3,7 +3,6 @@ import { Package, Search } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { listProducts } from "@/lib/services/products";
 import type { ProductListFilters } from "@/lib/services/products";
 import { PageHeader } from "@/components/page-header";
@@ -52,7 +51,7 @@ export default async function ProductsPage(props: PageProps<"/products">) {
       orderBy: { category: "asc" },
     }),
   ]);
-  const canWrite = can(user.role as Role, "product", "write");
+  const canWrite = can(user.role, "product", "write");
   const categories = categoryRows.map((r) => r.category).filter(Boolean) as string[];
 
   return (

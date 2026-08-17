@@ -15,7 +15,7 @@ Berdasarkan `package.json` repository ini:
 | TypeScript | ^5 |
 | Tailwind CSS | ^4 (`@tailwindcss/postcss`) |
 | Prisma ORM (generator `prisma-client`) | ^7.9.1 |
-| Database | SQLite via `better-sqlite3` (`@prisma/adapter-better-sqlite3`) |
+| Database | **Dual-provider**: PostgreSQL via `pg` + `@prisma/adapter-pg` (production) · SQLite via `better-sqlite3` (local dev & test) |
 | Validasi | Zod ^4.4.3 |
 | Session/auth | `jose` (JWT HS256 dalam cookie httpOnly) |
 | Charts | recharts |
@@ -26,13 +26,13 @@ Berdasarkan `package.json` repository ini:
 Prasyarat: Node.js 20+ dan npm.
 
 ```bash
-npm install          # otomatis menjalankan `prisma generate` (postinstall)
+npm install          # postinstall: generate client PostgreSQL + SQLite
 
 # buat file env (opsional — ada fallback, lihat bagian Environment Variables)
 # DATABASE_URL="file:./prisma/dev.db"
 # AUTH_SECRET="<minimal 32 karakter, wajib di production>"
 
-npx prisma migrate deploy   # terapkan migration ke prisma/dev.db
+npx prisma migrate deploy   # terapkan migration SQLite ke prisma/dev.db (local dev)
 npm run dev                 # http://localhost:3000
 ```
 
@@ -59,7 +59,8 @@ Akun seed (semua memakai password `password123`):
 
 | Variabel | Wajib | Keterangan |
 |---|---|---|
-| `DATABASE_URL` | Tidak (dev) | Connection string Prisma. Fallback dev: `file:./prisma/dev.db`. Contoh SQLite: `file:./prisma/dev.db` |
+| `DATABASE_URL` | Tidak (dev) | Connection string Prisma. Skema URL memilih provider: `file:./prisma/dev.db` → SQLite (dev), `postgres://…` → PostgreSQL (production). Tanpa env apa pun: SQLite |
+| `DB_PROVIDER` | Tidak | Override eksplisit `sqlite` atau `postgresql` bila skema URL ambigu |
 | `AUTH_SECRET` | **Ya (production)** | Kunci penanda-tanganan JWT sesi (HS256), minimal 32 karakter. Di production aplikasi menolak berjalan tanpanya; di dev dipakai kunci lokal sementara |
 
 ## Development, build, test
@@ -101,16 +102,21 @@ lib/
   authorization.ts, constants.ts # RBAC: matriks role → permission
   finance.ts                     # formula komisi (Rupiah bulat, integer-safe)
   format.ts                      # formatter IDR/angka
-  prisma.ts                      # singleton PrismaClient (driver adapter)
+  dbProvider.ts                  # pemilihan provider (sqlite vs postgresql)
+  prismaClient.ts                # createPrismaClient + schema-drift guard
+  prisma.ts                      # singleton PrismaClient (provider-agnostic)
   services/                      # satu-satunya layer query DB
   *.test.ts                      # test (node:test)
 prisma/
-  schema.prisma                  # skema multi-tenant
+  schema.prisma                  # skema multi-tenant PostgreSQL (production)
+  schema.sqlite.prisma           # twin skema SQLite (local dev & test)
   migrations/                    # riwayat migration SQLite
+  migrations-pg/                 # riwayat migration PostgreSQL (baseline)
   seed.ts                        # data contoh development
-generated/prisma/                # Prisma client hasil generate (jangan diedit)
+generated/prisma-pg/             # client PostgreSQL hasil generate (jangan diedit)
+generated/prisma-sqlite/         # client SQLite hasil generate (jangan diedit)
 docs/
-  production-readiness.md        # audit SQLite → PostgreSQL/Supabase
+  production-readiness.md        # audit + status migration PostgreSQL/Supabase
 PLAN.md                          # spesifikasi produk lengkap (bahasa Indonesia)
 Fix.md                           # brief audit/hardening awal
 Revisi.md                        # spesifikasi production hardening (revision list)
@@ -152,11 +158,12 @@ Prinsip arsitektur:
 
 ## Catatan production
 
-- Database saat ini **SQLite** (file lokal, driver `better-sqlite3`). Ini cocok untuk
-  development/single instance tetapi **bukan target production serverless** —
-  lihat `docs/production-readiness.md` untuk audit lengkap dan langkah migration
-  ke PostgreSQL/Supabase (schema sudah kompatibel; blocker utama adalah driver
-  adapter dan baseline migration).
+- **Dual-provider sudah diimplementasikan**: production memakai PostgreSQL
+  (Supabase/Vercel) lewat `@prisma/adapter-pg`; local dev & test tetap memakai
+  SQLite (`better-sqlite3`). Provider dipilih dari `DATABASE_URL`/`DB_PROVIDER`
+  — tidak ada kode yang di-hardcode per environment. Import DB di app hanya
+  lewat `@/lib/prisma`. Lihat `docs/production-readiness.md` §13 untuk detail
+  implementasi dan env production yang wajib diset.
 - Integrasi TikTok (halaman `settings/integrations`, modul sync) adalah modul
   internal dengan simulasi sync — bukan koneksi API TikTok resmi.
 - Laporan (client/internal) dihasilkan dari data yang sudah ada dan dapat

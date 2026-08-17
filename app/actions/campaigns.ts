@@ -6,7 +6,6 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
 import { isCampaignStatus } from "@/lib/constants";
-import type { Role } from "@/lib/constants";
 import {
   addCampaignCreator,
   createCampaign,
@@ -50,7 +49,7 @@ export async function createCampaignAction(
   formData: FormData,
 ): Promise<CampaignFormState> {
   const user = await requireUser();
-  if (!can(user.role as Role, "campaign", "write")) {
+  if (!can(user.role, "campaign", "write")) {
     return { error: "Anda tidak memiliki izin untuk menambah campaign." };
   }
 
@@ -117,7 +116,7 @@ export async function addCampaignCreatorAction(
   formData: FormData,
 ): Promise<LinkFormState> {
   const user = await requireUser();
-  if (!can(user.role as Role, "campaign", "write")) {
+  if (!can(user.role, "campaign", "write")) {
     return { error: "Anda tidak memiliki izin untuk mengubah campaign." };
   }
 
@@ -156,7 +155,7 @@ export async function removeCampaignCreatorAction(
   formData: FormData,
 ): Promise<void> {
   const user = await requireUser();
-  if (!can(user.role as Role, "campaign", "write")) return;
+  if (!can(user.role, "campaign", "write")) return;
 
   const linkId = String(formData.get("linkId") ?? "");
   if (!linkId) return;
@@ -187,6 +186,10 @@ export async function addCampaignNoteAction(
   formData: FormData,
 ): Promise<LinkFormState> {
   const user = await requireUser();
+  // Catatan adalah data baru pada campaign — butuh izin write, read saja tidak cukup
+  if (!can(user.role, "campaign", "write")) {
+    return { error: "Anda tidak memiliki izin untuk menambah catatan." };
+  }
   const content = String(formData.get("content") ?? "").trim();
   if (content.length < 3) {
     return { error: "Catatan minimal 3 karakter." };

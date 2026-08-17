@@ -1,8 +1,9 @@
 import prisma from "@/lib/prisma";
-import { paginate, totalPages, daysAgoDate } from "@/lib/services/common";
+import { paginate, totalPages, getAgencyTimezone, containsInsensitive } from "@/lib/services/common";
+import { daysAgoStartInTz } from "@/lib/timezone";
 import type { ListResult } from "@/lib/services/common";
 import type { CreatorHealth } from "@/lib/constants";
-import type { Prisma } from "@/generated/prisma/client";
+import type { Prisma } from "@/lib/prisma";
 
 // Derived fields shown in the creator table (PLAN §6)
 export type CreatorRow = {
@@ -51,8 +52,8 @@ export async function listCreators(
   const where: Prisma.CreatorWhereInput = { agencyId };
   if (filters.q) {
     where.OR = [
-      { displayName: { contains: filters.q } },
-      { username: { contains: filters.q } },
+      { displayName: containsInsensitive(filters.q) },
+      { username: containsInsensitive(filters.q) },
     ];
   }
   if (filters.category) where.category = filters.category;
@@ -64,6 +65,8 @@ export async function listCreators(
     if (filters.minFollowers != null) where.followers.gte = filters.minFollowers;
     if (filters.maxFollowers != null) where.followers.lte = filters.maxFollowers;
   }
+
+  const tz = await getAgencyTimezone(agencyId);
 
   const [creators, total] = await Promise.all([
     prisma.creator.findMany({
@@ -82,8 +85,8 @@ export async function listCreators(
   }
 
   // Server-side aggregation: GMV last 30 days vs previous 30 days (growth).
-  const since = daysAgoDate(30);
-  const prevSince = daysAgoDate(60);
+  const since = daysAgoStartInTz(tz, 30);
+  const prevSince = daysAgoStartInTz(tz, 60);
 
   const [recent, previous, activeCampaignCounts, lastActivities] = await Promise.all([
     prisma.creatorMetric.groupBy({
@@ -220,8 +223,9 @@ export async function getCreatorDetail(agencyId: string, creatorId: string) {
   ]);
 
   // Totals & growth
-  const since = daysAgoDate(30);
-  const prevSince = daysAgoDate(60);
+  const tz = await getAgencyTimezone(agencyId);
+  const since = daysAgoStartInTz(tz, 30);
+  const prevSince = daysAgoStartInTz(tz, 60);
   const [recent, previous, payoutsTotal] = await Promise.all([
     prisma.creatorMetric.aggregate({
       where: { creatorId, date: { gte: since } },

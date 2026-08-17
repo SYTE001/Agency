@@ -76,6 +76,7 @@ export async function entityBelongsToAgency(
     entityType === "Content" ? await findFirst(prisma.contentItem) :
     entityType === "LiveSession" ? await findFirst(prisma.liveSession) :
     entityType === "Product" ? await findFirst(prisma.product) :
+    entityType === "User" ? await findFirst(prisma.user) :
     null;
   return found != null;
 }

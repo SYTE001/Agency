@@ -3,7 +3,6 @@ import { Banknote, Calculator, Coins, TrendingUp } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { getFinanceSummary } from "@/lib/services/finance";
 import { PageHeader } from "@/components/page-header";
 import { FinanceNav } from "@/components/finance/finance-nav";
@@ -13,10 +12,10 @@ import { cn } from "@/lib/utils";
 
 export default async function FinancePage() {
   const user = await requireUser();
-  if (!can(user.role as Role, "finance", "read")) notFound();
+  if (!can(user.role, "finance", "read")) notFound();
 
   const s = await getFinanceSummary(user.agencyId);
-  const canWrite = can(user.role as Role, "finance", "write");
+  const canWrite = can(user.role, "finance", "write");
 
   return (
     <div className="space-y-5 p-6">

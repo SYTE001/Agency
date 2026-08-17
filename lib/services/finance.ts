@@ -1,16 +1,18 @@
 import prisma from "@/lib/prisma";
-import { paginate, totalPages, daysAgoDate } from "@/lib/services/common";
+import { paginate, totalPages, getAgencyTimezone } from "@/lib/services/common";
+import { daysAgoStartInTz } from "@/lib/timezone";
 import type { ListResult } from "@/lib/services/common";
-import type { Prisma } from "@/generated/prisma/client";
+import type { Prisma } from "@/lib/prisma";
 import { calculateCommission } from "@/lib/finance";
 
 // ---------------------------------------------------------------------------
 // Revenue summary
 // ---------------------------------------------------------------------------
 
-export async function getFinanceSummary(agencyId: string, days = 30) {
-  const since = daysAgoDate(days);
-  const prevSince = daysAgoDate(days * 2);
+export async function getFinanceSummary(agencyId: string, days = 30, ref: Date = new Date()) {
+  const tz = await getAgencyTimezone(agencyId);
+  const since = daysAgoStartInTz(tz, days, ref);
+  const prevSince = daysAgoStartInTz(tz, days * 2, ref);
 
   const [cur, prev, payouts, settlements] = await Promise.all([
     prisma.commission.aggregate({
@@ -147,6 +149,11 @@ export async function createCommission(
 ) {
   const creator = await prisma.creator.findFirst({ where: { id: data.creatorId, agencyId }, select: { id: true } });
   if (!creator) throw new Error("Creator tidak ditemukan");
+  // Referensi keuangan wajib milik tenant yang sama
+  if (data.campaignId) {
+    const campaign = await prisma.campaign.findFirst({ where: { id: data.campaignId, agencyId }, select: { id: true } });
+    if (!campaign) throw new Error("Campaign tidak ditemukan");
+  }
   const amounts = calculateCommission({
     gmv: data.gmv,
     creatorRate: data.creatorRate,
@@ -208,6 +215,10 @@ export async function createPayout(
 ) {
   const creator = await prisma.creator.findFirst({ where: { id: data.creatorId, agencyId }, select: { id: true } });
   if (!creator) throw new Error("Creator tidak ditemukan");
+  if (data.campaignId) {
+    const campaign = await prisma.campaign.findFirst({ where: { id: data.campaignId, agencyId }, select: { id: true } });
+    if (!campaign) throw new Error("Campaign tidak ditemukan");
+  }
   return prisma.creatorPayout.create({
     data: {
       agencyId,
@@ -267,6 +278,13 @@ export async function createSettlement(
 ) {
   const brand = await prisma.brand.findFirst({ where: { id: data.brandId, agencyId }, select: { id: true } });
   if (!brand) throw new Error("Brand tidak ditemukan");
+  if (data.campaignId) {
+    const campaign = await prisma.campaign.findFirst({
+      where: { id: data.campaignId, agencyId, brandId: data.brandId },
+      select: { id: true },
+    });
+    if (!campaign) throw new Error("Campaign tidak ditemukan");
+  }
   return prisma.settlement.create({
     data: {
       agencyId,

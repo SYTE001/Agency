@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
-import { paginate, totalPages } from "@/lib/services/common";
-import type { Prisma } from "@/generated/prisma/client";
+import { paginate, totalPages, containsInsensitive } from "@/lib/services/common";
+import type { Prisma } from "@/lib/prisma";
 import { isTaskPriority, isTaskStatus } from "@/lib/constants";
 
 export type TaskFilters = {
@@ -19,7 +19,7 @@ export async function listTasks(agencyId: string, filters: TaskFilters = {}) {
   const { skip, take, page, pageSize } = paginate(filters.page ?? 1, filters.pageSize ?? 25);
 
   const where: Prisma.TaskWhereInput = { agencyId };
-  if (filters.q) where.title = { contains: filters.q };
+  if (filters.q) where.title = containsInsensitive(filters.q);
   if (filters.status) where.status = filters.status;
   if (filters.priority) where.priority = filters.priority;
   if (filters.ownerId) where.ownerId = filters.ownerId;

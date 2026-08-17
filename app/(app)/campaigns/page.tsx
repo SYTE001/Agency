@@ -3,7 +3,6 @@ import { Megaphone, Search } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { CAMPAIGN_STATUS } from "@/lib/constants";
 import { listCampaigns } from "@/lib/services/campaigns";
 import type { CampaignListFilters } from "@/lib/services/campaigns";
@@ -66,7 +65,7 @@ export default async function CampaignsPage(props: PageProps<"/campaigns">) {
       orderBy: { name: "asc" },
     }),
   ]);
-  const canWrite = can(user.role as Role, "campaign", "write");
+  const canWrite = can(user.role, "campaign", "write");
 
   const tabHref = (key?: string) => {
     const params = new URLSearchParams(

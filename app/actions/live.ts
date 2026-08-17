@@ -3,11 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
 import { isLiveStatus } from "@/lib/constants";
-import type { Role } from "@/lib/constants";
 import { createLiveSession, recordLiveResults, updateLiveSession } from "@/lib/services/live";
 import { addNote, entityBelongsToAgency, logActivity } from "@/lib/services/activity";
 
@@ -43,7 +41,7 @@ export async function createLiveAction(
   formData: FormData,
 ): Promise<LiveFormState> {
   const user = await requireUser();
-  if (!can(user.role as Role, "live", "write")) {
+  if (!can(user.role, "live", "write")) {
     return { error: "Anda tidak memiliki izin untuk menjadwalkan LIVE." };
   }
 
@@ -68,23 +66,17 @@ export async function createLiveAction(
   }
 
   const data = parsed.data;
-  const checks: [string | null, "Creator" | "Campaign" | "Brand" | "Product"][] = [
+  const checks: [string | null, "Creator" | "Campaign" | "Brand" | "Product" | "User"][] = [
     [data.creatorId, "Creator"],
     [data.campaignId, "Campaign"],
     [data.brandId, "Brand"],
     [data.productId, "Product"],
+    [data.operatorId, "User"],
   ];
   for (const [id, type] of checks) {
     if (!id) continue;
     const ok = await entityBelongsToAgency(type, id, user.agencyId);
-    if (!ok) return { error: `${type} terpilih tidak ditemukan di agensi ini.` };
-  }
-  if (data.operatorId) {
-    const operator = await prisma.user.findFirst({
-      where: { id: data.operatorId, agencyId: user.agencyId },
-      select: { id: true },
-    });
-    if (!operator) return { error: "Operator terpilih tidak ditemukan di agensi ini." };
+    if (!ok) return { error: `${type} atau operator terpilih tidak ditemukan di agensi ini.` };
   }
 
   const session = await createLiveSession(user.agencyId, data);
@@ -104,7 +96,7 @@ export async function createLiveAction(
 /** Quick status transition from the list/detail page (form POST, hidden status). */
 export async function moveLiveStatusAction(sessionId: string, formData: FormData): Promise<void> {
   const user = await requireUser();
-  if (!can(user.role as Role, "live", "write")) return;
+  if (!can(user.role, "live", "write")) return;
 
   const status = String(formData.get("status") ?? "");
   if (!isLiveStatus(status)) return;
@@ -146,7 +138,7 @@ export async function recordLiveResultsAction(
   formData: FormData,
 ): Promise<LiveResultsState> {
   const user = await requireUser();
-  if (!can(user.role as Role, "live", "write")) {
+  if (!can(user.role, "live", "write")) {
     return { error: "Anda tidak memiliki izin untuk menutup sesi LIVE." };
   }
 
@@ -187,6 +179,10 @@ export async function addLiveNoteAction(
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean }> {
   const user = await requireUser();
+  // Catatan adalah data baru pada sesi LIVE — butuh izin write, read saja tidak cukup
+  if (!can(user.role, "live", "write")) {
+    return { error: "Anda tidak memiliki izin untuk menambah catatan." };
+  }
   const content = String(formData.get("content") ?? "").trim();
   if (content.length < 3) {
     return { error: "Catatan minimal 3 karakter." };

@@ -3,7 +3,6 @@ import { Building2, Search } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { BRAND_STATUS } from "@/lib/constants";
 import { listBrands } from "@/lib/services/brands";
 import type { BrandListFilters } from "@/lib/services/brands";
@@ -48,7 +47,7 @@ export default async function BrandsPage(props: PageProps<"/brands">) {
       orderBy: { industry: "asc" },
     }),
   ]);
-  const canWrite = can(user.role as Role, "brand", "write");
+  const canWrite = can(user.role, "brand", "write");
 
   const industries = industryRows.map((r) => r.industry).filter(Boolean) as string[];
 

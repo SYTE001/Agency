@@ -6,7 +6,6 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
 import { isProductStatus } from "@/lib/constants";
-import type { Role } from "@/lib/constants";
 import { createProduct } from "@/lib/services/products";
 import { logActivity } from "@/lib/services/activity";
 
@@ -29,7 +28,7 @@ export async function createProductAction(
   formData: FormData,
 ): Promise<ProductFormState> {
   const user = await requireUser();
-  if (!can(user.role as Role, "product", "write")) {
+  if (!can(user.role, "product", "write")) {
     return { error: "Anda tidak memiliki izin untuk menambah produk." };
   }
 

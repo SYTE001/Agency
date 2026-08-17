@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Radio } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { listLiveSessions } from "@/lib/services/live";
 import { PageHeader } from "@/components/page-header";
 import { ScheduleCalendar } from "@/components/live/schedule-calendar";
@@ -63,7 +62,7 @@ export default async function LiveSchedulePage(props: PageProps<"/live/schedule"
     rangeStart: windowStart,
     rangeEnd: windowEnd,
   });
-  const canWrite = can(user.role as Role, "live", "write");
+  const canWrite = can(user.role, "live", "write");
 
   const dateKey = (d: Date) => d.toISOString().slice(0, 10);
   const shift = (days: number) => {

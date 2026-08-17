@@ -4,13 +4,12 @@ import { ChevronLeft } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { PageHeader } from "@/components/page-header";
 import { CreatorForm } from "@/components/creators/creator-form";
 
 export default async function NewCreatorPage() {
   const user = await requireUser();
-  if (!can(user.role as Role, "creator", "write")) redirect("/creators");
+  if (!can(user.role, "creator", "write")) redirect("/creators");
 
   const managers = await prisma.user.findMany({
     where: { agencyId: user.agencyId },

@@ -33,7 +33,7 @@ function allows(role: Role, resource: string, action: string): boolean {
 
 export default async function SettingsRolesPage() {
   const user = await requireUser();
-  if (!can(user.role as Role, "setting", "read")) {
+  if (!can(user.role, "setting", "read")) {
     return (
       <div className="p-6">
         <EmptyState title="Tidak ada akses" description="Role Anda tidak memiliki akses ke pengaturan." />

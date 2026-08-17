@@ -170,6 +170,7 @@ async function reset() {
     prisma.liveSession,
     prisma.campaignCreator,
     prisma.campaignProduct,
+    prisma.campaign,
     prisma.productMetric,
     prisma.creatorMetric,
     prisma.creatorPlatformAccount,
@@ -177,7 +178,6 @@ async function reset() {
     prisma.creator,
     prisma.brandContact,
     prisma.brand,
-    prisma.campaign,
     prisma.user,
     prisma.agency,
   ];

@@ -24,13 +24,6 @@ export default async function LoginPage() {
         <div className="rounded-xl border bg-card p-6 shadow-sm">
           <LoginForm />
         </div>
-
-        <div className="mt-6 rounded-lg border bg-card/60 p-4 text-xs text-muted-foreground">
-          <p className="mb-1 font-medium text-foreground">Akun demo</p>
-          <p>andi@kreatifnusantara.id · password123 (Owner)</p>
-          <p>siti@kreatifnusantara.id · password123 (Account Manager)</p>
-          <p>rina@kreatifnusantara.id · password123 (Finance)</p>
-        </div>
       </div>
     </div>
   );

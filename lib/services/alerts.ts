@@ -53,12 +53,12 @@ export async function getOperationalAlerts(agencyId: string, limit = 12): Promis
         where: { creatorId: { in: ids }, date: { gte: since60, lt: since30 } },
         _sum: { gmv: true },
       });
-      const prevMap = new Map(prev.map((p) => [p.creatorId, p._sum.gmv ?? 0]));
+      const prevMap = new Map(prev.map((p) => [p.creatorId, p._sum.gmv?.toNumber() ?? 0]));
       const decliningIds: { id: string; drop: number }[] = [];
       for (const r of recent) {
         const prevGmv = prevMap.get(r.creatorId) ?? 0;
         if (prevGmv <= 0) continue;
-        const change = ((r._sum.gmv ?? 0) - prevGmv) / prevGmv;
+        const change = ((r._sum.gmv?.toNumber() ?? 0) - prevGmv) / prevGmv;
         if (change <= -0.2) decliningIds.push({ id: r.creatorId, drop: Math.round(Math.abs(change) * 100) });
       }
       if (decliningIds.length === 0) return [];
@@ -170,7 +170,7 @@ export async function getOperationalAlerts(agencyId: string, limit = 12): Promis
     });
   }
 
-  const underLives = recentEndedLives.filter((l) => l.actualGmv < l.targetGmv * 0.5).length;
+  const underLives = recentEndedLives.filter((l) => l.actualGmv.toNumber() < l.targetGmv.toNumber() * 0.5).length;
   if (underLives > 0) {
     alerts.push({
       id: "live-underperforming",

@@ -282,7 +282,7 @@ export async function runMockSync(agencyId: string): Promise<SyncOutcome> {
       const bump = Math.round(500_000 + Math.random() * 2_000_000);
       await prisma.campaign.update({
         where: { id: c.id },
-        data: { actualGmv: c.actualGmv + bump },
+        data: { actualGmv: c.actualGmv.toNumber() + bump },
       });
       log("info", `Campaign ${c.name} — GMV bertambah ${bump}`);
     }

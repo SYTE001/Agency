@@ -27,7 +27,7 @@ export default async function FinancePage() {
         {canWrite ? (
           <Link
             href="/finance/commissions/new"
-            className="inline-flex h-9 items-center justify-center rounded-md bg-brand px-4 text-sm font-medium text-brand-foreground shadow-sm transition-colors hover:bg-brand/90"
+            className="inline-flex h-9 items-center justify-center rounded-md bg-brand px-4 text-sm font-medium text-brand-foreground transition-colors hover:bg-brand/90"
           >
             Catat Komisi
           </Link>
@@ -44,12 +44,12 @@ export default async function FinancePage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </span>
             <span className="min-w-0">
-              <span className="block text-xs text-muted-foreground">Gross GMV ({s.days} hari)</span>
-              <span className="block text-base font-semibold">{formatCompactIDR(s.gmv)}</span>
+              <span className="block text-xs font-medium text-muted-foreground">Gross GMV ({s.days} hari)</span>
+              <span className="block text-lg font-semibold tracking-tight tabular-nums">{formatCompactIDR(s.gmv)}</span>
             </span>
             <span
               className={cn(
-                "ml-auto text-xs font-medium",
+                "ml-auto text-xs font-medium tabular-nums",
                 s.gmvGrowth > 0 ? "text-success" : s.gmvGrowth < 0 ? "text-destructive" : "text-muted-foreground",
               )}
             >
@@ -63,8 +63,8 @@ export default async function FinancePage() {
               <Coins className="h-4 w-4 text-muted-foreground" />
             </span>
             <span className="min-w-0">
-              <span className="block text-xs text-muted-foreground">Komisi Creator</span>
-              <span className="block text-base font-semibold">{formatCompactIDR(s.creatorCommission)}</span>
+              <span className="block text-xs font-medium text-muted-foreground">Komisi Creator</span>
+              <span className="block text-lg font-semibold tracking-tight tabular-nums">{formatCompactIDR(s.creatorCommission)}</span>
             </span>
           </CardContent>
         </Card>
@@ -74,12 +74,12 @@ export default async function FinancePage() {
               <Calculator className="h-4 w-4 text-muted-foreground" />
             </span>
             <span className="min-w-0">
-              <span className="block text-xs text-muted-foreground">Revenue Agensi</span>
-              <span className="block text-base font-semibold">{formatCompactIDR(s.agencyRevenue)}</span>
+              <span className="block text-xs font-medium text-muted-foreground">Revenue Agensi</span>
+              <span className="block text-lg font-semibold tracking-tight tabular-nums">{formatCompactIDR(s.agencyRevenue)}</span>
             </span>
             <span
               className={cn(
-                "ml-auto text-xs font-medium",
+                "ml-auto text-xs font-medium tabular-nums",
                 s.agencyRevenueGrowth > 0
                   ? "text-success"
                   : s.agencyRevenueGrowth < 0
@@ -97,8 +97,8 @@ export default async function FinancePage() {
               <Banknote className="h-4 w-4 text-muted-foreground" />
             </span>
             <span className="min-w-0">
-              <span className="block text-xs text-muted-foreground">Transaksi Komisi</span>
-              <span className="block text-base font-semibold">{s.commissionCount}</span>
+              <span className="block text-xs font-medium text-muted-foreground">Transaksi Komisi</span>
+              <span className="block text-lg font-semibold tracking-tight tabular-nums">{s.commissionCount}</span>
             </span>
           </CardContent>
         </Card>

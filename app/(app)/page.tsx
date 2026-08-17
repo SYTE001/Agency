@@ -121,8 +121,8 @@ export default async function OverviewPage() {
     <div className="space-y-5 p-6">
       {/* Greeting / date */}
       <div>
-        <h1 className="text-lg font-semibold tracking-tight">{greetingFor(hour)}, {user.name}</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">{dateLine} · Ringkasan operasional agensi Anda</p>
+        <h1 className="text-xl font-semibold tracking-tight">{greetingFor(hour)}, {user.name}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{dateLine} · Ringkasan operasional agensi Anda</p>
       </div>
 
       {/* KPI row */}
@@ -135,13 +135,13 @@ export default async function OverviewPage() {
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </span>
               <span className="min-w-0">
-                <span className="block text-xs text-muted-foreground">{k.label}</span>
-                <span className="block text-base font-semibold">{k.value}</span>
+                <span className="block text-xs font-medium text-muted-foreground">{k.label}</span>
+                <span className="block text-lg font-semibold tracking-tight tabular-nums">{k.value}</span>
               </span>
               {k.delta !== undefined ? (
                 <span
                   className={cn(
-                    "ml-auto text-xs font-medium",
+                    "ml-auto text-xs font-medium tabular-nums",
                     k.delta > 0 ? "text-success" : k.delta < 0 ? "text-destructive" : "text-muted-foreground",
                   )}
                 >
@@ -292,7 +292,8 @@ export default async function OverviewPage() {
               <p className="py-6 text-center text-sm text-muted-foreground">Tidak ada campaign aktif.</p>
             ) : (
               <ul className="space-y-3">
-                {overview.campaignProgress.map((c) => {
+                {overview.campaignProgress.map((raw) => {
+                  const c = { ...raw, gmvTarget: raw.gmvTarget.toNumber(), actualGmv: raw.actualGmv.toNumber() };
                   const pct = c.gmvTarget > 0 ? Math.min(100, Math.round((c.actualGmv / c.gmvTarget) * 100)) : 0;
                   return (
                     <li key={c.id}>
@@ -349,7 +350,7 @@ export default async function OverviewPage() {
                           {l.operator ? ` · Op: ${l.operator.name}` : " · Tanpa operator"}
                         </span>
                       </span>
-                      {l.status === "Ended" && l.targetGmv > 0 ? (
+                      {l.status === "Ended" && l.targetGmv.toNumber() > 0 ? (
                         <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
                           {formatCompactIDR(l.actualGmv)} / {formatCompactIDR(l.targetGmv)}
                         </span>

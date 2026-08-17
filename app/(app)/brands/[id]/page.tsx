@@ -150,7 +150,7 @@ export default async function BrandDetailPage(props: PageProps<"/brands/[id]">) 
                       <TableCell className="text-muted-foreground">
                         {c.startDate ? formatDate(c.startDate) : "—"}
                       </TableCell>
-                      <TableCell className="text-right">{c.actualGmv > 0 ? formatCompactIDR(c.actualGmv) : "—"}</TableCell>
+                      <TableCell className="text-right">{c.actualGmv.toNumber() > 0 ? formatCompactIDR(c.actualGmv) : "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

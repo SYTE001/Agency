@@ -118,7 +118,7 @@ model BrandContact {
 model Creator {
   id             String   @id @default(cuid())
   agencyId       String
-  username       String   @unique
+  username       String
   displayName    String
   category       String
   bio            String?
@@ -143,6 +143,8 @@ model Creator {
   commissions      Commission[]
   payouts          CreatorPayout[]
 
+  @@unique([agencyId, username])
+  @@unique([agencyId, externalId])
   @@index([agencyId])
   @@index([managerId])
   @@index([category])
@@ -154,10 +156,10 @@ model CreatorMetric {
   date           DateTime
   followers      Int      @default(0)
   engagementRate Float    @default(0)
-  gmv            Float    @default(0)
+  gmv            Decimal  @default(0)
   videos         Int      @default(0)
   avgViews       Int      @default(0)
-  liveGmv        Float    @default(0)
+  liveGmv        Decimal  @default(0)
 
   creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
@@ -173,6 +175,7 @@ model CreatorPlatformAccount {
 
   creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
+  @@unique([creatorId, platform, handle])
   @@index([creatorId])
 }
 
@@ -187,7 +190,7 @@ model Product {
   name        String
   sku         String?
   category    String?
-  price       Float    @default(0)
+  price       Decimal  @default(0)
   imageUrl    String?
   status      String   @default("Active") // Active | Inactive
   externalId  String?
@@ -201,6 +204,7 @@ model Product {
   contentItems   ContentItem[]
   liveSessions   LiveSession[]
 
+  @@unique([agencyId, sku])
   @@index([agencyId])
   @@index([brandId])
 }
@@ -209,7 +213,7 @@ model ProductMetric {
   id        String   @id @default(cuid())
   productId String
   date      DateTime
-  gmv       Float    @default(0)
+  gmv       Decimal  @default(0)
   orders    Int      @default(0)
   units     Int      @default(0)
 
@@ -230,12 +234,12 @@ model Campaign {
   ownerId        String?
   startDate      DateTime?
   endDate        DateTime?
-  budget         Float     @default(0)
+  budget         Decimal   @default(0)
   creatorTarget  Int       @default(0)
   contentTarget  Int       @default(0)
   liveTarget     Int       @default(0)
-  gmvTarget      Float     @default(0)
-  actualGmv      Float     @default(0)
+  gmvTarget      Decimal   @default(0)
+  actualGmv      Decimal   @default(0)
   commissionRate Float     @default(0)
   status         String    @default("Draft") // Draft|Planning|Recruiting|Active|ContentReview|Published|Completed|Reporting
   notes          String?
@@ -265,8 +269,8 @@ model CampaignCreator {
   campaignId      String
   creatorId       String
   role            String?
-  fee             Float    @default(0)
-  gmvContribution Float    @default(0)
+  fee             Decimal  @default(0)
+  gmvContribution Decimal  @default(0)
   status          String   @default("Active")
 
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -307,7 +311,7 @@ model ContentItem {
   revisionCount Int       @default(0)
   reviewerId    String?
   notes         String?
-  gmvGenerated  Float     @default(0)
+  gmvGenerated  Decimal   @default(0)
   viewsGenerated Int      @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -353,8 +357,8 @@ model LiveSession {
   operatorId     String?
   startTime      DateTime
   endTime        DateTime?
-  targetGmv      Float     @default(0)
-  actualGmv      Float     @default(0)
+  targetGmv      Decimal   @default(0)
+  actualGmv      Decimal   @default(0)
   viewers        Int       @default(0)
   orders         Int       @default(0)
   conversionRate Float     @default(0)
@@ -382,7 +386,7 @@ model LiveMetric {
   liveSessionId String
   timestamp     DateTime
   viewers       Int      @default(0)
-  gmv           Float    @default(0)
+  gmv           Decimal  @default(0)
   orders        Int      @default(0)
 
   liveSession LiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
@@ -463,11 +467,11 @@ model Commission {
   creatorId       String
   sourceType      String   // LiveSession | Content | Campaign
   sourceId        String?
-  gmv             Float    @default(0)
+  gmv             Decimal  @default(0)
   creatorRate     Float    @default(0)
-  creatorCommission Float  @default(0)
+  creatorCommission Decimal @default(0)
   agencyShareRate Float    @default(0)
-  agencyRevenue   Float    @default(0)
+  agencyRevenue   Decimal  @default(0)
   status          String   @default("Pending") // Pending | Calculated | Settled
   createdAt       DateTime @default(now())
 
@@ -484,7 +488,7 @@ model CreatorPayout {
   agencyId   String
   creatorId  String
   campaignId String?
-  amount     Float     @default(0)
+  amount     Decimal   @default(0)
   status     String    @default("Pending") // Pending | Paid
   paidAt     DateTime?
   createdAt  DateTime  @default(now())
@@ -502,7 +506,7 @@ model Settlement {
   agencyId   String
   brandId    String
   campaignId String?
-  amount     Float     @default(0)
+  amount     Decimal   @default(0)
   status     String    @default("Pending") // Pending | Paid | Overdue
   dueDate    DateTime?
   paidAt     DateTime?

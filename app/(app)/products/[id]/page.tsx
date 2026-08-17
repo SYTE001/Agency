@@ -173,7 +173,7 @@ export default async function ProductDetailPage(props: PageProps<"/products/[id]
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <MetricSummary label="GMV total" value={formatCompactIDR(metrics.reduce((s, m) => s + m.gmv, 0))} />
+                <MetricSummary label="GMV total" value={formatCompactIDR(metrics.reduce((s, m) => s + m.gmv.toNumber(), 0))} />
                 <MetricSummary label="Order total" value={formatNumber(metrics.reduce((s, m) => s + m.orders, 0))} />
                 <MetricSummary label="Unit total" value={formatNumber(metrics.reduce((s, m) => s + m.units, 0))} />
                 <MetricSummary
@@ -189,7 +189,7 @@ export default async function ProductDetailPage(props: PageProps<"/products/[id]
                 />
                 <MetricSummary
                   label="Rata-rata GMV/hari"
-                  value={formatCompactIDR(metrics.reduce((s, m) => s + m.gmv, 0) / metrics.length)}
+                  value={formatCompactIDR(metrics.reduce((s, m) => s + m.gmv.toNumber(), 0) / metrics.length)}
                 />
                 <MetricSummary
                   label="Rata-rata order/hari"

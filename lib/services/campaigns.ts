@@ -87,11 +87,14 @@ export async function listCampaigns(
     }),
   ]);
   const publishedMap = new Map(publishedCounts.map((r) => [r.campaignId, r._count._all]));
-  const gmvMap = new Map(gmvByCampaign.map((r) => [r.campaignId, r._sum.gmvGenerated ?? 0]));
+  const gmvMap = new Map(gmvByCampaign.map((r) => [r.campaignId, r._sum.gmvGenerated?.toNumber() ?? 0]));
 
   const rows: CampaignRow[] = campaigns.map((c) => {
     const contentGmv = gmvMap.get(c.id) ?? 0;
-    const actualGmv = c.actualGmv > 0 ? c.actualGmv : contentGmv;
+    const storedGmv = c.actualGmv.toNumber();
+    const budget = c.budget.toNumber();
+    const gmvTarget = c.gmvTarget.toNumber();
+    const actualGmv = storedGmv > 0 ? storedGmv : contentGmv;
     return {
       id: c.id,
       name: c.name,
@@ -102,8 +105,8 @@ export async function listCampaigns(
       ownerName: c.owner?.name ?? null,
       startDate: c.startDate,
       endDate: c.endDate,
-      budget: c.budget,
-      gmvTarget: c.gmvTarget,
+      budget,
+      gmvTarget,
       actualGmv,
       creatorTarget: c.creatorTarget,
       contentTarget: c.contentTarget,
@@ -112,7 +115,7 @@ export async function listCampaigns(
       contentCount: c._count.contentItems,
       contentPublished: publishedMap.get(c.id) ?? 0,
       liveCount: c._count.liveSessions,
-      progress: c.gmvTarget > 0 ? Math.min(1, actualGmv / c.gmvTarget) : 0,
+      progress: gmvTarget > 0 ? Math.min(1, actualGmv / gmvTarget) : 0,
     };
   });
 
@@ -196,9 +199,9 @@ export async function getCampaignDetail(agencyId: string, campaignId: string) {
     activity,
     contentStatusCounts: statusCounts,
     finance: {
-      gmv: finance._sum.gmv ?? 0,
-      creatorCommission: finance._sum.creatorCommission ?? 0,
-      agencyRevenue: finance._sum.agencyRevenue ?? 0,
+      gmv: finance._sum.gmv?.toNumber() ?? 0,
+      creatorCommission: finance._sum.creatorCommission?.toNumber() ?? 0,
+      agencyRevenue: finance._sum.agencyRevenue?.toNumber() ?? 0,
     },
   };
 }

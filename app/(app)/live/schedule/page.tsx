@@ -89,7 +89,7 @@ export default async function LiveSchedulePage(props: PageProps<"/live/schedule"
         {canWrite ? (
           <Link
             href="/live/new"
-            className="inline-flex h-9 items-center justify-center rounded-md bg-brand px-4 text-sm font-medium text-brand-foreground shadow-sm transition-colors hover:bg-brand/90"
+            className="inline-flex h-9 items-center justify-center rounded-md bg-brand px-4 text-sm font-medium text-brand-foreground transition-colors hover:bg-brand/90"
           >
             Jadwalkan LIVE
           </Link>

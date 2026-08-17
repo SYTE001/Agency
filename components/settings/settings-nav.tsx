@@ -20,7 +20,7 @@ export function SettingsNav({ active }: { active: SettingsTab }) {
           className={cn(
             "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
             active === t.key
-              ? "bg-background shadow-sm"
+              ? "bg-card text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground",
           )}
         >

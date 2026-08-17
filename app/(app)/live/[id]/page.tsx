@@ -63,15 +63,17 @@ export default async function LiveDetailPage(props: PageProps<"/live/[id]">) {
     }),
   ]);
 
-  const achieved = session.targetGmv > 0 ? (session.actualGmv / session.targetGmv) * 100 : 0;
+  const targetGmv = session.targetGmv.toNumber();
+  const actualGmv = session.actualGmv.toNumber();
+  const achieved = targetGmv > 0 ? (actualGmv / targetGmv) * 100 : 0;
   const moves = NEXT_STATUSES[session.status] ?? [];
 
   const stats = [
-    { label: "GMV Aktual", value: session.actualGmv > 0 ? formatCompactIDR(session.actualGmv) : "—" },
+    { label: "GMV Aktual", value: actualGmv > 0 ? formatCompactIDR(actualGmv) : "—" },
     {
       label: "Target GMV",
-      value: session.targetGmv > 0 ? formatCompactIDR(session.targetGmv) : "—",
-      sub: session.targetGmv > 0 && session.actualGmv > 0 ? `${formatPercent(achieved, 0)} tercapai` : undefined,
+      value: targetGmv > 0 ? formatCompactIDR(targetGmv) : "—",
+      sub: targetGmv > 0 && actualGmv > 0 ? `${formatPercent(achieved, 0)} tercapai` : undefined,
     },
     { label: "Viewers", value: session.viewers > 0 ? formatNumber(session.viewers) : "—" },
     { label: "Orders", value: session.orders > 0 ? formatNumber(session.orders) : "—" },
@@ -317,7 +319,7 @@ export default async function LiveDetailPage(props: PageProps<"/live/[id]">) {
         <span className="inline-flex items-center gap-1.5"><Eye className="h-4 w-4" />{formatNumber(session.viewers)} viewers</span>
         <span className="inline-flex items-center gap-1.5"><ShoppingCart className="h-4 w-4" />{formatNumber(session.orders)} orders</span>
         <span className="inline-flex items-center gap-1.5"><BadgePercent className="h-4 w-4" />{formatPercent(session.conversionRate)} konversi</span>
-        {session.targetGmv > 0 && session.actualGmv > 0 && achieved < 50 ? (
+        {targetGmv > 0 && actualGmv > 0 && achieved < 50 ? (
           <Badge variant="destructive">Di bawah 50% target</Badge>
         ) : null}
       </div>

@@ -1,221 +1,163 @@
-<div align="center">
+# Agency OS — TikTok Agency Management
 
-# ⚡ Agency OS
+Sistem operasi internal berbasis web untuk agensi TikTok Shop / Creator / LIVE Commerce:
+mengelola creator, brand, campaign, konten, jadwal LIVE, task, hingga keuangan
+(komisi, payout creator, settlement brand) dalam satu aplikasi multi-tenant.
 
-### **The Enterprise Operational Command Center for Creator & Live Commerce Agencies**
+## Stack aktual
 
-*Turn creator rosters, campaign pipelines, content revisions, LIVE commerce, and financial reconciliation into assigned actions and measurable revenue.*
+Berdasarkan `package.json` repository ini:
 
-<br/>
+| Komponen | Versi |
+|---|---|
+| Next.js (App Router, Server Actions) | 16.3.1 |
+| React | 19.2.8 |
+| TypeScript | ^5 |
+| Tailwind CSS | ^4 (`@tailwindcss/postcss`) |
+| Prisma ORM (generator `prisma-client`) | ^7.9.1 |
+| Database | SQLite via `better-sqlite3` (`@prisma/adapter-better-sqlite3`) |
+| Validasi | Zod ^4.4.3 |
+| Session/auth | `jose` (JWT HS256 dalam cookie httpOnly) |
+| Charts | recharts |
+| Test runner | `node:test` via `tsx` |
 
-[![Next.js](https://img.shields.io/badge/Next.js_14-black?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript_5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Prisma](https://img.shields.io/badge/Prisma_ORM-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
-[![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![License](https://img.shields.io/badge/License-Proprietary-E11D48?style=for-the-badge)](LICENSE)
+## Persiapan pertama kali
 
-<br/>
-
-[**Explore Features**](#-core-features--modules) • [**Tech Stack**](#-tech-stack) • [**Quick Start**](#-quick-start) • [**Scripts**](#-available-scripts) • [**Architecture**](#-security--architecture)
-
-<br/>
-
-</div>
-
----
-
-## 💡 Core Philosophy: The Operational Loop
-
-Traditional agencies suffer from disconnected spreadsheets, fragmented chat groups, and delayed financial reporting. **Agency OS** bridges analytics and frontline execution with a single, closed-loop operational framework:
-
-```mermaid
-flowchart LR
-    A["📊 DATA<br/><sub>Real-Time Metrics</sub>"] --> B["⚡ WORK<br/><sub>Tasks & Deliverables</sub>"]
-    B --> C["👤 OWNER<br/><sub>Assigned Operator</sub>"]
-    C --> D["🎯 ACTION<br/><sub>Targeted Execution</sub>"]
-    D --> E["📈 RESULT<br/><sub>GMV & Revenue</sub>"]
-
-    style A fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
-    style B fill:#0f172a,stroke:#818cf8,stroke-width:2px,color:#f8fafc
-    style C fill:#0f172a,stroke:#c084fc,stroke-width:2px,color:#f8fafc
-    style D fill:#0f172a,stroke:#f472b6,stroke-width:2px,color:#f8fafc
-    style E fill:#0f172a,stroke:#34d399,stroke-width:2px,color:#f8fafc
-```
-
-### 🎯 Key Questions Answered in Real Time
-- **Trend Detection**: What creators or campaigns are outperforming, and where is GMV dipping?
-- **Execution Priority**: What mission-critical tasks and approvals must be completed today?
-- **Unambiguous Ownership**: Who is the direct responsible individual (DRI) for every deliverable?
-- **Financial Precision**: Exactly what are the gross GMV, creator commissions, and net agency margins?
-- **SLA & Bottleneck Control**: Which reviews, drafts, or payouts are overdue?
-
----
-
-## ✨ Core Features & Modules
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### 📊 Overview Dashboard
-Executive command center with real-time visibility.
-- **Executive KPIs**: Live GMV, Agency Gross Revenue, Active Campaigns, and Pending Settlements.
-- **Actionable Alerts**: Deterministic system triggers that highlight dropping metrics and critical bottlenecks.
-
-<br/>
-
-### 👥 Creators Management
-Complete creator relationship & performance registry.
-- **Health Scoring**: Automated status tags (`Healthy`, `Watch`, `At Risk`, `Inactive`).
-- **Creator Profiles**: Platform account abstractions, niche tagging, and historical conversion metrics.
-
-<br/>
-
-### 🏢 Brand & Client Hub
-Centralized partner relations and portfolio governance.
-- **Account Profiles**: Client tiering, active contracts, and POC directories.
-- **Revenue Attribution**: Real-time campaign ROI and client health tracking.
-
-<br/>
-
-### 🚀 Campaigns Pipeline
-End-to-end lifecycle management from pitch to wrap-up.
-- **Roster Building**: Creator talent matching and slot allocation.
-- **Milestone Tracking**: Deliverable scheduling, budgeting, and performance reporting.
-
-<br/>
-
-### 🎙️ LIVE Operations Studio
-Live commerce broadcast planning and execution.
-- **Roster & Studio Scheduling**: Host, co-host, and operator shift management.
-- **Real-Time Analytics**: Minute-by-minute GMV pacing against targets.
-
-</td>
-<td width="50%" valign="top">
-
-### 📝 Content Production Kanban
-High-velocity review and publication workflow.
-- **Structured Pipeline**: 
-  `Brief` ➔ `Draft` ➔ `Revision` ➔ `Approved` ➔ `Published`
-- **Revision History**: Timestamped feedback logs and asset version control.
-
-<br/>
-
-### 📦 Product & SKU Intelligence
-E-commerce catalog performance tracking.
-- **Catalog Management**: SKU tracking with cross-channel performance correlation.
-- **Content Attribution**: Identify top-selling SKUs across organic posts vs. LIVE streams.
-
-<br/>
-
-### 💵 Finance & Settlements Engine
-Deterministic calculations with zero financial discrepancies.
-- **Split Automation**: Real-time computation of gross GMV, creator commissions, and agency cuts.
-- **Payout Tracking**: Settlement logs, invoice generation, and payout audit histories.
-
-<br/>
-
-### ✅ Tasks & Activity Matrix
-Entity-linked task management for high-density operations.
-- **Direct Context**: Tasks directly tied to Creators, Clients, Campaigns, or LIVE sessions.
-- **Accountability**: Priority levels, due date tracking, and immutable audit logs.
-
-<br/>
-
-### 🛡️ Multi-Tenant Architecture
-Enterprise-grade data isolation and security.
-- **Tenant Isolation**: Strict `agencyId` scoping across all database queries.
-- **RBAC**: Server-side Role-Based Access Control protecting sensitive financial data.
-
-</td>
-</tr>
-</table>
-
----
-
-## 🛠 Tech Stack
-
-<div align="center">
-
-| Area | Technologies | Details |
-| :--- | :--- | :--- |
-| **Frontend Framework** | `Next.js 14` (App Router) | Server Components, Streaming, API routes |
-| **Language** | `TypeScript 5.0+` | Strict type safety end-to-end |
-| **Styling & Icons** | `Tailwind CSS`, `Lucide React` | High-density, responsive, modern dark/light UI |
-| **Data Visualization** | `Recharts` | Interactive operational and financial charts |
-| **Schema Validation** | `Zod` | Runtime type checking and input sanitization |
-| **Database & ORM** | `SQLite` (`better-sqlite3`), `Prisma ORM` | High-performance embedded DB *(Target: PostgreSQL)* |
-| **Security & Auth** | `Jose JWT`, `Server-side RBAC` | Multi-tenant token isolation and role permissions |
-
-</div>
-
----
-
-## 🚀 Quick Start
-
-### 1. Prerequisites
-Ensure your environment meets the minimum version requirements:
-- **Node.js**: `v18.17+` or `v20+` (LTS recommended)
-- **Package Manager**: `npm` (bundled with Node) or `pnpm` / `yarn`
-
-### 2. Setup & Installation
+Prasyarat: Node.js 20+ dan npm.
 
 ```bash
-# Clone the repository
-git clone https://github.com/SYTE001/Agency.git
+npm install          # otomatis menjalankan `prisma generate` (postinstall)
 
-# Navigate to the project directory
-cd Agency
+# buat file env (opsional — ada fallback, lihat bagian Environment Variables)
+# DATABASE_URL="file:./prisma/dev.db"
+# AUTH_SECRET="<minimal 32 karakter, wajib di production>"
 
-# Install project dependencies (automatically triggers Prisma Client generation)
-npm install
+npx prisma migrate deploy   # terapkan migration ke prisma/dev.db
+npm run dev                 # http://localhost:3000
 ```
 
-### 3. Run Development Server
+Untuk mengisi database dengan data contoh (1 agensi demo + users, brands, creators,
+campaigns, metrics, transaksi keuangan):
 
 ```bash
-npm run dev
+npx prisma db seed
 ```
 
-### 4. Launch Application
-Open your browser and navigate to:
+Akun seed (semua memakai password `password123`):
+
+| Role | Email |
+|---|---|
+| owner | andi@kreatifnusantara.id |
+| account_manager | siti@kreatifnusantara.id |
+| creator_manager | budi@kreatifnusantara.id |
+| campaign_manager | dewi@kreatifnusantara.id |
+| finance | rina@kreatifnusantara.id |
+
+> Data seed hanya untuk development. Jangan jalankan seed di database production.
+
+## Environment variables
+
+| Variabel | Wajib | Keterangan |
+|---|---|---|
+| `DATABASE_URL` | Tidak (dev) | Connection string Prisma. Fallback dev: `file:./prisma/dev.db`. Contoh SQLite: `file:./prisma/dev.db` |
+| `AUTH_SECRET` | **Ya (production)** | Kunci penanda-tanganan JWT sesi (HS256), minimal 32 karakter. Di production aplikasi menolak berjalan tanpanya; di dev dipakai kunci lokal sementara |
+
+## Development, build, test
+
+```bash
+npm run dev      # server development (http://localhost:3000)
+npm run lint     # ESLint
+npm run test     # seluruh test (node:test via tsx)
+npm run build    # build production
+npm run start    # jalankan hasil build
 ```
-http://localhost:3000
+
+`npm run test` menjalankan:
+
+- `lib/finance.test.ts` — kalkulasi komisi/payout/revenue (deterministik, tanpa DB).
+- `lib/integration.test.ts` — test DB-backed (tenant isolation, RBAC, uniqueness
+  per tenant, CRUD kritis). Test ini memakai **database sekali pakai** di direktori
+  temp (bukan `prisma/dev.db`); jalankan `prisma migrate deploy` otomatis saat setup.
+  Untuk menjalankan suite yang sama terhadap PostgreSQL, set `DATABASE_URL` ke database
+  yang sudah di-migrate sebelum `npm run test`.
+
+## Arsitektur
+
+```
+app/
+  layout.tsx, globals.css        # root app
+  login/                         # halaman login
+  (app)/                         # grup route terautentikasi
+    page.tsx                     # dashboard/overview
+    creators/ brands/ products/  # master data
+    campaigns/ content/ live/    # operasional (live: schedule/new/[id])
+    tasks/ search/ reports/      # kolaborasi & pelaporan
+    finance/                     # + commissions/ payouts/ settlements
+    settings/                    # agency, roles, integrations
+  actions/                       # server actions (mutasi form)
+components/                      # UI components (shadcn-style primitives)
+lib/
+  auth.ts                        # sesi JWT (jose), cookie httpOnly
+  authorization.ts, constants.ts # RBAC: matriks role → permission
+  finance.ts                     # formula komisi (Rupiah bulat, integer-safe)
+  format.ts                      # formatter IDR/angka
+  prisma.ts                      # singleton PrismaClient (driver adapter)
+  services/                      # satu-satunya layer query DB
+  *.test.ts                      # test (node:test)
+prisma/
+  schema.prisma                  # skema multi-tenant
+  migrations/                    # riwayat migration SQLite
+  seed.ts                        # data contoh development
+generated/prisma/                # Prisma client hasil generate (jangan diedit)
+docs/
+  production-readiness.md        # audit SQLite → PostgreSQL/Supabase
+PLAN.md                          # spesifikasi produk lengkap (bahasa Indonesia)
+Fix.md                           # brief audit/hardening awal
+Revisi.md                        # spesifikasi production hardening (revision list)
 ```
 
-> [!TIP]
-> Database migrations and Prisma Client generation are automatically handled during `npm install` via the `postinstall` hook.
+Prinsip arsitektur:
 
----
+1. **Server Components + Server Actions** — mutasi lewat form action di `app/actions/`,
+   validasi Zod di server. Tidak ada client yang menulis langsung ke database.
+2. **Service layer tunggal** — semua query Prisma hanya ada di `lib/services/*`;
+   halaman UI tidak query langsung.
+3. **Multi-tenancy by `agencyId`** — setiap business record memiliki kolom `agencyId`.
+   `agencyId` selalu diambil dari sesi server (JWT diverifikasi ulang dari database),
+   tidak pernah dari payload client. Semua query list/detail/mutasi memfilter
+   `id + agencyId`.
+4. **RBAC di server** — matriks permission di `lib/constants.ts`
+   (`ROLE_PERMISSIONS`), dicek via `can(role, resource, action)` di setiap server
+   action. Role: `owner`, `admin`, `account_manager`, `creator_manager`,
+   `campaign_manager`, `live_manager`, `finance`, `viewer`.
+5. **Keuangan presisi** — seluruh field moneter bertipe `Decimal` di schema;
+   kalkulasi komisi memakai Rupiah bulat (integer-safe) di `lib/finance.ts`
+   sesuai formula PLAN §12:
+   - `creatorCommission = GMV × creatorRate%`
+   - `agencyRevenue = creatorCommission × agencyShareRate%` (dari komisi, bukan GMV)
+   - `creatorPayout = creatorCommission − agencyRevenue`
 
-## 📜 Available Scripts
+## Keamanan & multi-tenancy
 
-| Script | Command | Description |
-| :--- | :--- | :--- |
-| **Development** | `npm run dev` | Starts Next.js development server on port `3000` with Fast Refresh |
-| **Production Build** | `npm run build` | Compiles TypeScript, bundles assets, and optimizes for production |
-| **Start Production** | `npm run start` | Runs the compiled production build |
-| **Linting** | `npm run lint` | Runs ESLint to inspect code quality and enforce standards |
-| **Test Suite** | `npm run test` | Executes unit and integration test suites |
+- Session: JWT HS256 (jose) dalam cookie httpOnly; role & `agencyId` di-load ulang
+  dari database per request (perubahan role langsung berlaku).
+- `AUTH_SECRET` wajib diisi di production (aplikasi menolak start tanpa ini).
+- Cross-tenant access ditolak di semua service (dibuktikan oleh
+  `lib/integration.test.ts`): detail/update/delete membutuhkan `id + agencyId`;
+  mutasi finance menolak creator/brand milik tenant lain.
+- Unique constraints tenant-scoped: `Creator.username` dan `Product.sku` unik
+  per agency (`@@unique([agencyId, ...])`), bukan global.
+- Status/role divalidasi dengan type guard terhadap `lib/constants.ts`
+  (sumber kebenaran tunggal) di setiap server action.
 
----
+## Catatan production
 
-## 🔒 Security & Architecture Principles
-
-> [!IMPORTANT]
-> **Zero Trust Multi-Tenancy**: Data isolation by `agencyId` is strictly enforced at the server query layer, never relying purely on client-side state.
-
-- **Deterministic Financial Engine**: All financial formulas (margins, creator shares, platform fees) reside in isolated backend utility modules to prevent math inconsistencies.
-- **Operational Ergonomics**: High information density layout designed specifically for fast-paced operational teams managing dozens of parallel campaigns.
-
----
-
-<div align="center">
-
-## 📄 License & Confidentiality
-
-**Proprietary & Confidential**  
-Copyright © 2026 Agency OS. All rights reserved. Intended strictly for internal agency operations.
-
-</div>
+- Database saat ini **SQLite** (file lokal, driver `better-sqlite3`). Ini cocok untuk
+  development/single instance tetapi **bukan target production serverless** —
+  lihat `docs/production-readiness.md` untuk audit lengkap dan langkah migration
+  ke PostgreSQL/Supabase (schema sudah kompatibel; blocker utama adalah driver
+  adapter dan baseline migration).
+- Integrasi TikTok (halaman `settings/integrations`, modul sync) adalah modul
+  internal dengan simulasi sync — bukan koneksi API TikTok resmi.
+- Laporan (client/internal) dihasilkan dari data yang sudah ada dan dapat
+  diekspor sebagai CSV (pemisah `;` sesuai locale id-ID untuk Excel).

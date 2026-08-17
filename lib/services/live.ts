@@ -59,8 +59,8 @@ export async function listLiveSessions(agencyId: string, filters: LiveFilters = 
     status: s.status,
     startTime: s.startTime,
     endTime: s.endTime,
-    targetGmv: s.targetGmv,
-    actualGmv: s.actualGmv,
+    targetGmv: s.targetGmv.toNumber(),
+    actualGmv: s.actualGmv.toNumber(),
     viewers: s.viewers,
     orders: s.orders,
     conversionRate: s.conversionRate,
@@ -111,13 +111,13 @@ export async function getLiveDashboard(agencyId: string) {
   ]);
 
   const under = underperforming
-    .filter((s) => s.actualGmv < s.targetGmv * 0.5)
+    .filter((s) => s.actualGmv.toNumber() < s.targetGmv.toNumber() * 0.5)
     .slice(0, 5);
 
   return {
     liveNow,
     upcoming,
-    todayGmv: todayStats._sum.actualGmv ?? 0,
+    todayGmv: todayStats._sum.actualGmv?.toNumber() ?? 0,
     todayOrders: todayStats._sum.orders ?? 0,
     todaySessions: todayStats._count._all,
     underperforming: under,

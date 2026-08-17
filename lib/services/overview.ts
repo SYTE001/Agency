@@ -97,8 +97,8 @@ export async function getOverview(agencyId: string) {
     }),
   ]);
 
-  const totalGmv = gmvCur._sum.gmv ?? 0;
-  const prevGmv = gmvPrev._sum.gmv ?? 0;
+  const totalGmv = gmvCur._sum.gmv?.toNumber() ?? 0;
+  const prevGmv = gmvPrev._sum.gmv?.toNumber() ?? 0;
 
   const topCreatorRows = await prisma.creator.findMany({
     where: { id: { in: topCreators.map((c) => c.creatorId) } },
@@ -112,20 +112,20 @@ export async function getOverview(agencyId: string) {
     kpis: {
       totalGmv,
       gmvGrowth: prevGmv > 0 ? ((totalGmv - prevGmv) / prevGmv) * 100 : 0,
-      agencyRevenue: revenueCur._sum.agencyRevenue ?? 0,
-      liveGmv30: gmvCur._sum.liveGmv ?? 0,
+      agencyRevenue: revenueCur._sum.agencyRevenue?.toNumber() ?? 0,
+      liveGmv30: gmvCur._sum.liveGmv?.toNumber() ?? 0,
       activeCreators,
       activeCampaigns,
       activeBrands,
-      pendingSettlements: pendingSettlements._sum.amount ?? 0,
+      pendingSettlements: pendingSettlements._sum.amount?.toNumber() ?? 0,
       pendingSettlementCount: pendingSettlements._count._all,
     },
     gmvDaily: gmvDaily
-      .map((d) => ({ date: d.date, gmv: d._sum.gmv ?? 0 }))
+      .map((d) => ({ date: d.date, gmv: d._sum.gmv?.toNumber() ?? 0 }))
       .sort((a, b) => a.date.getTime() - b.date.getTime()),
     topCreators: topCreators.map((c) => ({
       id: c.creatorId,
-      gmv: c._sum.gmv ?? 0,
+      gmv: c._sum.gmv?.toNumber() ?? 0,
       ...creatorInfo.get(c.creatorId),
     })),
     liveToday,

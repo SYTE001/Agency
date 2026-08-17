@@ -110,13 +110,13 @@ export async function listCreators(
   ]);
 
   const recentMap = new Map(recent.map((r) => [r.creatorId, r]));
-  const prevMap = new Map(previous.map((r) => [r.creatorId, r._sum.gmv ?? 0]));
+  const prevMap = new Map(previous.map((r) => [r.creatorId, r._sum.gmv?.toNumber() ?? 0]));
   const campaignMap = new Map(activeCampaignCounts.map((r) => [r.creatorId, r._count._all]));
   const activityMap = new Map(lastActivities.map((r) => [r.entityId, r._max.createdAt]));
 
   let rows: CreatorRow[] = creators.map((c) => {
     const r = recentMap.get(c.id);
-    const gmv30 = r?._sum.gmv ?? 0;
+    const gmv30 = r?._sum.gmv?.toNumber() ?? 0;
     const prevGmv = prevMap.get(c.id) ?? 0;
     const growth = prevGmv > 0 ? ((gmv30 - prevGmv) / prevGmv) * 100 : gmv30 > 0 ? 100 : 0;
     return {
@@ -135,7 +135,7 @@ export async function listCreators(
       gmvGrowth: growth,
       avgViews: Math.round(r?._avg.avgViews ?? 0),
       videoCount: r?._sum.videos ?? 0,
-      liveGmv30: r?._sum.liveGmv ?? 0,
+      liveGmv30: r?._sum.liveGmv?.toNumber() ?? 0,
       activeCampaigns: campaignMap.get(c.id) ?? 0,
       lastActivityAt: activityMap.get(c.id) ?? null,
     };
@@ -234,12 +234,12 @@ export async function getCreatorDetail(agencyId: string, creatorId: string) {
     prisma.creatorPayout.aggregate({ where: { creatorId, agencyId }, _sum: { amount: true } }),
   ]);
 
-  const gmv30 = recent._sum.gmv ?? 0;
-  const prevGmv = previous._sum.gmv ?? 0;
+  const gmv30 = recent._sum.gmv?.toNumber() ?? 0;
+  const prevGmv = previous._sum.gmv?.toNumber() ?? 0;
   const gmvGrowth = prevGmv > 0 ? ((gmv30 - prevGmv) / prevGmv) * 100 : 0;
   const commission30 = commissions
     .filter((c) => c.createdAt >= since)
-    .reduce((sum, c) => sum + c.creatorCommission, 0);
+    .reduce((sum, c) => sum + c.creatorCommission.toNumber(), 0);
 
   return {
     creator,
@@ -252,10 +252,10 @@ export async function getCreatorDetail(agencyId: string, creatorId: string) {
     totals: {
       gmv30,
       gmvGrowth,
-      liveGmv30: recent._sum.liveGmv ?? 0,
+      liveGmv30: recent._sum.liveGmv?.toNumber() ?? 0,
       videos30: recent._sum.videos ?? 0,
       commission30,
-      totalPaid: payoutsTotal._sum.amount ?? 0,
+      totalPaid: payoutsTotal._sum.amount?.toNumber() ?? 0,
     },
   };
 }

@@ -108,8 +108,8 @@ export async function getClientReport(agencyId: string, campaignId: string, peri
   const creatorNames = new Map(topCreatorRows.map((c) => [c.id, c.displayName]));
   const productNames = new Map(topProductRows.map((p) => [p.id, p.name]));
 
-  const gmv = commissionAgg._sum.gmv ?? 0;
-  const productGmv = productGmvAgg._sum.gmv ?? 0;
+  const gmv = commissionAgg._sum.gmv?.toNumber() ?? 0;
+  const productGmv = productGmvAgg._sum.gmv?.toNumber() ?? 0;
 
   return {
     campaign: {
@@ -118,37 +118,37 @@ export async function getClientReport(agencyId: string, campaignId: string, peri
       status: campaign.status,
       startDate: campaign.startDate,
       endDate: campaign.endDate,
-      gmvTarget: campaign.gmvTarget,
+      gmvTarget: campaign.gmvTarget.toNumber(),
       brandName: campaign.brand.name,
       brandIndustry: campaign.brand.industry,
     },
     period: { period, days, start, end },
     totals: {
       gmv,
-      gmvGrowth: growth(gmv, commissionPrevAgg._sum.gmv ?? 0),
-      commission: commissionAgg._sum.creatorCommission ?? 0,
-      agencyRevenue: commissionAgg._sum.agencyRevenue ?? 0,
+      gmvGrowth: growth(gmv, commissionPrevAgg._sum.gmv?.toNumber() ?? 0),
+      commission: commissionAgg._sum.creatorCommission?.toNumber() ?? 0,
+      agencyRevenue: commissionAgg._sum.agencyRevenue?.toNumber() ?? 0,
       creators,
       videos,
       videosPublished,
       liveSessions: liveAgg._count._all,
-      liveGmv: liveAgg._sum.actualGmv ?? 0,
+      liveGmv: liveAgg._sum.actualGmv?.toNumber() ?? 0,
       liveOrders: liveAgg._sum.orders ?? 0,
       liveViewers: liveAgg._sum.viewers ?? 0,
       productGmv,
-      productGmvGrowth: growth(productGmv, productGmvPrevAgg._sum.gmv ?? 0),
+      productGmvGrowth: growth(productGmv, productGmvPrevAgg._sum.gmv?.toNumber() ?? 0),
       productOrders: productOrdersAgg._sum.orders ?? 0,
     },
     topCreators: topCreatorsRaw.map((c) => ({
       id: c.creatorId,
       name: creatorNames.get(c.creatorId) ?? c.creatorId,
-      gmv: c._sum.gmv ?? 0,
-      commission: c._sum.creatorCommission ?? 0,
+      gmv: c._sum.gmv?.toNumber() ?? 0,
+      commission: c._sum.creatorCommission?.toNumber() ?? 0,
     })),
     topProducts: topProductsRaw.map((p) => ({
       id: p.productId,
       name: productNames.get(p.productId) ?? p.productId,
-      gmv: p._sum.gmv ?? 0,
+      gmv: p._sum.gmv?.toNumber() ?? 0,
       orders: p._sum.orders ?? 0,
     })),
   };
@@ -226,17 +226,17 @@ export async function getInternalReport(agencyId: string, period: Period) {
     prisma.settlement.aggregate({ where: { agencyId, status: "Paid" }, _sum: { amount: true } }),
   ]);
 
-  const gmv = metricsCur._sum.gmv ?? 0;
-  const revenue = commissionCur._sum.agencyRevenue ?? 0;
+  const gmv = metricsCur._sum.gmv?.toNumber() ?? 0;
+  const revenue = commissionCur._sum.agencyRevenue?.toNumber() ?? 0;
   const videos = metricsCur._sum.videos ?? 0;
 
   return {
     period: { period, days, start, end },
     gmv,
-    gmvGrowth: growth(gmv, metricsPrev._sum.gmv ?? 0),
+    gmvGrowth: growth(gmv, metricsPrev._sum.gmv?.toNumber() ?? 0),
     revenue,
-    revenueGrowth: growth(revenue, commissionPrev._sum.agencyRevenue ?? 0),
-    commission: commissionCur._sum.creatorCommission ?? 0,
+    revenueGrowth: growth(revenue, commissionPrev._sum.agencyRevenue?.toNumber() ?? 0),
+    commission: commissionCur._sum.creatorCommission?.toNumber() ?? 0,
     commissionCount: commissionCur._count._all,
     creatorProductivity: {
       creatorsTotal,
@@ -249,17 +249,17 @@ export async function getInternalReport(agencyId: string, period: Period) {
     content: { createdInPeriod: contentCreated, publishedTotal: contentPublished },
     live: {
       sessions: liveAgg._count._all,
-      gmv: liveAgg._sum.actualGmv ?? 0,
+      gmv: liveAgg._sum.actualGmv?.toNumber() ?? 0,
       orders: liveAgg._sum.orders ?? 0,
       viewers: liveAgg._sum.viewers ?? 0,
     },
     tasks: { pending: pendingTasks, overdue: overdueTasks },
     finance: {
-      payoutsPending: payoutsPending._sum.amount ?? 0,
-      payoutsPaid: payoutsPaid._sum.amount ?? 0,
-      settlementsPending: settlementsPending._sum.amount ?? 0,
-      settlementsOverdue: settlementsOverdue._sum.amount ?? 0,
-      settlementsPaid: settlementsPaid._sum.amount ?? 0,
+      payoutsPending: payoutsPending._sum.amount?.toNumber() ?? 0,
+      payoutsPaid: payoutsPaid._sum.amount?.toNumber() ?? 0,
+      settlementsPending: settlementsPending._sum.amount?.toNumber() ?? 0,
+      settlementsOverdue: settlementsOverdue._sum.amount?.toNumber() ?? 0,
+      settlementsPaid: settlementsPaid._sum.amount?.toNumber() ?? 0,
     },
   };
 }

@@ -62,7 +62,7 @@ export async function getContentBoard(agencyId: string, filters: ContentFilters 
       dueDate: item.dueDate,
       publishDate: item.publishDate,
       revisionCount: item.revisionCount,
-      gmvGenerated: item.gmvGenerated,
+      gmvGenerated: item.gmvGenerated.toNumber(),
       viewsGenerated: item.viewsGenerated,
       campaignId: item.campaignId,
       campaignName: item.campaign.name,

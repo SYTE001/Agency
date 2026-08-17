@@ -70,12 +70,12 @@ export async function listProducts(
       name: p.name,
       sku: p.sku,
       category: p.category,
-      price: p.price,
+      price: p.price.toNumber(),
       imageUrl: p.imageUrl,
       status: p.status,
       brandId: p.brandId,
       brandName: p.brand?.name ?? null,
-      gmv30: m?._sum.gmv ?? 0,
+      gmv30: m?._sum.gmv?.toNumber() ?? 0,
       orders30: m?._sum.orders ?? 0,
       units30: m?._sum.units ?? 0,
     };
@@ -122,7 +122,7 @@ export async function getProductDetail(agencyId: string, productId: string) {
     campaigns,
     recentContent,
     totals: {
-      gmv30: totals._sum.gmv ?? 0,
+      gmv30: totals._sum.gmv?.toNumber() ?? 0,
       orders30: totals._sum.orders ?? 0,
       units30: totals._sum.units ?? 0,
     },

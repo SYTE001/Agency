@@ -34,19 +34,21 @@ export async function getFinanceSummary(agencyId: string, days = 30) {
     }),
   ]);
 
-  const gmv = cur._sum.gmv ?? 0;
-  const prevGmv = prev._sum.gmv ?? 0;
-  const agencyRevenue = cur._sum.agencyRevenue ?? 0;
-  const prevRevenue = prev._sum.agencyRevenue ?? 0;
+  const gmv = cur._sum.gmv?.toNumber() ?? 0;
+  const prevGmv = prev._sum.gmv?.toNumber() ?? 0;
+  const agencyRevenue = cur._sum.agencyRevenue?.toNumber() ?? 0;
+  const prevRevenue = prev._sum.agencyRevenue?.toNumber() ?? 0;
 
-  const payoutSum = (status: string) => payouts.find((p) => p.status === status)?._sum.amount ?? 0;
-  const settlementSum = (status: string) => settlements.find((s) => s.status === status)?._sum.amount ?? 0;
+  const payoutSum = (status: string) =>
+    payouts.find((p) => p.status === status)?._sum.amount?.toNumber() ?? 0;
+  const settlementSum = (status: string) =>
+    settlements.find((s) => s.status === status)?._sum.amount?.toNumber() ?? 0;
 
   return {
     days,
     gmv,
     gmvGrowth: prevGmv > 0 ? ((gmv - prevGmv) / prevGmv) * 100 : 0,
-    creatorCommission: cur._sum.creatorCommission ?? 0,
+    creatorCommission: cur._sum.creatorCommission?.toNumber() ?? 0,
     agencyRevenue,
     agencyRevenueGrowth: prevRevenue > 0 ? ((agencyRevenue - prevRevenue) / prevRevenue) * 100 : 0,
     commissionCount: cur._count._all,
@@ -112,11 +114,11 @@ export async function listCommissions(
   return {
     items: rows.map((c) => ({
       id: c.id,
-      gmv: c.gmv,
+      gmv: c.gmv.toNumber(),
       creatorRate: c.creatorRate,
-      creatorCommission: c.creatorCommission,
+      creatorCommission: c.creatorCommission.toNumber(),
       agencyShareRate: c.agencyShareRate,
-      agencyRevenue: c.agencyRevenue,
+      agencyRevenue: c.agencyRevenue.toNumber(),
       status: c.status,
       sourceType: c.sourceType,
       createdAt: c.createdAt,

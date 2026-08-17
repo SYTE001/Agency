@@ -55,6 +55,29 @@ Akun seed (semua memakai password `password123`):
 
 > Data seed hanya untuk development. Jangan jalankan seed di database production.
 
+## Bootstrap akun Owner produksi
+
+Database production tidak pernah di-seed dengan data contoh. Setelah
+`npx prisma migrate deploy` selesai di database PostgreSQL produksi, jalankan
+satu kali bootstrap untuk memastikan agency + satu akun Owner ada:
+
+```bash
+OWNER_PASSWORD='password-aman-anda' npx tsx scripts/bootstrap-owner.mts
+```
+
+Perilaku script:
+
+- menolak `DATABASE_URL` yang bukan `postgres(ql)://`;
+- memastikan agency `Kreatif Nusantara` (slug `kreatif-nusantara`) ada — dibuat
+  hanya jika belum ada, tidak pernah menimpa;
+- membuat `owner@kreatifnusantara.id` (role `owner`) hanya jika email belum ada —
+  idempoten, tidak pernah menimpa password akun yang sudah ada;
+- meng-hash password dengan implementasi scrypt aplikasi (`lib/password.ts`)
+  dan tidak pernah mencetak password ke output.
+
+> Jangan menaruh password produksi di source code, file env yang ter-commit,
+> atau Git — lewatkan hanya via environment variable saat eksekusi.
+
 ## Environment variables
 
 | Variabel | Wajib | Keterangan |
@@ -62,6 +85,7 @@ Akun seed (semua memakai password `password123`):
 | `DATABASE_URL` | Tidak (dev) | Connection string Prisma. Skema URL memilih provider: `file:./prisma/dev.db` → SQLite (dev), `postgres://…` → PostgreSQL (production). Tanpa env apa pun: SQLite |
 | `DB_PROVIDER` | Tidak | Override eksplisit `sqlite` atau `postgresql` bila skema URL ambigu |
 | `AUTH_SECRET` | **Ya (production)** | Kunci penanda-tanganan JWT sesi (HS256), minimal 32 karakter. Di production aplikasi menolak berjalan tanpanya; di dev dipakai kunci lokal sementara |
+| `OWNER_PASSWORD` | Tidak | Password untuk bootstrap satu kali (`scripts/bootstrap-owner.mts`) — hanya dibutuhkan saat eksekusi, tidak disimpan/di-commit |
 
 ## Development, build, test
 

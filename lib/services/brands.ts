@@ -1,7 +1,8 @@
 import prisma from "@/lib/prisma";
-import { paginate, totalPages, daysAgoDate } from "@/lib/services/common";
+import { paginate, totalPages, getAgencyTimezone, containsInsensitive } from "@/lib/services/common";
+import { daysAgoStartInTz } from "@/lib/timezone";
 import type { ListResult } from "@/lib/services/common";
-import type { Prisma } from "@/generated/prisma/client";
+import type { Prisma } from "@/lib/prisma";
 
 export type BrandRow = {
   id: string;
@@ -36,7 +37,7 @@ export async function listBrands(
   const { skip, take, page, pageSize } = paginate(filters.page ?? 1, filters.pageSize ?? 20);
 
   const where: Prisma.BrandWhereInput = { agencyId };
-  if (filters.q) where.name = { contains: filters.q };
+  if (filters.q) where.name = containsInsensitive(filters.q);
   if (filters.status) where.status = filters.status;
   if (filters.industry) where.industry = filters.industry;
 
@@ -58,7 +59,7 @@ export async function listBrands(
     return { items: [], total, page, pageSize, totalPages: totalPages(total, pageSize) };
   }
 
-  const since = daysAgoDate(30);
+  const since = daysAgoStartInTz(await getAgencyTimezone(agencyId), 30);
 
   // Agency revenue attributed to each brand's campaigns (last 30 days)
   const [campaignAgg, campaignCounts, productCounts] = await Promise.all([

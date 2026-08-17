@@ -6,7 +6,6 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
 import { isContentStatus } from "@/lib/constants";
-import type { Role } from "@/lib/constants";
 import { createContentItem, updateContentStatus } from "@/lib/services/content";
 import { addNote, entityBelongsToAgency, logActivity } from "@/lib/services/activity";
 
@@ -35,7 +34,7 @@ export async function createContentAction(
   formData: FormData,
 ): Promise<ContentFormState> {
   const user = await requireUser();
-  if (!can(user.role as Role, "content", "write")) {
+  if (!can(user.role, "content", "write")) {
     return { error: "Anda tidak memiliki izin untuk menambah konten." };
   }
 
@@ -80,7 +79,7 @@ export async function createContentAction(
 
 export async function moveContentAction(contentId: string, formData: FormData): Promise<void> {
   const user = await requireUser();
-  if (!can(user.role as Role, "content", "write")) return;
+  if (!can(user.role, "content", "write")) return;
 
   const status = String(formData.get("status") ?? "");
   const feedback = String(formData.get("feedback") ?? "").trim() || null;
@@ -116,6 +115,10 @@ export async function addContentNoteAction(
   formData: FormData,
 ): Promise<ContentNoteState> {
   const user = await requireUser();
+  // Catatan adalah data baru pada konten — butuh izin write, read saja tidak cukup
+  if (!can(user.role, "content", "write")) {
+    return { error: "Anda tidak memiliki izin untuk menambah catatan." };
+  }
   const content = String(formData.get("content") ?? "").trim();
   if (content.length < 3) {
     return { error: "Catatan minimal 3 karakter." };

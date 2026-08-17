@@ -1,14 +1,13 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 
 const BOM = "﻿";
 
 export async function GET() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
-  if (!can(user.role as Role, "integration", "read")) {
+  if (!can(user.role, "integration", "read")) {
     return new Response("Forbidden", { status: 403 });
   }
 

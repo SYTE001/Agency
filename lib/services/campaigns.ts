@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
-import { paginate, totalPages } from "@/lib/services/common";
+import { paginate, totalPages, containsInsensitive } from "@/lib/services/common";
 import type { ListResult } from "@/lib/services/common";
-import type { Prisma } from "@/generated/prisma/client";
+import type { Prisma } from "@/lib/prisma";
 
 export type CampaignRow = {
   id: string;
@@ -46,7 +46,7 @@ export async function listCampaigns(
   const { skip, take, page, pageSize } = paginate(filters.page ?? 1, filters.pageSize ?? 20);
 
   const where: Prisma.CampaignWhereInput = { agencyId };
-  if (filters.q) where.name = { contains: filters.q };
+  if (filters.q) where.name = containsInsensitive(filters.q);
   if (filters.status) where.status = filters.status;
   if (filters.brandId) where.brandId = filters.brandId;
   if (filters.ownerId) where.ownerId = filters.ownerId;
@@ -230,6 +230,11 @@ export async function createCampaign(
 ) {
   const brand = await prisma.brand.findFirst({ where: { id: data.brandId, agencyId }, select: { id: true } });
   if (!brand) throw new Error("Brand tidak ditemukan");
+  // Setiap FK yang dipilih klien wajib milik tenant yang sama
+  if (data.ownerId) {
+    const owner = await prisma.user.findFirst({ where: { id: data.ownerId, agencyId }, select: { id: true } });
+    if (!owner) throw new Error("Owner tidak ditemukan");
+  }
   return prisma.campaign.create({
     data: {
       agencyId,

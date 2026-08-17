@@ -2,14 +2,13 @@ import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskForm, type RelatedOption } from "@/components/tasks/task-form";
 
 export default async function NewTaskPage() {
   const user = await requireUser();
-  if (!can(user.role as Role, "task", "write")) notFound();
+  if (!can(user.role, "task", "write")) notFound();
 
   const [users, creators, brands, campaigns, contents, lives] = await Promise.all([
     prisma.user.findMany({

@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
-import type { Prisma } from "@/generated/prisma/client";
+import type { Prisma } from "@/lib/prisma";
+import { containsInsensitive } from "@/lib/services/common";
 import { CONTENT_STATUS, isContentStatus } from "@/lib/constants";
 
 export type ContentRow = {
@@ -32,7 +33,7 @@ export const KANBAN_COLUMNS = CONTENT_STATUS;
 /** Kanban board: all open-pipeline items grouped by status (PLAN §10). */
 export async function getContentBoard(agencyId: string, filters: ContentFilters = {}) {
   const where: Prisma.ContentItemWhereInput = { agencyId };
-  if (filters.q) where.title = { contains: filters.q };
+  if (filters.q) where.title = containsInsensitive(filters.q);
   if (filters.campaignId) where.campaignId = filters.campaignId;
   if (filters.creatorId) where.creatorId = filters.creatorId;
   if (filters.status) where.status = filters.status;
@@ -122,6 +123,15 @@ export async function createContentItem(
   if (!campaign) throw new Error("Campaign tidak ditemukan");
   const creator = await prisma.creator.findFirst({ where: { id: data.creatorId, agencyId }, select: { id: true } });
   if (!creator) throw new Error("Creator tidak ditemukan");
+  // Setiap FK opsional yang dipilih klien wajib milik tenant yang sama
+  if (data.productId) {
+    const product = await prisma.product.findFirst({ where: { id: data.productId, agencyId }, select: { id: true } });
+    if (!product) throw new Error("Product tidak ditemukan");
+  }
+  if (data.reviewerId) {
+    const reviewer = await prisma.user.findFirst({ where: { id: data.reviewerId, agencyId }, select: { id: true } });
+    if (!reviewer) throw new Error("Reviewer tidak ditemukan");
+  }
   return prisma.contentItem.create({
     data: {
       agencyId,

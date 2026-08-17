@@ -18,6 +18,11 @@ export const ROLES = [
 
 export type Role = (typeof ROLES)[number];
 
+/** Runtime guard: validate a string from the DB/token against the role union. */
+export function isRole(value: string): value is Role {
+  return (ROLES as readonly string[]).includes(value);
+}
+
 export const ROLE_LABELS: Record<Role, string> = {
   owner: "Owner",
   admin: "Admin",

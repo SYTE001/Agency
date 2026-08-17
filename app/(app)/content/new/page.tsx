@@ -2,14 +2,13 @@ import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContentForm } from "@/components/content/content-form";
 
 export default async function NewContentPage() {
   const user = await requireUser();
-  if (!can(user.role as Role, "content", "write")) notFound();
+  if (!can(user.role, "content", "write")) notFound();
 
   const [campaigns, creators, products, users] = await Promise.all([
     prisma.campaign.findMany({

@@ -15,7 +15,6 @@ import {
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { getLiveDetail } from "@/lib/services/live";
 import { getNotes } from "@/lib/services/activity";
 import { StatusBadge } from "@/components/status-badge";
@@ -52,7 +51,7 @@ export default async function LiveDetailPage(props: PageProps<"/live/[id]">) {
   if (!detail) notFound();
 
   const { session, metrics, activity } = detail;
-  const canWrite = can(user.role as Role, "live", "write");
+  const canWrite = can(user.role, "live", "write");
 
   const [notes, tasks] = await Promise.all([
     getNotes("LiveSession", session.id, user.agencyId),

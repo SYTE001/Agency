@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Resource, Role } from "@/lib/constants";
+import type { Resource } from "@/lib/constants";
 import { getOverview } from "@/lib/services/overview";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -75,7 +75,7 @@ export default async function OverviewPage() {
   };
   const alerts = overview.alerts.filter((a) => {
     const res = alertResource[a.entityType];
-    return !res || can(user.role as Role, res, "read");
+    return !res || can(user.role, res, "read");
   });
 
   const now = new Date();
@@ -88,7 +88,7 @@ export default async function OverviewPage() {
     year: "numeric",
   }).format(now);
 
-  const r = (res: Resource) => can(user.role as Role, res, "read");
+  const r = (res: Resource) => can(user.role, res, "read");
   const kpisRow = [
     {
       label: "Total GMV (30 hari)",

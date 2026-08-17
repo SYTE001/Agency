@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { PAYOUT_STATUS } from "@/lib/constants";
 import { listPayouts } from "@/lib/services/finance";
 import type { PayoutFilters } from "@/lib/services/finance";
@@ -38,7 +37,7 @@ function flattenParams(params: Record<string, string | string[] | undefined>): R
 
 export default async function PayoutsPage(props: PageProps<"/finance/payouts">) {
   const user = await requireUser();
-  if (!can(user.role as Role, "finance", "read")) notFound();
+  if (!can(user.role, "finance", "read")) notFound();
   const searchParams = await props.searchParams;
 
   const statusParam = str(searchParams.status);
@@ -57,7 +56,7 @@ export default async function PayoutsPage(props: PageProps<"/finance/payouts">) 
       take: 100,
     }),
   ]);
-  const canWrite = can(user.role as Role, "finance", "write");
+  const canWrite = can(user.role, "finance", "write");
 
   return (
     <div className="space-y-4 p-6">

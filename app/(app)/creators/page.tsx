@@ -3,7 +3,6 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Search, Users } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { CREATOR_CATEGORIES, CREATOR_HEALTH, CREATOR_STATUS } from "@/lib/constants";
 import { listCreators } from "@/lib/services/creators";
 import type { CreatorListFilters } from "@/lib/services/creators";
@@ -54,7 +53,7 @@ export default async function CreatorsPage(props: PageProps<"/creators">) {
     }),
   ]);
 
-  const canWrite = can(user.role as Role, "creator", "write");
+  const canWrite = can(user.role, "creator", "write");
 
   return (
     <div className="space-y-4 p-6">

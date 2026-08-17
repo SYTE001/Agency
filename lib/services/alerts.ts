@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
-import { daysAgoDate } from "@/lib/services/common";
+import { getAgencyTimezone } from "@/lib/services/common";
+import { daysAgoStartInTz } from "@/lib/timezone";
 
 /**
  * Deterministic operational alerts (PLAN §15).
@@ -28,8 +29,9 @@ export type Alert = {
 
 export async function getOperationalAlerts(agencyId: string, limit = 12): Promise<Alert[]> {
   const now = new Date();
-  const since30 = daysAgoDate(30);
-  const since60 = daysAgoDate(60);
+  const tz = await getAgencyTimezone(agencyId);
+  const since30 = daysAgoStartInTz(tz, 30);
+  const since60 = daysAgoStartInTz(tz, 60);
 
   const [
     decliningCreators,
@@ -86,7 +88,7 @@ export async function getOperationalAlerts(agencyId: string, limit = 12): Promis
       where: {
         agencyId,
         status: { in: ["Recruiting", "Active", "ContentReview", "Published"] },
-        endDate: { gte: now, lte: daysAgoDate(-7) },
+        endDate: { gte: now, lte: daysAgoStartInTz(tz, -7) },
       },
     }),
     prisma.liveSession.findMany({
@@ -99,7 +101,7 @@ export async function getOperationalAlerts(agencyId: string, limit = 12): Promis
       where: { agencyId, status: { in: ["Open", "InProgress"] }, dueDate: { lt: now } },
     }),
     prisma.liveSession.findMany({
-      where: { agencyId, status: { in: ["Ended", "NeedsReview"] }, targetGmv: { gt: 0 }, startTime: { gte: daysAgoDate(7) } },
+      where: { agencyId, status: { in: ["Ended", "NeedsReview"] }, targetGmv: { gt: 0 }, startTime: { gte: daysAgoStartInTz(tz, 7) } },
       select: { id: true, actualGmv: true, targetGmv: true },
       take: 100,
     }),

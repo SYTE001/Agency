@@ -2,14 +2,13 @@ import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LiveForm } from "@/components/live/live-form";
 
 export default async function NewLivePage() {
   const user = await requireUser();
-  if (!can(user.role as Role, "live", "write")) notFound();
+  if (!can(user.role, "live", "write")) notFound();
 
   const [creators, campaigns, brands, products, users] = await Promise.all([
     prisma.creator.findMany({

@@ -13,7 +13,7 @@ import { formatDate } from "@/lib/format";
 
 export default async function SettingsTeamPage() {
   const user = await requireUser();
-  if (!can(user.role as Role, "setting", "read")) {
+  if (!can(user.role, "setting", "read")) {
     return (
       <div className="p-6">
         <EmptyState title="Tidak ada akses" description="Role Anda tidak memiliki akses ke pengaturan." />

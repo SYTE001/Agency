@@ -1,0 +1,583 @@
+// TikTok Agency OS — relational schema (SQLite twin for local dev & tests)
+// Kept in lockstep with `prisma/schema.prisma` (PostgreSQL, production).
+// Multi-tenant: every business record belongs to an Agency via agencyId.
+// SQLite connector: no native enums, so statuses/roles are String fields
+// whose allowed values live in `lib/constants.ts`.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma-sqlite"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// Tenant & Users
+// ---------------------------------------------------------------------------
+
+model Agency {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  timezone  String   @default("Asia/Jakarta")
+  currency  String   @default("IDR")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users          User[]
+  brands         Brand[]
+  creators       Creator[]
+  products       Product[]
+  campaigns      Campaign[]
+  contentItems   ContentItem[]
+  liveSessions   LiveSession[]
+  tasks          Task[]
+  activities     Activity[]
+  notes          Note[]
+  commissions    Commission[]
+  creatorPayouts CreatorPayout[]
+  settlements    Settlement[]
+  integrations   Integration[]
+  reports        Report[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  agencyId     String
+  email        String   @unique
+  name         String
+  role         String   @default("Viewer")
+  title        String?
+  passwordHash String
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  agency Agency @relation(fields: [agencyId], references: [id])
+
+  managedCreators Creator[]          @relation("CreatorManager")
+  ownedCampaigns  Campaign[]         @relation("CampaignOwner")
+  reviewedContent ContentItem[]      @relation("ContentReviewer")
+  operatedLives   LiveSession[]      @relation("LiveOperator")
+  ownedTasks      Task[]             @relation("TaskOwner")
+  createdTasks    Task[]             @relation("TaskCreator")
+  completedTasks  Task[]             @relation("TaskCompleter")
+  authoredNotes   Note[]
+  authoredActivity Activity[]
+
+  @@index([agencyId])
+}
+
+// ---------------------------------------------------------------------------
+// Brands
+// ---------------------------------------------------------------------------
+
+model Brand {
+  id          String   @id @default(cuid())
+  agencyId    String
+  name        String
+  logoUrl     String?
+  industry    String?
+  website     String?
+  description String?
+  status      String   @default("Active") // Active | Paused | Churned
+  externalId  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agency      Agency    @relation(fields: [agencyId], references: [id])
+  contacts    BrandContact[]
+  products    Product[]
+  campaigns   Campaign[]
+  liveSessions LiveSession[]
+  settlements Settlement[]
+
+  @@index([agencyId])
+}
+
+model BrandContact {
+  id        String   @id @default(cuid())
+  brandId   String
+  name      String
+  email     String?
+  phone     String?
+  role      String?
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([brandId])
+}
+
+// ---------------------------------------------------------------------------
+// Creators
+// ---------------------------------------------------------------------------
+
+model Creator {
+  id             String   @id @default(cuid())
+  agencyId       String
+  username       String
+  displayName    String
+  category       String
+  bio            String?
+  avatarUrl      String?
+  followers      Int      @default(0)
+  engagementRate Float    @default(0)
+  health         String   @default("Healthy") // Healthy | Watch | AtRisk | Inactive
+  status         String   @default("Active")  // Active | Inactive | Paused
+  managerId      String?
+  externalId     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  agency       Agency @relation(fields: [agencyId], references: [id])
+  manager      User?  @relation("CreatorManager", fields: [managerId], references: [id])
+
+  platformAccounts CreatorPlatformAccount[]
+  metrics          CreatorMetric[]
+  campaignLinks    CampaignCreator[]
+  contentItems     ContentItem[]
+  liveSessions     LiveSession[]
+  commissions      Commission[]
+  payouts          CreatorPayout[]
+
+  @@unique([agencyId, username])
+  @@unique([agencyId, externalId])
+  @@index([agencyId])
+  @@index([managerId])
+  @@index([category])
+}
+
+model CreatorMetric {
+  id             String   @id @default(cuid())
+  creatorId      String
+  date           DateTime
+  followers      Int      @default(0)
+  engagementRate Float    @default(0)
+  gmv            Decimal  @default(0)
+  videos         Int      @default(0)
+  avgViews       Int      @default(0)
+  liveGmv        Decimal  @default(0)
+
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId, date])
+}
+
+model CreatorPlatformAccount {
+  id         String   @id @default(cuid())
+  creatorId  String
+  platform   String   @default("TikTok")
+  handle     String
+  externalId String?
+
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@unique([creatorId, platform, handle])
+  @@index([creatorId])
+}
+
+// ---------------------------------------------------------------------------
+// Products
+// ---------------------------------------------------------------------------
+
+model Product {
+  id          String   @id @default(cuid())
+  agencyId    String
+  brandId     String?
+  name        String
+  sku         String?
+  category    String?
+  price       Decimal  @default(0)
+  imageUrl    String?
+  status      String   @default("Active") // Active | Inactive
+  externalId  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agency    Agency  @relation(fields: [agencyId], references: [id])
+  brand     Brand?  @relation(fields: [brandId], references: [id])
+  metrics   ProductMetric[]
+  campaignLinks CampaignProduct[]
+  contentItems   ContentItem[]
+  liveSessions   LiveSession[]
+
+  @@unique([agencyId, sku])
+  @@index([agencyId])
+  @@index([brandId])
+}
+
+model ProductMetric {
+  id        String   @id @default(cuid())
+  productId String
+  date      DateTime
+  gmv       Decimal  @default(0)
+  orders    Int      @default(0)
+  units     Int      @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, date])
+}
+
+// ---------------------------------------------------------------------------
+// Campaigns
+// ---------------------------------------------------------------------------
+
+model Campaign {
+  id             String    @id @default(cuid())
+  agencyId       String
+  brandId        String
+  name           String
+  ownerId        String?
+  startDate      DateTime?
+  endDate        DateTime?
+  budget         Decimal   @default(0)
+  creatorTarget  Int       @default(0)
+  contentTarget  Int       @default(0)
+  liveTarget     Int       @default(0)
+  gmvTarget      Decimal   @default(0)
+  actualGmv      Decimal   @default(0)
+  commissionRate Float     @default(0)
+  status         String    @default("Draft") // Draft|Planning|Recruiting|Active|ContentReview|Published|Completed|Reporting
+  notes          String?
+  externalId     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  agency   Agency @relation(fields: [agencyId], references: [id])
+  brand    Brand  @relation(fields: [brandId], references: [id])
+  owner    User?  @relation("CampaignOwner", fields: [ownerId], references: [id])
+
+  creators       CampaignCreator[]
+  products       CampaignProduct[]
+  contentItems   ContentItem[]
+  liveSessions   LiveSession[]
+  commissions    Commission[]
+  payouts        CreatorPayout[]
+  settlements    Settlement[]
+
+  @@index([agencyId])
+  @@index([brandId])
+  @@index([status])
+}
+
+model CampaignCreator {
+  id              String   @id @default(cuid())
+  campaignId      String
+  creatorId       String
+  role            String?
+  fee             Decimal  @default(0)
+  gmvContribution Decimal  @default(0)
+  status          String   @default("Active")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  creator  Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([creatorId])
+}
+
+model CampaignProduct {
+  id         String @id @default(cuid())
+  campaignId String
+  productId  String
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([productId])
+}
+
+// ---------------------------------------------------------------------------
+// Content
+// ---------------------------------------------------------------------------
+
+model ContentItem {
+  id            String    @id @default(cuid())
+  agencyId      String
+  campaignId    String
+  creatorId     String
+  productId     String?
+  title         String
+  brief         String?
+  dueDate       DateTime?
+  publishDate   DateTime?
+  contentUrl    String?
+  status        String    @default("Brief") // Brief|Assigned|WaitingForDraft|DraftSubmitted|Revision|Approved|Scheduled|Published|Rejected|Cancelled
+  revisionCount Int       @default(0)
+  reviewerId    String?
+  notes         String?
+  gmvGenerated  Decimal   @default(0)
+  viewsGenerated Int      @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  agency   Agency   @relation(fields: [agencyId], references: [id])
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+  creator  Creator  @relation(fields: [creatorId], references: [id])
+  product  Product? @relation(fields: [productId], references: [id])
+  reviewer User?    @relation("ContentReviewer", fields: [reviewerId], references: [id])
+
+  revisions ContentRevision[]
+
+  @@index([agencyId])
+  @@index([campaignId])
+  @@index([creatorId])
+  @@index([status])
+}
+
+model ContentRevision {
+  id            String   @id @default(cuid())
+  contentItemId String
+  version       Int      @default(1)
+  feedback      String
+  createdAt     DateTime @default(now())
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@index([contentItemId])
+}
+
+// ---------------------------------------------------------------------------
+// LIVE
+// ---------------------------------------------------------------------------
+
+model LiveSession {
+  id             String    @id @default(cuid())
+  agencyId       String
+  campaignId     String?
+  creatorId      String
+  brandId        String?
+  productId      String?
+  room           String?
+  operatorId     String?
+  startTime      DateTime
+  endTime        DateTime?
+  targetGmv      Decimal   @default(0)
+  actualGmv      Decimal   @default(0)
+  viewers        Int       @default(0)
+  orders         Int       @default(0)
+  conversionRate Float     @default(0)
+  status         String    @default("Scheduled") // Scheduled|Preparing|Live|Ended|Cancelled|NeedsReview
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  agency   Agency    @relation(fields: [agencyId], references: [id])
+  campaign Campaign? @relation(fields: [campaignId], references: [id])
+  creator  Creator   @relation(fields: [creatorId], references: [id])
+  brand    Brand?    @relation(fields: [brandId], references: [id])
+  product  Product?  @relation(fields: [productId], references: [id])
+  operator User?     @relation("LiveOperator", fields: [operatorId], references: [id])
+
+  metrics LiveMetric[]
+
+  @@index([agencyId])
+  @@index([creatorId])
+  @@index([startTime])
+}
+
+model LiveMetric {
+  id            String   @id @default(cuid())
+  liveSessionId String
+  timestamp     DateTime
+  viewers       Int      @default(0)
+  gmv           Decimal  @default(0)
+  orders        Int      @default(0)
+
+  liveSession LiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+
+  @@index([liveSessionId])
+}
+
+// ---------------------------------------------------------------------------
+// Tasks / Activity / Notes
+// ---------------------------------------------------------------------------
+
+model Task {
+  id          String    @id @default(cuid())
+  agencyId    String
+  title       String
+  ownerId     String?
+  relatedType String?   // Creator | Brand | Campaign | Content | LiveSession | Finance | Generic
+  relatedId   String?
+  priority    String    @default("Medium") // Low | Medium | High | Urgent
+  dueDate     DateTime?
+  status      String    @default("Open")   // Open | InProgress | Done | Cancelled
+  notes       String?
+  createdById String?
+  completedById String?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  agency      Agency @relation(fields: [agencyId], references: [id])
+  owner       User?  @relation("TaskOwner", fields: [ownerId], references: [id])
+  createdBy   User?  @relation("TaskCreator", fields: [createdById], references: [id])
+  completedBy User?  @relation("TaskCompleter", fields: [completedById], references: [id])
+
+  @@index([agencyId])
+  @@index([ownerId])
+  @@index([status])
+}
+
+model Activity {
+  id         String   @id @default(cuid())
+  agencyId   String
+  entityType String
+  entityId   String
+  actorId    String?
+  action     String
+  details    String?
+  createdAt  DateTime @default(now())
+
+  agency Agency @relation(fields: [agencyId], references: [id])
+  actor  User?  @relation(fields: [actorId], references: [id])
+
+  @@index([agencyId, entityType, entityId])
+}
+
+model Note {
+  id         String   @id @default(cuid())
+  agencyId   String
+  entityType String
+  entityId   String
+  authorId   String
+  content    String
+  createdAt  DateTime @default(now())
+
+  agency Agency @relation(fields: [agencyId], references: [id])
+  author User   @relation(fields: [authorId], references: [id])
+
+  @@index([agencyId, entityType, entityId])
+}
+
+// ---------------------------------------------------------------------------
+// Finance
+// ---------------------------------------------------------------------------
+
+model Commission {
+  id              String   @id @default(cuid())
+  agencyId        String
+  campaignId      String?
+  creatorId       String
+  sourceType      String   // LiveSession | Content | Campaign
+  sourceId        String?
+  gmv             Decimal  @default(0)
+  creatorRate     Float    @default(0)
+  creatorCommission Decimal @default(0)
+  agencyShareRate Float    @default(0)
+  agencyRevenue   Decimal  @default(0)
+  status          String   @default("Pending") // Pending | Calculated | Settled
+  createdAt       DateTime @default(now())
+
+  agency   Agency     @relation(fields: [agencyId], references: [id])
+  campaign Campaign?  @relation(fields: [campaignId], references: [id])
+  creator  Creator    @relation(fields: [creatorId], references: [id])
+
+  @@index([agencyId])
+  @@index([creatorId])
+}
+
+model CreatorPayout {
+  id         String    @id @default(cuid())
+  agencyId   String
+  creatorId  String
+  campaignId String?
+  amount     Decimal   @default(0)
+  status     String    @default("Pending") // Pending | Paid
+  paidAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  agency   Agency     @relation(fields: [agencyId], references: [id])
+  creator  Creator    @relation(fields: [creatorId], references: [id])
+  campaign Campaign?  @relation(fields: [campaignId], references: [id])
+
+  @@index([agencyId])
+  @@index([creatorId])
+}
+
+model Settlement {
+  id         String    @id @default(cuid())
+  agencyId   String
+  brandId    String
+  campaignId String?
+  amount     Decimal   @default(0)
+  status     String    @default("Pending") // Pending | Paid | Overdue
+  dueDate    DateTime?
+  paidAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  agency   Agency     @relation(fields: [agencyId], references: [id])
+  brand    Brand      @relation(fields: [brandId], references: [id])
+  campaign Campaign?  @relation(fields: [campaignId], references: [id])
+
+  @@index([agencyId])
+  @@index([brandId])
+}
+
+// ---------------------------------------------------------------------------
+// Integrations & Reports
+// ---------------------------------------------------------------------------
+
+model Integration {
+  id        String   @id @default(cuid())
+  agencyId  String
+  provider  String   @default("TikTok")
+  status    String   @default("Disconnected") // Connected | Disconnected | Error
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agency   Agency    @relation(fields: [agencyId], references: [id])
+  syncJobs SyncJob[]
+
+  @@index([agencyId])
+}
+
+model SyncJob {
+  id            String    @id @default(cuid())
+  integrationId String
+  type          String
+  status        String    @default("Queued") // Queued | Running | Success | Failed
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  logs       SyncLog[]
+
+  @@index([integrationId])
+}
+
+model SyncLog {
+  id        String   @id @default(cuid())
+  syncJobId String
+  level     String   @default("info") // info | warn | error
+  message   String
+  createdAt DateTime @default(now())
+
+  syncJob SyncJob @relation(fields: [syncJobId], references: [id], onDelete: Cascade)
+
+  @@index([syncJobId])
+}
+
+model Report {
+  id           String   @id @default(cuid())
+  agencyId     String
+  type         String   @default("Client") // Client | Internal
+  title        String
+  periodStart  DateTime?
+  periodEnd    DateTime?
+  data         String?  // JSON payload
+  createdById  String?
+  createdAt    DateTime @default(now())
+
+  agency Agency @relation(fields: [agencyId], references: [id])
+
+  @@index([agencyId])
+}

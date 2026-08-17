@@ -6,7 +6,6 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
 import { isTaskPriority, isTaskStatus } from "@/lib/constants";
-import type { Role } from "@/lib/constants";
 import { createTask, updateTask } from "@/lib/services/tasks";
 import { entityBelongsToAgency, logActivity } from "@/lib/services/activity";
 
@@ -46,7 +45,7 @@ export async function createTaskAction(
   formData: FormData,
 ): Promise<TaskFormState> {
   const user = await requireUser();
-  if (!can(user.role as Role, "task", "write")) {
+  if (!can(user.role, "task", "write")) {
     return { error: "Anda tidak memiliki izin untuk menambah task." };
   }
 
@@ -88,7 +87,7 @@ export async function createTaskAction(
 
 export async function updateTaskStatusAction(taskId: string, formData: FormData): Promise<void> {
   const user = await requireUser();
-  if (!can(user.role as Role, "task", "write")) return;
+  if (!can(user.role, "task", "write")) return;
 
   const status = String(formData.get("status") ?? "");
   if (!isTaskStatus(status)) return;

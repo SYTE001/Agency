@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { COMMISSION_STATUS } from "@/lib/constants";
 import { listCommissions } from "@/lib/services/finance";
 import type { CommissionFilters } from "@/lib/services/finance";
@@ -44,7 +43,7 @@ const SOURCE_LABEL: Record<string, string> = {
 
 export default async function CommissionsPage(props: PageProps<"/finance/commissions">) {
   const user = await requireUser();
-  if (!can(user.role as Role, "finance", "read")) notFound();
+  if (!can(user.role, "finance", "read")) notFound();
   const searchParams = await props.searchParams;
 
   const statusParam = str(searchParams.status);
@@ -72,7 +71,7 @@ export default async function CommissionsPage(props: PageProps<"/finance/commiss
       take: 100,
     }),
   ]);
-  const canWrite = can(user.role as Role, "finance", "write");
+  const canWrite = can(user.role, "finance", "write");
   const hasFilter = Boolean(filters.status || filters.creatorId || filters.campaignId || filters.sourceType);
 
   return (

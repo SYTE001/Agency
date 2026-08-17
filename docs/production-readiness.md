@@ -1,6 +1,9 @@
 # Production Readiness Audit — SQLite → PostgreSQL/Supabase
 
-Status: **AUDIT SELESAI — migration BELUM dilakukan** (sesuai Revisi §5: audit dulu, jangan memaksakan migration tanpa approval).
+Status: **AUDIT SELESAI — migration PostgreSQL SUDAH diimplementasikan (2026-08-17)**.
+Migration dilakukan sebagai **dual-provider**: SQLite tetap dipakai untuk local
+dev & test, PostgreSQL adalah path production. Lihat bagian "Implementation
+Status" di bawah untuk detail arsitekturnya.
 
 Dokumen ini adalah hasil audit compatibility repository `SYTE001/Agency` untuk target
 production PostgreSQL/Supabase, sesuai checklist Revisi §5:
@@ -285,3 +288,49 @@ Tidak ada blocker di level arsitektur aplikasi.
   (satu-satunya layer query).
 - ✅ Integration test DB-backed (Revisi §7) dapat dijalankan terhadap provider mana pun
   hanya dengan mengganti `DATABASE_URL`.
+
+---
+
+## 13. Implementation status — dual-provider (dilaksanakan 2026-08-17)
+
+Migration dilaksanakan sebagai **dual-provider** (bukan SQLite→PG yang membuang
+SQLite). SQLite tetap dipakai untuk local dev & test; PostgreSQL adalah satu-satunya
+path production. Pemilihan provider **berasal dari `DATABASE_URL`/`DB_PROVIDER`**,
+bukan dari kode yang di-hardcode per environment.
+
+**Struktur:**
+
+| File | Peran |
+|---|---|
+| `prisma/schema.prisma` | Schema **PostgreSQL** (production). Generator output → `generated/prisma-pg`. |
+| `prisma/schema.sqlite.prisma` | Twin schema **SQLite** (local dev & test), model identik. Output → `generated/prisma-sqlite`. |
+| `prisma.config.ts` | Memilih schema + folder migration dari `DB_PROVIDER`/`DATABASE_URL` (`file:` → sqlite, `postgres://` → pg). |
+| `prisma/migrations/` | Riwayat migration **SQLite** (dipertahankan). |
+| `prisma/migrations-pg/` | Riwayat migration **PostgreSQL**, dimulai dari baseline `20260817100000_pg_baseline`. |
+| `lib/dbProvider.ts` | Fungsi `useSqliteSchema()` — satu sumber kebenaran pemilihan provider. |
+| `lib/prismaClient.ts` | `createPrismaClient()` memilih adapter (PG vs better-sqlite3) + re-export `Prisma` namespace + schema-drift guard. |
+| `lib/prisma.ts` | Singleton client provider-agnostic; satu-satunya titik import DB di app. |
+| `.env.example` | Contoh `DATABASE_URL` SQLite (dev) dan PostgreSQL (prod) + `DB_PROVIDER`. |
+
+**Aturan penting:**
+
+1. **Import DB hanya lewat `@/lib/prisma`** — baik runtime client maupun tipe
+   (`import type { Prisma } from "@/lib/prisma"`). Jangan import langsung dari
+   `@/generated/…` kecuali di `lib/prismaClient.ts`.
+2. **Drift guard:** `lib/prismaClient.ts` membandingkan tipe model
+   (`Campaign`, `Commission`) antara kedua generated client. Jika kedua schema
+   melenceng, `tsc --noEmit` gagal.
+3. **Case-sensitivity `contains` (dari §8.1)** tetap jadi pekerjaan P1: pencarian
+   string harus konsisten case-insensitive di kedua provider lewat helper di
+   `lib/services/common.ts` (bukan raw SQL).
+4. **PostgreSQL production env:** `DATABASE_URL=postgres://…` (Supabase/Vercel)
+   + `AUTH_SECRET` (≥32 char, wajib). `DB_PROVIDER` opsional — hanya perlu bila
+   skema URL ambigu.
+
+**Perintah verifikasi yang dijalankan (hasil hijau):**
+
+- `npm install` → postinstall men-generate **kedua** client secara eksplisit:
+  `prisma generate --schema prisma/schema.prisma` (PG) dan
+  `prisma generate --schema prisma/schema.sqlite.prisma` (SQLite).
+- `npx tsc --noEmit` ✅
+- `npm test` (39 test, SQLite throwaway DB) ✅

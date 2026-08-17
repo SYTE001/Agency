@@ -1,7 +1,8 @@
 import prisma from "@/lib/prisma";
-import { paginate, totalPages, daysAgoDate } from "@/lib/services/common";
+import { paginate, totalPages, getAgencyTimezone, containsInsensitive } from "@/lib/services/common";
+import { daysAgoStartInTz } from "@/lib/timezone";
 import type { ListResult } from "@/lib/services/common";
-import type { Prisma } from "@/generated/prisma/client";
+import type { Prisma } from "@/lib/prisma";
 
 export type ProductRow = {
   id: string;
@@ -34,7 +35,7 @@ export async function listProducts(
   const { skip, take, page, pageSize } = paginate(filters.page ?? 1, filters.pageSize ?? 20);
 
   const where: Prisma.ProductWhereInput = { agencyId };
-  if (filters.q) where.name = { contains: filters.q };
+  if (filters.q) where.name = containsInsensitive(filters.q);
   if (filters.brandId) where.brandId = filters.brandId;
   if (filters.status) where.status = filters.status;
   if (filters.category) where.category = filters.category;
@@ -55,7 +56,7 @@ export async function listProducts(
     return { items: [], total, page, pageSize, totalPages: totalPages(total, pageSize) };
   }
 
-  const since = daysAgoDate(30);
+  const since = daysAgoStartInTz(await getAgencyTimezone(agencyId), 30);
   const recent = await prisma.productMetric.groupBy({
     by: ["productId"],
     where: { productId: { in: ids }, date: { gte: since } },
@@ -110,7 +111,7 @@ export async function getProductDetail(agencyId: string, productId: string) {
     }),
   ]);
 
-  const since = daysAgoDate(30);
+  const since = daysAgoStartInTz(await getAgencyTimezone(agencyId), 30);
   const totals = await prisma.productMetric.aggregate({
     where: { productId, date: { gte: since } },
     _sum: { gmv: true, orders: true, units: true },

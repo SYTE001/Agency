@@ -3,7 +3,6 @@ import { CalendarDays, CheckSquare, Search } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { TASK_PRIORITY, TASK_STATUS } from "@/lib/constants";
 import { getTaskCounts, listTasks } from "@/lib/services/tasks";
 import type { TaskFilters } from "@/lib/services/tasks";
@@ -69,7 +68,7 @@ export default async function TasksPage(props: PageProps<"/tasks">) {
       orderBy: { name: "asc" },
     }),
   ]);
-  const canWrite = can(user.role as Role, "task", "write");
+  const canWrite = can(user.role, "task", "write");
   const hasFilter = Boolean(filters.q || filters.status || filters.priority || filters.ownerId || filters.overdue);
   const now = new Date();
 

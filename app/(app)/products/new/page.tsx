@@ -4,13 +4,12 @@ import { ChevronLeft } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { PageHeader } from "@/components/page-header";
 import { ProductForm } from "@/components/products/product-form";
 
 export default async function NewProductPage() {
   const user = await requireUser();
-  if (!can(user.role as Role, "product", "write")) redirect("/products");
+  if (!can(user.role, "product", "write")) redirect("/products");
 
   const brands = await prisma.brand.findMany({
     where: { agencyId: user.agencyId },

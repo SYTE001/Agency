@@ -6,7 +6,6 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
 import { isBrandStatus } from "@/lib/constants";
-import type { Role } from "@/lib/constants";
 import { createBrand, createBrandContact } from "@/lib/services/brands";
 import { addNote, entityBelongsToAgency, logActivity } from "@/lib/services/activity";
 
@@ -33,7 +32,7 @@ export async function createBrandAction(
   formData: FormData,
 ): Promise<BrandFormState> {
   const user = await requireUser();
-  if (!can(user.role as Role, "brand", "write")) {
+  if (!can(user.role, "brand", "write")) {
     return { error: "Anda tidak memiliki izin untuk menambah brand." };
   }
 
@@ -94,7 +93,7 @@ export async function addBrandContactAction(
   formData: FormData,
 ): Promise<ContactFormState> {
   const user = await requireUser();
-  if (!can(user.role as Role, "brand", "write")) {
+  if (!can(user.role, "brand", "write")) {
     return { error: "Anda tidak memiliki izin untuk mengubah brand." };
   }
 
@@ -141,6 +140,10 @@ export async function addBrandNoteAction(
   formData: FormData,
 ): Promise<ContactFormState> {
   const user = await requireUser();
+  // Catatan adalah data baru pada brand — butuh izin write, read saja tidak cukup
+  if (!can(user.role, "brand", "write")) {
+    return { error: "Anda tidak memiliki izin untuk menambah catatan." };
+  }
   const content = String(formData.get("content") ?? "").trim();
   if (content.length < 3) {
     return { error: "Catatan minimal 3 karakter." };

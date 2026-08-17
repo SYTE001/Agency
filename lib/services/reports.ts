@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
-import { daysAgoDate, startOfDay } from "@/lib/services/common";
+import { getAgencyTimezone } from "@/lib/services/common";
+import { daysAgoStartInTz, dayEndInTz } from "@/lib/timezone";
 
 /**
  * Reporting layer (PLAN §13 / Phase 8). Reports are generated entirely from
@@ -7,16 +8,19 @@ import { daysAgoDate, startOfDay } from "@/lib/services/common";
  *  - client report: per-campaign performance for the brand
  *  - internal report: agency-wide operational + financial summary
  * Both support a 30/90 day period with comparison to the previous window.
+ *
+ * Day boundaries are interpreted in the tenant's timezone (Agency.timezone):
+ * the DB stays UTC, the window is computed as local calendar days.
  */
 
 export const PERIODS = { "30d": 30, "90d": 90 } as const;
 export type Period = keyof typeof PERIODS;
 
-export function resolvePeriod(period: Period) {
+export function resolvePeriod(period: Period, timeZone: string, now: Date = new Date()) {
   const days = PERIODS[period];
-  const end = new Date();
-  const start = startOfDay(daysAgoDate(days));
-  const prevStart = startOfDay(daysAgoDate(days * 2));
+  const start = daysAgoStartInTz(timeZone, days, now);
+  const prevStart = daysAgoStartInTz(timeZone, days * 2, now);
+  const end = dayEndInTz(timeZone, now);
   return { days, start, prevStart, end };
 }
 
@@ -37,7 +41,8 @@ export async function getClientReport(agencyId: string, campaignId: string, peri
   });
   if (!campaign) return null;
 
-  const { days, start, prevStart, end } = resolvePeriod(period);
+  const timeZone = await getAgencyTimezone(agencyId);
+  const { days, start, prevStart, end } = resolvePeriod(period, timeZone);
   const inCampaignProducts = {
     date: { gte: start },
     product: { agencyId, campaignLinks: { some: { campaignId } } },
@@ -161,7 +166,8 @@ export type ClientReport = NonNullable<Awaited<ReturnType<typeof getClientReport
 // ---------------------------------------------------------------------------
 
 export async function getInternalReport(agencyId: string, period: Period) {
-  const { days, start, prevStart, end } = resolvePeriod(period);
+  const timeZone = await getAgencyTimezone(agencyId);
+  const { days, start, prevStart, end } = resolvePeriod(period, timeZone);
 
   const [
     metricsCur,

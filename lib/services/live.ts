@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
-import { startOfDay, endOfDay } from "@/lib/services/common";
-import type { Prisma } from "@/generated/prisma/client";
+import { getAgencyTimezone } from "@/lib/services/common";
+import { dayStartInTz, dayEndInTz } from "@/lib/timezone";
+import type { Prisma } from "@/lib/prisma";
 import { isLiveStatus } from "@/lib/constants";
 
 export type LiveRow = {
@@ -25,6 +26,7 @@ export type LiveFilters = {
   status?: string;
   creatorId?: string;
   date?: Date; // specific day
+  ref?: Date; // "sekarang" untuk filter `date` — tests menginjeksikan jam tetap
   rangeStart?: Date;
   rangeEnd?: Date;
 };
@@ -34,7 +36,9 @@ export async function listLiveSessions(agencyId: string, filters: LiveFilters = 
   if (filters.status) where.status = filters.status;
   if (filters.creatorId) where.creatorId = filters.creatorId;
   if (filters.date) {
-    where.startTime = { gte: startOfDay(filters.date), lte: endOfDay(filters.date) };
+    const tz = await getAgencyTimezone(agencyId);
+    const ref = filters.ref ?? new Date();
+    where.startTime = { gte: dayStartInTz(tz, ref), lte: dayEndInTz(tz, ref) };
   } else if (filters.rangeStart || filters.rangeEnd) {
     where.startTime = {};
     if (filters.rangeStart) where.startTime.gte = filters.rangeStart;
@@ -76,7 +80,10 @@ export async function listLiveSessions(agencyId: string, filters: LiveFilters = 
 
 /** LIVE dashboard data (PLAN §11): live now, upcoming today, today's totals. */
 export async function getLiveDashboard(agencyId: string) {
+  const tz = await getAgencyTimezone(agencyId);
   const today = new Date();
+  const todayStart = dayStartInTz(tz, today);
+  const todayEnd = dayEndInTz(tz, today);
   const [liveNow, upcoming, todayStats, underperforming] = await Promise.all([
     prisma.liveSession.findMany({
       where: { agencyId, status: "Live" },
@@ -87,13 +94,13 @@ export async function getLiveDashboard(agencyId: string) {
       where: {
         agencyId,
         status: { in: ["Scheduled", "Preparing"] },
-        startTime: { gte: startOfDay(today), lte: endOfDay(today) },
+        startTime: { gte: todayStart, lte: todayEnd },
       },
       include: { creator: { select: { displayName: true } } },
       orderBy: { startTime: "asc" },
     }),
     prisma.liveSession.aggregate({
-      where: { agencyId, startTime: { gte: startOfDay(today), lte: endOfDay(today) } },
+      where: { agencyId, startTime: { gte: todayStart, lte: todayEnd } },
       _sum: { actualGmv: true, orders: true },
       _count: { _all: true },
     }),
@@ -169,8 +176,27 @@ export async function createLiveSession(
     notes?: string | null;
   },
 ) {
+  // Validasi tenant untuk semua referensi yang dipilih klien — ID lintas
+  // tenant tidak boleh pernah tertaut ke sesi LIVE (defense in depth;
+  // lapisan aksi memvalidasi sebelum mencapai sini).
   const creator = await prisma.creator.findFirst({ where: { id: data.creatorId, agencyId }, select: { id: true } });
   if (!creator) throw new Error("Creator tidak ditemukan");
+  if (data.campaignId) {
+    const campaign = await prisma.campaign.findFirst({ where: { id: data.campaignId, agencyId }, select: { id: true } });
+    if (!campaign) throw new Error("Campaign tidak ditemukan");
+  }
+  if (data.brandId) {
+    const brand = await prisma.brand.findFirst({ where: { id: data.brandId, agencyId }, select: { id: true } });
+    if (!brand) throw new Error("Brand tidak ditemukan");
+  }
+  if (data.productId) {
+    const product = await prisma.product.findFirst({ where: { id: data.productId, agencyId }, select: { id: true } });
+    if (!product) throw new Error("Product tidak ditemukan");
+  }
+  if (data.operatorId) {
+    const operator = await prisma.user.findFirst({ where: { id: data.operatorId, agencyId }, select: { id: true } });
+    if (!operator) throw new Error("Operator tidak ditemukan");
+  }
   return prisma.liveSession.create({
     data: {
       agencyId,

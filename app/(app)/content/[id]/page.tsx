@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { getContentDetail } from "@/lib/services/content";
 import { getNotes } from "@/lib/services/activity";
 import { StatusBadge } from "@/components/status-badge";
@@ -56,7 +55,7 @@ export default async function ContentDetailPage(props: PageProps<"/content/[id]"
   if (!detail) notFound();
 
   const { item, activity, tasks } = detail;
-  const canWrite = can(user.role as Role, "content", "write");
+  const canWrite = can(user.role, "content", "write");
 
   const notes = await getNotes("Content", item.id, user.agencyId);
 

@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import { getBrandDetail } from "@/lib/services/brands";
 import { getActivity, getNotes } from "@/lib/services/activity";
 import { StatusBadge } from "@/components/status-badge";
@@ -42,7 +41,7 @@ export default async function BrandDetailPage(props: PageProps<"/brands/[id]">) 
   if (!detail) notFound();
 
   const { brand, campaigns, products, settlements, tasks, totals } = detail;
-  const canWrite = can(user.role as Role, "brand", "write");
+  const canWrite = can(user.role, "brand", "write");
 
   const [activity, notes] = await Promise.all([
     getActivity("Brand", brand.id, user.agencyId, 15),

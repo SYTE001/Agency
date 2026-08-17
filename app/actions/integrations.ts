@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
-import type { Role } from "@/lib/constants";
 import {
   importCreatorsCsv,
   importProductsCsv,
@@ -19,7 +18,7 @@ export type IntegrationFormState = { error?: string; success?: string };
 
 async function requireIntegrationManager() {
   const user = await requireUser();
-  if (!can(user.role as Role, "integration", "manage")) return null;
+  if (!can(user.role, "integration", "manage")) return null;
   return user;
 }
 

@@ -83,7 +83,7 @@ export default async function CampaignsPage(props: PageProps<"/campaigns">) {
         {canWrite ? (
           <Link
             href="/campaigns/new"
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-brand px-4 text-sm font-medium text-brand-foreground shadow-sm transition-colors hover:bg-brand/90"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-brand px-4 text-sm font-medium text-brand-foreground transition-colors hover:bg-brand/90"
           >
             Tambah Campaign
           </Link>

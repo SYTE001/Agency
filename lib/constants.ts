@@ -153,6 +153,7 @@ export const CREATOR_HEALTH = ["Healthy", "Watch", "AtRisk", "Inactive"] as cons
 export type CreatorHealth = (typeof CREATOR_HEALTH)[number];
 
 export const CREATOR_STATUS = ["Active", "Inactive", "Paused"] as const;
+export const PRODUCT_STATUS = ["Active", "Inactive"] as const;
 
 // ---------------------------------------------------------------------------
 // Statuses for the remaining modules
@@ -211,9 +212,17 @@ export type TaskPriority = (typeof TASK_PRIORITY)[number];
 
 export type BrandStatus = (typeof BRAND_STATUS)[number];
 export type CampaignStatus = (typeof CAMPAIGN_STATUS)[number];
+export type CreatorStatus = (typeof CREATOR_STATUS)[number];
+export type ProductStatus = (typeof PRODUCT_STATUS)[number];
 
 export function isBrandStatus(v: string): v is BrandStatus {
   return (BRAND_STATUS as readonly string[]).includes(v);
+}
+export function isCreatorStatus(v: string): v is CreatorStatus {
+  return (CREATOR_STATUS as readonly string[]).includes(v);
+}
+export function isProductStatus(v: string): v is ProductStatus {
+  return (PRODUCT_STATUS as readonly string[]).includes(v);
 }
 export function isCampaignStatus(v: string): v is CampaignStatus {
   return (CAMPAIGN_STATUS as readonly string[]).includes(v);

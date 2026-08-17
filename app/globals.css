@@ -2,51 +2,60 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+  Design tokens. A single cool-neutral ramp (zinc), one restrained brand
+  accent, and a three-step surface ladder so elevation reads as tonal, not
+  border/shadow noise.
+
+  Light ladder (elevation = lighter):  page #f5f5f7  →  card #ffffff
+  Dark  ladder (elevation = lighter):  page #0a0a0c  →  card #151519
+  The sidebar uses --subtle, one step toward the card tier in either mode.
+*/
 :root {
-  --background: #ffffff;
+  --background: #f5f5f7;
   --foreground: #18181b;
   --card: #ffffff;
   --card-foreground: #18181b;
-  --muted: #f4f4f5;
+  --muted: #eeeef0;
   --muted-foreground: #71717a;
-  --subtle: #fafafa;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
+  --subtle: #ececef;
+  --border: #e5e5e9;
+  --input: #e5e5e9;
   --primary: #18181b;
   --primary-foreground: #fafafa;
-  --accent: #f4f4f5;
+  --accent: #eeeef0;
   --accent-foreground: #18181b;
   --brand: #4f46e5;
   --brand-foreground: #ffffff;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   --success: #16a34a;
-  --warning: #d97706;
-  --ring: #a1a1aa;
+  --warning: #b45309;
+  --ring: #6366f1;
   --radius: 0.5rem;
 }
 
 .dark {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: #131316;
-  --card-foreground: #fafafa;
-  --muted: #1c1c20;
-  --muted-foreground: #a1a1aa;
-  --subtle: #0e0e11;
-  --border: #27272a;
-  --input: #27272a;
-  --primary: #fafafa;
+  --background: #0a0a0c;
+  --foreground: #f4f4f5;
+  --card: #151519;
+  --card-foreground: #f4f4f5;
+  --muted: #1e1e23;
+  --muted-foreground: #9e9ea6;
+  --subtle: #0f0f12;
+  --border: #26262b;
+  --input: #26262b;
+  --primary: #f4f4f5;
   --primary-foreground: #18181b;
-  --accent: #27272a;
-  --accent-foreground: #fafafa;
+  --accent: #1e1e23;
+  --accent-foreground: #f4f4f5;
   --brand: #6366f1;
   --brand-foreground: #ffffff;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --success: #22c55e;
-  --warning: #f59e0b;
-  --ring: #3f3f46;
+  --warning: #d97706;
+  --ring: #818cf8;
 }
 
 @theme inline {
@@ -91,6 +100,29 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+/* Native <select> dropdowns follow the active theme so the opened option-list
+   popup is readable. Without color-scheme, Chrome/Edge render the popup with
+   the browser's default light scheme while the option text stays light from the
+   dark theme — near-white text on a white list. Setting color-scheme makes the
+   UA draw the popup dark, and explicit option colors pin it to our tokens. */
+select {
+  color-scheme: light;
+}
+.dark select {
+  color-scheme: dark;
+}
+.dark select option {
+  background-color: var(--card);
+  color: var(--foreground);
+}
+.dark select option:checked {
+  background-color: var(--brand);
+  color: var(--brand-foreground);
+}
+.dark select option:disabled {
+  color: var(--muted-foreground);
 }
 
 /* Thin, theme-aware scrollbars */

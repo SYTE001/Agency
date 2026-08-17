@@ -58,9 +58,11 @@ export default async function CampaignDetailPage(props: PageProps<"/campaigns/[i
     orderBy: { displayName: "asc" },
   });
 
-  const contentGmv = content.reduce((sum, item) => sum + item.gmvGenerated, 0);
-  const actualGmv = campaign.actualGmv > 0 ? campaign.actualGmv : contentGmv;
-  const progress = campaign.gmvTarget > 0 ? Math.min(1, actualGmv / campaign.gmvTarget) : 0;
+  const contentGmv = content.reduce((sum, item) => sum + item.gmvGenerated.toNumber(), 0);
+  const storedGmv = campaign.actualGmv.toNumber();
+  const gmvTarget = campaign.gmvTarget.toNumber();
+  const actualGmv = storedGmv > 0 ? storedGmv : contentGmv;
+  const progress = gmvTarget > 0 ? Math.min(1, actualGmv / gmvTarget) : 0;
 
   const stats = [
     { label: "Budget", value: formatCompactIDR(campaign.budget) },
@@ -209,7 +211,7 @@ export default async function CampaignDetailPage(props: PageProps<"/campaigns/[i
                     <TableCell className="text-right">{formatNumber(link.creator.followers)}</TableCell>
                     <TableCell className="text-muted-foreground">{link.role ?? "—"}</TableCell>
                     <TableCell className="text-right">{formatIDR(link.fee)}</TableCell>
-                    <TableCell className="text-right">{link.gmvContribution > 0 ? formatCompactIDR(link.gmvContribution) : "—"}</TableCell>
+                    <TableCell className="text-right">{link.gmvContribution.toNumber() > 0 ? formatCompactIDR(link.gmvContribution) : "—"}</TableCell>
                     <TableCell><StatusBadge status={link.status} /></TableCell>
                     {canWrite ? (
                       <TableCell>
@@ -332,7 +334,7 @@ export default async function CampaignDetailPage(props: PageProps<"/campaigns/[i
                       {item.dueDate ? formatDate(item.dueDate) : "—"}
                     </TableCell>
                     <TableCell className="text-right">
-                      {item.gmvGenerated > 0 ? formatCompactIDR(item.gmvGenerated) : "—"}
+                      {item.gmvGenerated.toNumber() > 0 ? formatCompactIDR(item.gmvGenerated) : "—"}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -361,7 +363,7 @@ export default async function CampaignDetailPage(props: PageProps<"/campaigns/[i
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {l.creator.displayName} · {formatDate(l.startTime)}
-                      {l.actualGmv > 0 ? <> · GMV {formatCompactIDR(l.actualGmv)}</> : null}
+                      {l.actualGmv.toNumber() > 0 ? <> · GMV {formatCompactIDR(l.actualGmv)}</> : null}
                     </p>
                   </div>
                   <StatusBadge status={l.status} />

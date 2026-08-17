@@ -7,11 +7,18 @@ import { Button } from "@/components/ui/button";
 import { ROLE_LABELS } from "@/lib/constants";
 import type { SessionUser } from "@/lib/auth";
 
-export function AppTopbar({ user }: { user: SessionUser }) {
+export function AppTopbar({
+  user,
+  leading,
+}: {
+  user: SessionUser;
+  leading?: React.ReactNode;
+}) {
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-4">
+    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/70 bg-card px-4">
       <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold">Kreatif Nusantara</span>
+        {leading}
+        <span className="text-sm font-semibold tracking-tight">Kreatif Nusantara</span>
         <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
           Agency OS
         </span>

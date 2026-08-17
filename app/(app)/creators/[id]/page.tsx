@@ -131,7 +131,7 @@ export default async function CreatorDetailPage(props: PageProps<"/creators/[id]
                       <TableCell className="text-muted-foreground">
                         {c.campaign.startDate ? formatDate(c.campaign.startDate) : "—"}
                       </TableCell>
-                      <TableCell className="text-right">{c.fee > 0 ? formatIDR(c.fee) : "—"}</TableCell>
+                      <TableCell className="text-right">{c.fee.toNumber() > 0 ? formatIDR(c.fee) : "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -313,7 +313,7 @@ export default async function CreatorDetailPage(props: PageProps<"/creators/[id]
               />
               <MetricSummary
                 label="Total GMV 45 hari"
-                value={formatIDR(metrics.reduce((s, m) => s + m.gmv, 0))}
+                value={formatIDR(metrics.reduce((s, m) => s + m.gmv.toNumber(), 0))}
               />
               <MetricSummary
                 label="Total video"
@@ -324,7 +324,7 @@ export default async function CreatorDetailPage(props: PageProps<"/creators/[id]
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <MetricSummary label="Avg views terakhir" value={formatCompactNumber(metrics[metrics.length - 1].avgViews)} />
               <MetricSummary label="ER terakhir" value={`${metrics[metrics.length - 1].engagementRate.toFixed(1).replace(".", ",")}%`} />
-              <MetricSummary label="LIVE GMV 45 hari" value={formatIDR(metrics.reduce((s, m) => s + m.liveGmv, 0))} />
+              <MetricSummary label="LIVE GMV 45 hari" value={formatIDR(metrics.reduce((s, m) => s + m.liveGmv.toNumber(), 0))} />
               <MetricSummary label="Jumlah data harian" value={formatNumber(metrics.length)} />
             </div>
           </CardContent>

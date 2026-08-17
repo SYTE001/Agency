@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
+import { isProductStatus } from "@/lib/constants";
 import type { Role } from "@/lib/constants";
 import { createProduct } from "@/lib/services/products";
 import { logActivity } from "@/lib/services/activity";
@@ -15,7 +16,7 @@ const productSchema = z.object({
   sku: z.string().trim().max(60).transform((v) => v || null),
   category: z.string().trim().max(60).transform((v) => v || null),
   price: z.coerce.number().min(0, "Harga tidak boleh negatif").default(0),
-  status: z.string().default("Active"),
+  status: z.string().default("Active").refine(isProductStatus, "Status tidak valid"),
 });
 
 export type ProductFormState = {

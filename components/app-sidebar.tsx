@@ -33,12 +33,12 @@ const NAV: { href: string; label: string; icon: typeof Users; resource: Resource
   { href: "/settings", label: "Settings", icon: Settings, resource: "setting" },
 ];
 
-export function AppSidebar({ role }: { role: Role }) {
+export function AppSidebar({ role, collapsed }: { role: Role; collapsed?: boolean }) {
   const pathname = usePathname();
   const items = NAV.filter((n) => !n.resource || can(role, n.resource, "read"));
 
   return (
-    <nav className="flex flex-col gap-0.5 p-3">
+    <nav className="flex flex-col gap-0.5 p-2.5">
       {items.map((item) => {
         const active =
           item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -47,15 +47,22 @@ export function AppSidebar({ role }: { role: Role }) {
           <Link
             key={item.href}
             href={item.href}
+            title={collapsed ? item.label : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+              collapsed && "justify-center px-0",
               active
-                ? "bg-accent text-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                ? "bg-accent font-semibold text-foreground"
+                : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <Icon className="h-4 w-4 shrink-0" />
-            {item.label}
+            {active ? (
+              <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-brand" />
+            ) : null}
+            <Icon
+              className={cn("h-4 w-4 shrink-0", active && "text-brand")}
+            />
+            {!collapsed ? item.label : null}
           </Link>
         );
       })}

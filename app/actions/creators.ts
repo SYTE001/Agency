@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
+import { isCreatorStatus } from "@/lib/constants";
 import type { Role } from "@/lib/constants";
 import { createCreator } from "@/lib/services/creators";
 import { logActivity } from "@/lib/services/activity";
@@ -17,7 +18,7 @@ const creatorSchema = z.object({
   engagementRate: z.coerce.number().min(0).max(100).default(0),
   managerId: z.string().transform((v) => v || null),
   bio: z.string().max(500).transform((v) => v || null),
-  status: z.string().default("Active"),
+  status: z.string().default("Active").refine(isCreatorStatus, "Status tidak valid"),
 });
 
 export type CreatorFormState = {

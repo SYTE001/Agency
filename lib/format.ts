@@ -1,5 +1,12 @@
 // Formatting helpers. Indonesian (id-ID) conventions throughout.
 
+/** Accepts plain numbers and Prisma Decimal objects (monetary values are whole Rupiah). */
+type DecimalLike = number | { toNumber(): number };
+
+function toNumber(n: DecimalLike): number {
+  return typeof n === "number" ? n : n.toNumber();
+}
+
 const idr = new Intl.NumberFormat("id-ID", {
   style: "currency",
   currency: "IDR",
@@ -9,14 +16,15 @@ const idr = new Intl.NumberFormat("id-ID", {
 const idNum = new Intl.NumberFormat("id-ID");
 
 /** Full Rupiah: "Rp100.000.000" */
-export function formatIDR(n: number): string {
-  return idr.format(n);
+export function formatIDR(n: DecimalLike): string {
+  return idr.format(toNumber(n));
 }
 
 /** Compact Rupiah: "Rp100M", "Rp12,3M", "Rp3,4B" */
-export function formatCompactIDR(n: number): string {
-  const sign = n < 0 ? "-" : "";
-  const abs = Math.abs(n);
+export function formatCompactIDR(n: DecimalLike): string {
+  const v = toNumber(n);
+  const sign = v < 0 ? "-" : "";
+  const abs = Math.abs(v);
   if (abs >= 1_000_000_000) return `${sign}Rp${dec(abs / 1e9)}B`;
   if (abs >= 1_000_000) return `${sign}Rp${dec(abs / 1e6)}M`;
   if (abs >= 1_000) return `${sign}Rp${Math.round(abs / 1e3)}rb`;
@@ -28,14 +36,15 @@ function dec(n: number): string {
 }
 
 /** Full number: "1.234.567" */
-export function formatNumber(n: number): string {
-  return idNum.format(Math.round(n));
+export function formatNumber(n: DecimalLike): string {
+  return idNum.format(Math.round(toNumber(n)));
 }
 
 /** Compact number: "12,3K", "1,2M", "1,2B" */
-export function formatCompactNumber(n: number): string {
-  const abs = Math.abs(n);
-  const sign = n < 0 ? "-" : "";
+export function formatCompactNumber(n: DecimalLike): string {
+  const v = toNumber(n);
+  const abs = Math.abs(v);
+  const sign = v < 0 ? "-" : "";
   if (abs >= 1_000_000_000) return `${sign}${dec(abs / 1e9)}B`;
   if (abs >= 1_000_000) return `${sign}${dec(abs / 1e6)}M`;
   if (abs >= 1_000) return `${sign}${dec(abs / 1e3)}rb`;

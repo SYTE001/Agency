@@ -99,8 +99,8 @@ export async function listBrands(
   for (const row of campaignAgg) {
     const brandId = row.campaignId ? campaignBrand.get(row.campaignId) : null;
     if (!brandId) continue;
-    brandGmv.set(brandId, (brandGmv.get(brandId) ?? 0) + (row._sum.gmv ?? 0));
-    brandRevenue.set(brandId, (brandRevenue.get(brandId) ?? 0) + (row._sum.agencyRevenue ?? 0));
+    brandGmv.set(brandId, (brandGmv.get(brandId) ?? 0) + (row._sum.gmv?.toNumber() ?? 0));
+    brandRevenue.set(brandId, (brandRevenue.get(brandId) ?? 0) + (row._sum.agencyRevenue?.toNumber() ?? 0));
   }
 
   const totalCampaigns = new Map<string, number>();
@@ -202,12 +202,12 @@ export async function getBrandDetail(agencyId: string, brandId: string) {
     settlements,
     tasks,
     totals: {
-      gmv: totals._sum.gmv ?? 0,
-      agencyRevenue: totals._sum.agencyRevenue ?? 0,
-      creatorCommission: totals._sum.creatorCommission ?? 0,
+      gmv: totals._sum.gmv?.toNumber() ?? 0,
+      agencyRevenue: totals._sum.agencyRevenue?.toNumber() ?? 0,
+      creatorCommission: totals._sum.creatorCommission?.toNumber() ?? 0,
       campaignCount: campaigns.length,
       productCount: products.length,
-      pendingSettlement: pendingSettlement._sum.amount ?? 0,
+      pendingSettlement: pendingSettlement._sum.amount?.toNumber() ?? 0,
       activeCreators,
     },
   };

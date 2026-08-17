@@ -67,7 +67,7 @@ export default async function ContentDetailPage(props: PageProps<"/content/[id]"
     ["Brief", "Assigned", "WaitingForDraft", "DraftSubmitted", "Revision"].includes(item.status);
 
   const stats = [
-    { label: "GMV Dihasilkan", value: item.gmvGenerated > 0 ? formatCompactIDR(item.gmvGenerated) : "—" },
+    { label: "GMV Dihasilkan", value: item.gmvGenerated.toNumber() > 0 ? formatCompactIDR(item.gmvGenerated) : "—" },
     { label: "Views", value: item.viewsGenerated > 0 ? formatNumber(item.viewsGenerated) : "—" },
     { label: "Revisi", value: String(item.revisionCount) },
     { label: "Reviewer", value: item.reviewer?.name ?? "—" },

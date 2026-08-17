@@ -64,7 +64,7 @@ export default async function LivePage(props: PageProps<"/live">) {
           {canWrite ? (
             <Link
               href="/live/new"
-              className="inline-flex h-9 items-center justify-center rounded-md bg-brand px-4 text-sm font-medium text-brand-foreground shadow-sm transition-colors hover:bg-brand/90"
+              className="inline-flex h-9 items-center justify-center rounded-md bg-brand px-4 text-sm font-medium text-brand-foreground transition-colors hover:bg-brand/90"
             >
               Jadwalkan LIVE
             </Link>
@@ -184,7 +184,7 @@ export default async function LivePage(props: PageProps<"/live">) {
                     {formatCompactIDR(s.actualGmv)} / {formatCompactIDR(s.targetGmv)}
                   </span>
                   <span className="text-sm font-medium text-destructive">
-                    {formatPercent(s.targetGmv > 0 ? (s.actualGmv / s.targetGmv) * 100 : 0, 0)}
+                    {formatPercent(s.targetGmv.toNumber() > 0 ? (s.actualGmv.toNumber() / s.targetGmv.toNumber()) * 100 : 0, 0)}
                   </span>
                   <StatusBadge status={s.status} />
                 </Link>

@@ -6,7 +6,6 @@ import { getCreatorDetail } from "@/lib/services/creators";
 import { getActivity, getNotes } from "@/lib/services/activity";
 import { StatusBadge } from "@/components/status-badge";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {

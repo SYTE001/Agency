@@ -9,7 +9,19 @@ export { hashPassword, verifyPassword } from "@/lib/password";
 export const SESSION_COOKIE = "taos_session";
 
 function secretKey(): Uint8Array {
-  const secret = process.env.AUTH_SECRET ?? "taos-dev-secret-change-me-in-production";
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) {
+    // Never fall back to a hardcoded key in production: a predictable signing
+    // secret lets anyone forge session tokens. Only local development may proceed
+    // without one.
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("AUTH_SECRET wajib diisi (minimal 32 karakter) untuk produksi.");
+    }
+    return new TextEncoder().encode("taos-dev-secret-local-only");
+  }
+  if (secret.length < 32) {
+    throw new Error("AUTH_SECRET terlalu pendek — gunakan minimal 32 karakter.");
+  }
   return new TextEncoder().encode(secret);
 }
 

@@ -2,23 +2,7 @@ import prisma from "@/lib/prisma";
 import { paginate, totalPages, daysAgoDate } from "@/lib/services/common";
 import type { ListResult } from "@/lib/services/common";
 import type { Prisma } from "@/generated/prisma/client";
-
-/**
- * Finance formulas (PLAN §12, explicit). Rates are percentages: creatorRate 12
- * means 12% of GMV. Amounts are rounded to whole Rupiah (matches seed data).
- *   creatorCommission = gmv * creatorRate / 100
- *   agencyRevenue     = creatorCommission * agencyShareRate / 100
- *   creatorShare      = creatorCommission - agencyRevenue
- */
-export function calculateCommission(args: { gmv: number; creatorRate: number; agencyShareRate: number }) {
-  const creatorCommission = Math.round((args.gmv * args.creatorRate) / 100);
-  const agencyRevenue = Math.round((creatorCommission * args.agencyShareRate) / 100);
-  return {
-    creatorCommission,
-    agencyRevenue,
-    creatorShare: creatorCommission - agencyRevenue,
-  };
-}
+import { calculateCommission } from "@/lib/finance";
 
 // ---------------------------------------------------------------------------
 // Revenue summary

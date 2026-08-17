@@ -7,13 +7,13 @@ import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
 import type { Role } from "@/lib/constants";
 import {
-  calculateCommission,
   createCommission,
   createPayout,
   createSettlement,
   markPayoutPaid,
   markSettlementPaid,
 } from "@/lib/services/finance";
+import { calculateCommission } from "@/lib/finance";
 import { logActivity } from "@/lib/services/activity";
 
 const FINANCE_PATHS = ["/finance", "/finance/commissions", "/finance/payouts", "/finance/settlements"];

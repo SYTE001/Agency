@@ -4,6 +4,10 @@ import "dotenv/config";
 import prisma from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { CREATOR_CATEGORIES } from "@/lib/constants";
+import {
+  calculateAgencyRevenue,
+  calculateCreatorCommission,
+} from "@/lib/finance";
 
 // ---------------------------------------------------------------------------
 // Deterministic RNG + helpers
@@ -609,9 +613,9 @@ async function main() {
     const gmv = randInt(500_000, 150_000_000);
     const creatorRate = randInt(5, 20);
     const agencyShareRate = randInt(15, 40);
-    const creatorCommission = Math.round((gmv * creatorRate) / 100);
+    const creatorCommission = calculateCreatorCommission(gmv, creatorRate);
     // PLAN §12: revenue agensi dihitung dari komisi creator, bukan dari GMV
-    const agencyRevenue = Math.round((creatorCommission * agencyShareRate) / 100);
+    const agencyRevenue = calculateAgencyRevenue(creatorCommission, agencyShareRate);
     commissionRows.push({
       id: uid("comm", i),
       agencyId: "agency-001",

@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { startOfDay, endOfDay } from "@/lib/services/common";
 import type { Prisma } from "@/generated/prisma/client";
-import { LIVE_STATUS, isLiveStatus } from "@/lib/constants";
+import { isLiveStatus } from "@/lib/constants";
 
 export type LiveRow = {
   id: string;

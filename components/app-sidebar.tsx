@@ -33,7 +33,15 @@ const NAV: { href: string; label: string; icon: typeof Users; resource: Resource
   { href: "/settings", label: "Settings", icon: Settings, resource: "setting" },
 ];
 
-export function AppSidebar({ role, collapsed }: { role: Role; collapsed?: boolean }) {
+export function AppSidebar({
+  role,
+  collapsed,
+  onNavigate,
+}: {
+  role: Role;
+  collapsed?: boolean;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const items = NAV.filter((n) => !n.resource || can(role, n.resource, "read"));
 
@@ -47,6 +55,7 @@ export function AppSidebar({ role, collapsed }: { role: Role; collapsed?: boolea
           <Link
             key={item.href}
             href={item.href}
+            onClick={onNavigate}
             title={collapsed ? item.label : undefined}
             className={cn(
               "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",

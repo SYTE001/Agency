@@ -1,1577 +1,568 @@
-# TikTok Agency OS — PLAN.md
+# Agency OS — Production-Safe Development
 
-## 0. Project Goal
+Kamu bekerja langsung pada repository `SYTE001/Agency`.
 
-Build a web-based internal operating system for TikTok Shop / Creator / Live Commerce agencies.
+Repository ini SUDAH memiliki arsitektur aplikasi yang berjalan. Jangan melakukan rewrite, migrasi framework, atau restrukturisasi besar hanya untuk menyelesaikan task.
 
-The product is **not** a clone of TikTok Partner Center.
+## Tujuan
 
-Its job is to become the agency's operational layer above TikTok data:
+Siapkan repository agar aman untuk:
 
-> DATA → WORK → OWNER → ACTION → RESULT
+1. Local development
+2. Vercel preview deployment
+3. Production deployment
+4. Pengembangan fitur/UI berikutnya tanpa merusak auth, database, RBAC, multi-tenancy, atau financial logic.
 
-The dashboard must help an agency answer within seconds:
+## HARD CONSTRAINTS
 
-1. What is performing?
-2. What is declining?
-3. What requires action today?
-4. Which creator/campaign/client is responsible?
-5. How much GMV/revenue/commission is being generated?
-6. What work is overdue?
+JANGAN:
 
-Primary users:
+* mengganti Next.js
+* mengganti React
+* mengganti Prisma
+* mengganti PostgreSQL sebagai database production
+* menghapus service layer
+* memindahkan database query langsung ke component
+* menghapus RBAC
+* mengubah mekanisme multi-tenancy `agencyId`
+* mengubah formula finance tanpa alasan dan test
+* menggunakan SQLite sebagai database production
+* memasukkan secret/API key/password ke source code
+* menjalankan seed development terhadap production
+* membuat mock API sebagai pengganti database/API production
+* melakukan rewrite besar terhadap architecture
+* menghapus fitur existing hanya karena belum sempurna
 
-- Agency Owner / Director
-- Account Manager
-- Creator / Talent Manager
-- Campaign Manager
-- Live / Operations Manager
-- Finance
-- Admin
-
----
-
-# 1. Core Product Thesis
-
-TikTok already provides platform analytics.
-
-The SaaS should solve the problems around that data:
-
-- fragmented creator information
-- campaign follow-up
-- content approval
-- deadlines
-- sample/product tracking
-- creator communication
-- live scheduling
-- issue/alert tracking
-- commission calculation
-- client reporting
-- internal accountability
-- historical performance
-- action recommendations
-
-The product should therefore be designed as:
-
-## Agency Operating System
-
-not:
-
-## TikTok Analytics Clone
+Jika sebuah perubahan tidak diperlukan untuk task, JANGAN ubah.
 
 ---
 
-# 2. MVP Scope
+# 1. Production Environment
 
-Build these six core modules first:
+Audit dan pastikan environment production menggunakan:
 
-1. Overview
-2. Creators
-3. Campaigns
-4. Content
-5. LIVE
-6. Finance
-
-Secondary modules:
-
-7. Brands / Clients
-8. Products
-9. Tasks / Activity
-10. Reports
-11. Settings / Team / Roles
-
-Do not build every possible feature in v1.
-
----
-
-# 3. Product Workflow
-
-The primary business workflow is:
-
-```text
-BRAND
-  ↓
-CAMPAIGN
-  ↓
-CREATOR SELECTION
-  ↓
-PRODUCT / SAMPLE
-  ↓
-CONTENT BRIEF
-  ↓
-DRAFT
-  ↓
-REVISION
-  ↓
-APPROVAL
-  ↓
-PUBLISHED
-  ↓
-LIVE / SALES
-  ↓
-GMV
-  ↓
-COMMISSION
-  ↓
-SETTLEMENT
-  ↓
-REPORT
+```env
+DATABASE_URL=postgresql://...
+AUTH_SECRET=<random-secret-minimum-32-chars>
+DB_PROVIDER=postgresql
+TZ=Asia/Jakarta
 ```
 
-Secondary workflow:
+Jangan pernah commit nilai asli secret.
 
-```text
-CREATOR
-  ↓
-PERFORMANCE
-  ↓
-ALERT
-  ↓
-FOLLOW-UP
-  ↓
-ACTION
-  ↓
-RESULT
-```
+Pastikan `.env`, credential, database URL production, password, token, API key, dan session secret tetap berada di environment Vercel/local.
 
-This second workflow is critical.
-
-Analytics without action is not the product.
+Pertahankan `.env.example` sebagai template tanpa credential asli.
 
 ---
 
-# 4. Information Architecture
+# 2. Database
+
+Production wajib menggunakan PostgreSQL.
+
+Local development tetap boleh menggunakan SQLite.
+
+Jangan menggabungkan database local dan production.
+
+Pastikan:
 
 ```text
-App
-├── Overview
-│
-├── Creators
-│   ├── All Creators
-│   ├── Creator Detail
-│   ├── Performance
-│   └── Contracts / Notes
-│
-├── Brands
-│   ├── All Brands
-│   └── Brand Detail
-│
-├── Campaigns
-│   ├── Active
-│   ├── Upcoming
-│   ├── Completed
-│   └── Campaign Detail
-│
-├── Content
-│   ├── Pipeline
-│   ├── Review Queue
-│   └── Content Detail
-│
-├── LIVE
-│   ├── Schedule
-│   ├── Live Sessions
-│   └── Live Detail
-│
-├── Products
-│   ├── Catalog
-│   └── Samples
-│
-├── Finance
-│   ├── Revenue
-│   ├── Commission
-│   ├── Settlements
-│   └── Creator Payout
-│
-├── Reports
-│
-├── Tasks
-│
-└── Settings
-    ├── Team
-    ├── Roles
-    ├── Integrations
-    └── Agency Settings
+Local:
+SQLite → better-sqlite3
+
+Production:
+PostgreSQL → pg / @prisma/adapter-pg
+```
+
+Jangan menggunakan `prisma/dev.db` sebagai persistent production storage.
+
+Sebelum mengubah schema Prisma:
+
+1. inspect schema existing
+2. inspect migration existing
+3. cek impact terhadap PostgreSQL
+4. jangan menghapus migration existing
+5. jangan reset production database
+
+Jika membutuhkan perubahan schema, buat migration yang proper.
+
+---
+
+# 3. Timezone — Asia/Jakarta
+
+Perbaiki masalah timezone production.
+
+Agency menggunakan:
+
+```text
+Asia/Jakarta
+```
+
+Pastikan fungsi seperti:
+
+* daily metrics
+* date range
+* overdue task
+* laporan
+* campaign date
+* finance date
+* dashboard statistics
+
+tidak bergantung secara tidak sengaja pada timezone UTC server.
+
+Jangan hanya mengubah tampilan tanggal.
+
+Perhitungan boundary hari harus konsisten dengan timezone bisnis.
+
+Jika architecture saat ini belum mendukung timezone tenant secara penuh, gunakan `Agency.timezone` sebagai source of truth tanpa melakukan rewrite architecture.
+
+Default:
+
+```text
+Asia/Jakarta
 ```
 
 ---
 
-# 5. Overview Dashboard
+# 4. PostgreSQL Search Compatibility
 
-The Overview page is the most important screen.
-
-## Primary KPIs
-
-- Total GMV
-- GMV growth
-- Agency revenue
-- Active creators
-- Active campaigns
-- Active brands
-- Today's LIVE sessions
-- Pending settlements
-
-## Operational Alerts
-
-Examples:
+Audit semua penggunaan Prisma:
 
 ```text
-12 creators have declining performance
-8 campaign tasks are overdue
-17 content items require review
-5 creators have not submitted content
-3 LIVE sessions need operator assignment
-4 settlements are pending
+contains
+startsWith
+endsWith
 ```
 
-Every alert must be actionable.
+Perhatikan perbedaan case sensitivity antara SQLite dan PostgreSQL.
 
-Example:
+Jika search UI sebelumnya bersifat case-insensitive, pertahankan behavior tersebut di PostgreSQL.
 
-```text
-Creator performance ↓ 32%
+Jangan mengubah UX search.
 
-[View creator]
-[Assign follow-up]
-```
-
-Avoid passive warning cards.
+Jangan melakukan perubahan database yang tidak diperlukan.
 
 ---
 
-# 6. Creator Module
+# 5. Authentication
 
-## Creator table
-
-Fields:
-
-- profile photo
-- username
-- display name
-- category
-- followers
-- engagement rate
-- GMV
-- GMV growth
-- videos
-- average views
-- LIVE GMV
-- active campaigns
-- status
-- manager
-- last activity
-
-Filters:
-
-- category
-- follower range
-- GMV
-- growth
-- status
-- manager
-- campaign
-- brand
-- LIVE
-- date range
-
-## Creator detail
-
-Sections:
+Pertahankan:
 
 ```text
-Profile
-Performance
-Campaigns
-Content
-LIVE
-Revenue / Commission
-Tasks
-Notes
-Activity History
+JWT
+httpOnly cookie
+jose
+AUTH_SECRET
 ```
 
-## Creator health
+Pastikan:
 
-Create a simple health state:
+* unauthenticated user tidak bisa membuka protected routes
+* session diverifikasi server-side
+* user tidak bisa mengganti `agencyId` melalui request payload
+* role tidak dipercaya dari client
+* perubahan role berlaku setelah session/user reload
+* password tidak pernah disimpan plaintext
+* password production tidak berada di repository
 
-```text
-Healthy
-Watch
-At Risk
-Inactive
-```
-
-Do not invent AI scores without explainable inputs.
+Jangan mengganti auth system.
 
 ---
 
-# 7. Creator Discovery / Matching
+# 6. Multi-Tenancy
 
-This should be phase 2, not a hard dependency for MVP.
+Ini adalah bagian CRITICAL.
 
-Input:
-
-```text
-Brand
-Product
-Category
-Target audience
-Follower range
-Budget
-GMV target
-Required creator count
-```
-
-Output:
+Semua business data harus tetap terisolasi berdasarkan:
 
 ```text
-Suggested Creators
-Match Score
-Reason
-Historical category performance
-GMV
-Engagement
-Average views
-Previous brand work
+agencyId
 ```
 
-The match score must be explainable.
+Jangan pernah mengambil:
 
-Example:
-
-```text
-92% match
-
-+ strong Beauty GMV
-+ target audience fit
-+ historical skincare performance
-- higher creator fee
+```ts
+agencyId
 ```
+
+dari form/client payload sebagai source of truth.
+
+Gunakan agency dari authenticated server session/database.
+
+Audit:
+
+* creators
+* brands
+* products
+* campaigns
+* content
+* live sessions
+* tasks
+* finance
+* commissions
+* payouts
+* settlements
+* reports
+* search
+
+Pastikan tenant A tidak bisa membaca, mengubah, atau menghapus data tenant B.
+
+Jangan menghapus integration tests untuk tenant isolation.
 
 ---
 
-# 8. Brands Module
+# 7. RBAC
 
-Each brand should have:
+Pertahankan role system existing:
 
-- company profile
-- contact person
-- campaigns
-- products
-- total GMV
-- total spend
-- agency revenue
-- active creators
-- contracts
-- notes
-- tasks
-- reports
+```text
+owner
+admin
+account_manager
+creator_manager
+campaign_manager
+live_manager
+finance
+viewer
+```
 
-Brand detail should answer:
+Semua mutation harus tetap melewati server-side authorization.
 
-> How much business does this client generate for the agency?
+Jangan hanya menyembunyikan tombol UI.
+
+Authorization harus tetap dilakukan di server action/service layer.
+
+Jika UI menampilkan tombol berdasarkan permission, itu hanya UX layer; bukan security layer.
 
 ---
 
-# 9. Campaign Module
+# 8. Service Layer
 
-Campaign lifecycle:
-
-```text
-Draft
-↓
-Planning
-↓
-Recruiting
-↓
-Active
-↓
-Content Review
-↓
-Published
-↓
-Completed
-↓
-Reporting
-```
-
-Campaign fields:
-
-- campaign name
-- brand
-- owner
-- start date
-- end date
-- budget
-- creator target
-- selected creators
-- products
-- content target
-- live target
-- GMV target
-- actual GMV
-- commission
-- status
-- progress
-- notes
-
-Campaign detail:
+Pertahankan prinsip:
 
 ```text
-Overview
-Creators
-Products
-Content
-Tasks
-Timeline
-Performance
-Finance
-Activity
-```
-
----
-
-# 10. Content Pipeline
-
-Content status:
-
-```text
-Brief
-Assigned
-Waiting for Draft
-Draft Submitted
-Revision
-Approved
-Scheduled
-Published
-Rejected
-Cancelled
-```
-
-Kanban should be the default interface.
-
-Example:
-
-```text
-BRIEF
-  12
-
-DRAFT
-  8
-
-REVISION
-  5
-
-APPROVED
-  14
-
-PUBLISHED
-  61
-```
-
-Each content item:
-
-- creator
-- campaign
-- product
-- brief
-- due date
-- publish date
-- content URL
-- status
-- revision count
-- reviewer
-- notes
-- performance snapshot
-
----
-
-# 11. LIVE Module
-
-LIVE schedule should feel operational.
-
-Calendar views:
-
-- day
-- week
-- month
-
-LIVE session fields:
-
-- creator/host
-- brand
-- product
-- room/studio
-- operator
-- start time
-- end time
-- target GMV
-- actual GMV
-- viewers
-- orders
-- conversion
-- status
-- notes
-
-Statuses:
-
-```text
-Scheduled
-Preparing
-Live
-Ended
-Cancelled
-Needs Review
-```
-
-LIVE dashboard:
-
-```text
-LIVE NOW
-Upcoming
-Today's GMV
-Today's Sessions
-Underperforming Sessions
-```
-
----
-
-# 12. Finance Module
-
-Finance must separate platform numbers from agency numbers.
-
-Core fields:
-
-```text
-Gross GMV
-Creator Commission
-Agency Share
-Agency Revenue
-Creator Payout
-Pending Settlement
-Paid Settlement
-```
-
-Example:
-
-```text
-GMV                    Rp100M
-Creator Commission     Rp10M
-Agency Share            30%
-Agency Revenue           Rp3M
-Creator Share             Rp7M
-```
-
-Finance views:
-
-- revenue summary
-- creator payout
-- agency commission
-- brand revenue
-- campaign revenue
-- settlement status
-- transaction history
-
-Use explicit calculation formulas.
-
-Never hide financial calculations behind unexplained numbers.
-
----
-
-# 13. Reports
-
-Reports should be generated from existing data.
-
-Examples:
-
-## Client report
-
-```text
-Brand
-Campaign
-Period
-
-GMV
-Orders
-Creators
-Videos
-LIVE Sessions
-Top Creators
-Top Products
-Agency Performance
-```
-
-## Internal report
-
-```text
-Agency GMV
-Revenue
-Creator Productivity
-Campaign Completion
-Content Completion
-LIVE Performance
-Pending Tasks
-Financial Status
-```
-
-Export targets:
-
-- CSV
-- PDF (later)
-- shareable web report (later)
-
----
-
-# 14. Task / Activity System
-
-This is one of the highest-value features.
-
-Every operational object can create a task.
-
-Examples:
-
-```text
-Follow up creator
-Review draft
-Approve campaign
-Confirm sample shipment
-Schedule LIVE
-Send client report
-Check settlement
-```
-
-Task fields:
-
-- title
-- owner
-- related entity
-- priority
-- due date
-- status
-- notes
-- created by
-- completed by
-
-Activity timeline should exist on:
-
-- creator
-- campaign
-- brand
-- content
-- LIVE
-- finance record
-
----
-
-# 15. Alerts
-
-MVP alerts should be deterministic.
-
-Examples:
-
-```text
-Creator GMV ↓ > 20% over comparison window
-Content overdue
-Campaign deadline approaching
-Creator inactive
-LIVE target missed
-Settlement pending
-Campaign completion below target
-```
-
-Do not start with AI-generated alerts.
-
-Build reliable rules first.
-
----
-
-# 16. Roles & Permissions
-
-Minimum RBAC:
-
-```text
-Owner
-Admin
-Account Manager
-Creator Manager
-Campaign Manager
-LIVE Manager
-Finance
-Viewer
-```
-
-Permissions must be resource-based.
-
-Examples:
-
-```text
-Creator Manager:
-read creators
-edit creators
-read campaigns
-no finance write
-
-Finance:
-read finance
-write settlements
-read campaigns
-no creator management
-
-Viewer:
-read-only
-```
-
-Use server-side authorization.
-
-Do not rely only on UI hiding.
-
----
-
-# 17. Database Model
-
-Use a relational schema.
-
-Core tables:
-
-```text
-agencies
-users
-roles
-user_roles
-
-brands
-brand_contacts
-
-creators
-creator_metrics
-creator_platform_accounts
-
-campaigns
-campaign_creators
-campaign_products
-
-products
-product_metrics
-
-content_items
-content_revisions
-
-live_sessions
-live_metrics
-
-tasks
-activities
-notes
-
-commissions
-creator_payouts
-settlements
-
-reports
-report_items
-
-integrations
-sync_jobs
-sync_logs
-```
-
-Recommended relationships:
-
-```text
-Agency
- ├── Users
- ├── Brands
- ├── Creators
- ├── Campaigns
- ├── Products
- ├── LIVE Sessions
- └── Finance
-
-Campaign
- ├── Brand
- ├── Creators
- ├── Products
- ├── Content
- ├── LIVE Sessions
- └── Finance
-```
-
-Every business table should include:
-
-```text
-id
-agency_id
-created_at
-updated_at
-```
-
-Use `agency_id` for multi-tenant isolation.
-
----
-
-# 18. Multi-Tenant Architecture
-
-The product must be multi-tenant from the start.
-
-Rules:
-
-```text
-ONE AGENCY = ONE TENANT
-
-Every business record belongs to an agency.
-
-Users can access only records belonging
-to their agency.
-```
-
-Do not create a single global database namespace where every tenant can query everything.
-
-Recommended with Supabase:
-
-- PostgreSQL
-- Row Level Security
-- Supabase Auth
-- agency membership table
-- server-side validation
-- storage buckets scoped by agency
-
----
-
-# 19. Integration Architecture
-
-Do not tightly couple the UI directly to TikTok APIs.
-
-Use:
-
-```text
-TikTok / Other Sources
-        ↓
-Integration Layer
-        ↓
-Sync Jobs
-        ↓
-Normalized Database
-        ↓
-Business Logic
-        ↓
-Dashboard
-```
-
-Suggested components:
-
-```text
-integrations
-sync_jobs
-sync_logs
-external_accounts
-external_ids
-```
-
-Every external object should preserve its source ID.
-
-Example:
-
-```text
-creator.external_id
-campaign.external_id
-product.external_id
-```
-
-This avoids duplicate records and makes synchronization possible.
-
----
-
-# 20. TikTok Integration Strategy
-
-Important:
-
-The SaaS must use authorized integrations / official APIs where available.
-
-Do not build the architecture around scraping or browser automation.
-
-The first version should support:
-
-```text
-Manual Data Import
-CSV Import
-Mock Data
-```
-
-Then:
-
-```text
-TikTok OAuth / Partner Integration
-↓
-Sync
-↓
-Normalize
-↓
-Dashboard
-```
-
-This allows product development without blocking on external API approval.
-
----
-
-# 21. Mock Data Strategy
-
-Build realistic seed data.
-
-Minimum:
-
-```text
-1 agency
-5 users
-20 brands
-100 creators
-50 products
-20 campaigns
-200 content items
-30 LIVE sessions
-300 finance records
-500 tasks/activity records
-```
-
-Use Indonesian-like names and realistic Rupiah amounts.
-
-Data distribution must create realistic situations:
-
-- strong creators
-- declining creators
-- overdue content
-- active campaigns
-- completed campaigns
-- pending settlements
-- underperforming LIVE
-- high-performing products
-
-The dashboard must not look empty.
-
----
-
-# 22. UI / UX Direction
-
-Design principle:
-
-## Apple-like operational minimalism
-
-Requirements:
-
-- clean spacing
-- strong hierarchy
-- low visual noise
-- precise alignment
-- high contrast
-- light and dark mode
-- compact but readable tables
-- responsive desktop-first layout
-- meaningful empty states
-- minimal gradients
-- no decorative AI graphics
-- no excessive glassmorphism
-- no dashboard card explosion
-
-The UI should feel closer to:
-
-```text
-Linear
-Raycast
-Stripe Dashboard
-Apple System UI
-Notion database
-```
-
-than a generic AI SaaS template.
-
----
-
-# 23. Overview Layout
-
-Recommended desktop hierarchy:
-
-```text
-TOP BAR
-Agency selector | Search | Date | Notifications | User
-
-SIDEBAR
-Overview
-Creators
-Brands
-Campaigns
-Content
-LIVE
-Products
-Finance
-Reports
-Tasks
-Settings
-
-MAIN
-Greeting / Date
-
-KPI Row
-GMV | Revenue | Creators | Campaigns
-
-Performance Chart
-
-Operational Alerts
-
-Campaign Progress
-
-LIVE Today
-
-Top Creators
-
-Recent Activity
-```
-
-Do not put 15 equal cards above the fold.
-
----
-
-# 24. Search
-
-Global search must eventually support:
-
-```text
-Creator
-Brand
-Campaign
-Product
-Content
-LIVE session
-Task
-```
-
-Example:
-
-```text
-⌘ K
-
-Search "somethinc"
-```
-
-Results grouped by entity.
-
----
-
-# 25. Technical Stack
-
-Recommended baseline:
-
-```text
-Frontend:
-Next.js
-TypeScript
-React
-
-Styling:
-Tailwind CSS
-shadcn/ui or equivalent component system
-
-Backend:
-Next.js server actions / route handlers
-Supabase
-
-Database:
+UI
+ ↓
+Server Action
+ ↓
+Authorization
+ ↓
+Service
+ ↓
+Prisma
+ ↓
 PostgreSQL
-
-Auth:
-Supabase Auth
-
-Storage:
-Supabase Storage
-
-Deployment:
-Vercel
-
-Charts:
-Recharts / lightweight chart library
-
-Validation:
-Zod
-
-Forms:
-React Hook Form
-
-Testing:
-Vitest
-Playwright
 ```
 
-Do not introduce a second backend unless required.
+Jangan membuat component seperti:
+
+```ts
+prisma.creator.findMany(...)
+```
+
+langsung dari UI/page/component.
+
+Semua database access tetap melalui service layer yang sudah ada.
 
 ---
 
-# 26. Code Architecture
+# 9. Financial Logic
 
-Preferred structure:
+Jangan mengubah formula existing tanpa alasan.
+
+Pertahankan:
 
 ```text
-app/
-components/
-features/
-lib/
-services/
-types/
-utils/
-database/
-hooks/
+creatorCommission
+= GMV × creatorRate%
+
+agencyRevenue
+= creatorCommission × agencyShareRate%
+
+creatorPayout
+= creatorCommission − agencyRevenue
 ```
 
-Feature modules:
+Money tetap menggunakan Decimal/integer-safe calculation sesuai implementation existing.
+
+Jangan menggunakan floating-point arithmetic baru untuk financial calculation.
+
+Setiap perubahan finance wajib memiliki/update test.
+
+---
+
+# 10. API / Integration
+
+Jangan menganggap halaman:
 
 ```text
-features/
-├── creators/
-├── brands/
-├── campaigns/
-├── content/
-├── live/
-├── finance/
-├── tasks/
-└── reports/
+settings/integrations
 ```
 
-Keep domain logic in `features` / `services`.
+sebagai official TikTok API integration jika implementation existing masih berupa internal simulation.
 
-Avoid putting all business logic directly inside page components.
-
----
-
-# 27. Development Phases
-
-## Phase 0 — Discovery & Architecture
-
-Deliverables:
-
-- workflow map
-- entity map
-- database ERD
-- role matrix
-- API boundaries
-- navigation map
-
-Do not build polished UI yet.
-
----
-
-## Phase 1 — Foundation
-
-Build:
-
-- Next.js app structure
-- Supabase project
-- authentication
-- agency membership
-- RBAC
-- database migrations
-- RLS
-- base UI system
-- layout
-- navigation
-
-Acceptance:
-
-- user can sign in
-- user belongs to one agency
-- data isolation works
-- role restrictions work
-
----
-
-## Phase 2 — Core CRM
-
-Build:
-
-- Creators
-- Brands
-- Products
-- Search
-- Detail pages
-- Notes
-- Tasks
-- Activity timeline
-
-Acceptance:
-
-- CRUD works
-- filtering works
-- relations work
-- activity is recorded
-
----
-
-## Phase 3 — Campaign & Content Operations
-
-Build:
-
-- Campaigns
-- Campaign creators
-- Content pipeline
-- Kanban
-- deadlines
-- revision tracking
-- progress
-
-Acceptance:
+Jangan mengklaim:
 
 ```text
-Campaign
-→ Creator
-→ Content
-→ Approval
-→ Published
+TikTok API connected
 ```
 
-works end-to-end.
+jika sebenarnya belum ada official API integration.
+
+Jika nanti membuat integration nyata, buat abstraction terpisah tanpa merusak existing internal workflow.
 
 ---
 
-## Phase 4 — LIVE Operations
+# 11. Error Handling
 
-Build:
+Audit production error handling.
 
-- LIVE calendar
-- sessions
-- hosts
-- rooms
-- targets
-- performance
-- status
-
-Acceptance:
-
-An operator can schedule and track a LIVE session without external spreadsheets.
-
----
-
-## Phase 5 — Finance
-
-Build:
-
-- commissions
-- creator payout
-- agency revenue
-- settlements
-- financial dashboard
-
-Acceptance:
-
-Financial calculations are traceable from source transaction → commission → agency share → payout.
-
----
-
-## Phase 6 — Overview Intelligence
-
-Now connect all modules.
-
-Build:
-
-- KPI aggregation
-- performance charts
-- operational alerts
-- creator health
-- campaign health
-- overdue indicators
-- activity feed
-
-This phase should make the product feel like one system rather than separate CRUD pages.
-
----
-
-## Phase 7 — Integration
-
-Only after internal workflows work.
-
-Build:
-
-- OAuth
-- external account linking
-- sync jobs
-- external IDs
-- import/export
-- sync logs
-- retry logic
-
-Start with read-only synchronization.
-
-Do not immediately build write-back automation.
-
----
-
-## Phase 8 — Reporting
-
-Build:
-
-- client report
-- internal report
-- CSV export
-- shareable report
-- period comparison
-
----
-
-# 28. Future Features
-
-Do not include in MVP.
-
-Potential later modules:
+User harus mendapatkan error yang jelas seperti:
 
 ```text
-AI Creator Matching
-AI Brief Generator
-AI Campaign Planner
-Automated Follow-up
-WhatsApp integration
-Email integration
-Slack integration
-Client portal
-Advanced attribution
-Forecasting
-Anomaly detection
-Agency benchmarking
-Creator marketplace
-Automated payouts
-Contract management
-Mobile app
+Something went wrong.
+Please try again.
 ```
 
-Priority should be based on actual agency workflow pain.
+Jangan expose:
+
+* database connection string
+* stack trace
+* Prisma internal error
+* JWT secret
+* API key
+* SQL query
+* server filesystem path
+
+ke browser.
+
+Server log boleh memiliki detail debugging yang diperlukan, tetapi jangan log secret/password/token.
 
 ---
 
-# 29. Non-Goals
+# 12. Loading & Performance
 
-Do NOT build these first:
+Pertahankan architecture server-first.
 
-- social media feed clone
-- TikTok clone
-- generic CRM
-- generic project management app
-- generic AI chatbot
-- giant analytics wall
-- fake AI recommendations
-- scraping infrastructure
-- complex mobile app
-- dozens of chart types
-- unnecessary animations
+Jangan menambahkan:
 
----
+* unnecessary polling
+* `setInterval`
+* massive client-side fetching
+* duplicate API requests
+* giant client components
+* unnecessary global state
 
-# 30. Core Product Metrics
+Audit halaman dashboard dan tab yang sebelumnya terasa lambat.
 
-Internal SaaS metrics:
+Jika data yang sama diminta berkali-kali saat navigation, identifikasi penyebabnya sebelum menambahkan cache.
+
+Jangan menambahkan artificial loading animation sebagai solusi terhadap query lambat.
+
+Jika query lambat:
 
 ```text
-Daily Active Users
-Weekly Active Agencies
-Creators managed / agency
-Campaigns managed / agency
-Content completion rate
-Task completion rate
-LIVE sessions managed
-GMV tracked
-Agency revenue tracked
-Settlement processing time
-```
-
-Operational metrics:
-
-```text
-Campaign completion %
-Content on-time %
-Creator activity %
-GMV growth
-Revenue growth
-LIVE target achievement %
+inspect query
+→ inspect indexes
+→ inspect duplicated requests
+→ inspect server/client boundary
+→ optimize actual bottleneck
 ```
 
 ---
 
-# 31. Acceptance Criteria
+# 13. UI Development Rule
 
-The MVP is considered usable when an agency can perform this complete flow:
+Mulai sekarang repository dianggap sebagai:
 
 ```text
-1. Create brand
-2. Add creators
-3. Add products
-4. Create campaign
-5. Assign creators
-6. Create content tasks
-7. Track draft → revision → approval → published
-8. Schedule LIVE
-9. Record LIVE results
-10. Record GMV
-11. Calculate commission
-12. Create creator payout
-13. See campaign performance
-14. See agency overview
-15. Export report
+FUNCTIONAL BASELINE
 ```
 
-The entire flow must work without editing the database manually.
+UI boleh di-enhance secara agresif selama functionality tidak rusak.
+
+Gunakan prinsip:
+
+```text
+Apple-inspired
+minimal
+clean
+high information density
+subtle borders
+clear hierarchy
+responsive
+fast
+```
+
+Tetapi:
+
+JANGAN:
+
+* rewrite architecture hanya demi UI
+* mengganti data flow
+* menghapus existing functionality
+* mengganti route structure tanpa alasan
+* memindahkan business logic ke client
+* membuat dummy data untuk menggantikan real data
 
 ---
 
-# 32. Quality Requirements
+# 14. Before Every Change
 
-Performance:
+Sebelum mengubah file:
 
-- fast initial navigation
-- table pagination
-- server-side filtering where appropriate
-- avoid loading all records into browser
-- aggregate expensive metrics server-side
-- skeleton loading
-- sensible caching
+1. inspect existing implementation
+2. identify dependencies
+3. identify data flow
+4. identify server/client boundary
+5. identify auth/RBAC impact
+6. identify database impact
+7. make the smallest safe change
 
-Security:
-
-- RLS enabled
-- tenant isolation
-- server-side authorization
-- validated inputs
-- no secrets in client
-- audit-sensitive actions
-
-Reliability:
-
-- database migrations
-- seeded test data
-- error states
-- empty states
-- retryable sync jobs
-- logs
+Jangan langsung overwrite file besar.
 
 ---
 
-# 33. DeepSeek CLI Execution Rules
+# 15. Validation
 
-DeepSeek CLI should work sequentially.
+Setelah perubahan jalankan:
 
-Before changing code:
+```bash
+npm run lint
+npm run test
+npm run build
+```
 
-1. Inspect existing repository.
-2. Identify current stack.
-3. Identify existing database/schema.
-4. Preserve working architecture unless a change is necessary.
-5. Build one phase at a time.
-6. Run tests/typecheck/lint after each phase.
-7. Do not create duplicate components or parallel systems.
-8. Do not invent API endpoints that do not exist.
-9. Use mock adapters before external API integration.
-10. Keep external providers behind a service interface.
+Jika tersedia environment PostgreSQL test, jalankan test terhadap PostgreSQL juga.
 
-For every major task, DeepSeek should report:
+Pastikan tidak ada:
 
 ```text
-Changed files
-Database changes
-Routes/pages added
-Components added
-Tests added
-Known issues
-Next recommended task
+TypeScript errors
+ESLint errors
+Prisma errors
+build errors
+missing environment variable errors
+auth regression
+tenant isolation regression
 ```
+
+Jika build gagal karena environment variable lokal tidak tersedia, bedakan:
+
+```text
+real code error
+```
+
+dengan:
+
+```text
+missing local configuration
+```
+
+Jangan membuat fake secret untuk menyembunyikan error.
 
 ---
 
-# 34. Prompt Pattern for DeepSeek CLI
+# 16. Git Safety
 
-Use this pattern when assigning implementation tasks:
+Sebelum perubahan besar:
 
-```text
-You are working on TikTok Agency OS.
-
-First inspect the repository and existing architecture.
-
-Do not rewrite working architecture without a concrete reason.
-
-Task:
-[DESCRIBE ONE TASK]
-
-Requirements:
-- Follow the existing stack and conventions.
-- Preserve multi-tenant isolation.
-- Use Supabase/RLS correctly.
-- Keep domain logic out of page components.
-- Add loading, empty, error, and success states.
-- Add types and validation.
-- Add tests where practical.
-- Run lint/typecheck/tests after implementation.
-
-Before finishing:
-1. Summarize files changed.
-2. Summarize schema changes.
-3. Report test results.
-4. Report any assumptions.
-5. Report any remaining issue.
-
-Do not silently skip failed checks.
+```bash
+git status
+git branch
+git log -5 --oneline
 ```
+
+Jangan melakukan:
+
+```bash
+git reset --hard
+git clean -fd
+```
+
+kecuali secara eksplisit diminta.
+
+Jangan menghapus perubahan user yang belum committed.
+
+Setiap perubahan harus mudah di-review dan di-revert.
 
 ---
 
-# 35. Recommended Build Order
+# 17. Definition of Done
 
-Absolute priority:
+Task dianggap selesai hanya jika:
 
-```text
-1. Foundation
-2. Auth + Agency + RBAC
-3. Database + RLS
-4. Creators
-5. Brands
-6. Products
-7. Campaigns
-8. Content Pipeline
-9. Tasks / Activity
-10. LIVE
-11. Finance
-12. Overview
-13. Reports
-14. Integration Layer
-15. TikTok Integration
-16. AI / Automation
-```
-
-This order is intentional.
-
-Do not start with the Overview dashboard.
-
-The Overview is an aggregation layer and will become inaccurate if the underlying operational modules do not exist.
+* existing functionality tetap bekerja
+* authentication tetap bekerja
+* RBAC tetap bekerja
+* tenant isolation tetap bekerja
+* PostgreSQL production path tetap bekerja
+* SQLite local development tetap bekerja
+* finance calculation tidak berubah secara tidak sengaja
+* no secrets committed
+* lint passed
+* tests passed
+* production build passed
+* UI responsive
+* tidak ada console error yang berasal dari perubahan
+* tidak ada unnecessary architecture rewrite
 
 ---
 
-# 36. Final Product Positioning
+# PRIORITY
 
-The product should ultimately be positioned as:
-
-> **The operating system for TikTok commerce agencies.**
-
-Not:
-
-> TikTok analytics dashboard.
-
-Its differentiation is:
+Jika menemukan konflik antara:
 
 ```text
-TikTok Data
-+
-Agency Workflow
-+
-Team Accountability
-+
-Campaign Operations
-+
-Finance
-+
-Actionable Alerts
+visual improvement
 ```
 
-The most valuable screen is not the chart.
+dan:
 
-It is the screen that tells the agency:
+```text
+security / data integrity / architecture
+```
 
-> "These are the 7 things you need to deal with today."
+selalu prioritaskan:
+
+```text
+Security
+>
+Data integrity
+>
+Authentication
+>
+Multi-tenancy
+>
+RBAC
+>
+Database integrity
+>
+Performance
+>
+UX
+>
+Visual polish
+```
+
+Kerjakan perubahan secara incremental.
+
+Sebelum coding, jelaskan singkat:
+
+```text
+Current state
+Risk
+Files affected
+Plan
+```
+
+Setelah coding, laporkan:
+
+```text
+Changed
+Test result
+Build result
+Remaining issue
+```
+
+Jangan mengarang hasil test. Jika sebuah test tidak dapat dijalankan, nyatakan alasannya secara eksplisit.

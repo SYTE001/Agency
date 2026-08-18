@@ -10,6 +10,17 @@ import { calculateCommission } from "@/lib/finance";
 // ---------------------------------------------------------------------------
 
 export async function getFinanceSummary(agencyId: string, days = 30, ref: Date = new Date()) {
+  const payoutsPromise = prisma.creatorPayout.groupBy({
+    by: ["status"],
+    where: { agencyId },
+    _sum: { amount: true },
+  });
+  const settlementsPromise = prisma.settlement.groupBy({
+    by: ["status"],
+    where: { agencyId },
+    _sum: { amount: true },
+  });
+
   const tz = await getAgencyTimezone(agencyId);
   const since = daysAgoStartInTz(tz, days, ref);
   const prevSince = daysAgoStartInTz(tz, days * 2, ref);
@@ -24,16 +35,8 @@ export async function getFinanceSummary(agencyId: string, days = 30, ref: Date =
       where: { agencyId, createdAt: { gte: prevSince, lt: since } },
       _sum: { gmv: true, agencyRevenue: true },
     }),
-    prisma.creatorPayout.groupBy({
-      by: ["status"],
-      where: { agencyId },
-      _sum: { amount: true },
-    }),
-    prisma.settlement.groupBy({
-      by: ["status"],
-      where: { agencyId },
-      _sum: { amount: true },
-    }),
+    payoutsPromise,
+    settlementsPromise,
   ]);
 
   const gmv = cur._sum.gmv?.toNumber() ?? 0;

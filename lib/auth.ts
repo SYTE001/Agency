@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
@@ -6,7 +7,7 @@ import { isRole, type Role } from "@/lib/constants";
 
 export { hashPassword, verifyPassword } from "@/lib/password";
 
-export const SESSION_COOKIE = "taos_session";
+export const SESSION_COOKIE = "taos-session";
 
 // Token issuer/audience: binding a session token to this app prevents tokens
 // signed for (or by) another service with a shared secret from being accepted.
@@ -88,8 +89,13 @@ export async function verifySessionToken(token: string): Promise<TokenPayload | 
  * claims — tampered or stale claims still resolve to the current row.
  * Exported so tests can exercise the full resolution path without the Next
  * cookie transport.
+ *
+ * Wrapped in React cache() to deduplicate DB lookups during the same request
+ * (e.g. layout + page).
  */
-export async function resolveSessionUser(token: string): Promise<SessionUser | null> {
+export const resolveSessionUser = cache(async function resolveSessionUser(
+  token: string,
+): Promise<SessionUser | null> {
   const payload = await verifySessionToken(token);
   if (!payload?.sub) return null;
 
@@ -108,18 +114,19 @@ export async function resolveSessionUser(token: string): Promise<SessionUser | n
     email: user.email,
     name: user.name,
   };
-}
+});
 
 /**
  * Resolve the current signed-in user from the session cookie.
  * Re-loads the user row so role/agency changes take effect immediately.
+ * Wrapped in React cache() to prevent redundant cookie reads and DB queries.
  */
-export async function getSessionUser(): Promise<SessionUser | null> {
+export const getSessionUser = cache(async function getSessionUser(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (!token) return null;
   return resolveSessionUser(token);
-}
+});
 
 /** Require a signed-in user; redirect to /login otherwise. */
 export async function requireUser(): Promise<SessionUser> {

@@ -41,7 +41,9 @@ export async function listBrands(
   if (filters.status) where.status = filters.status;
   if (filters.industry) where.industry = filters.industry;
 
-  const [brands, total] = await Promise.all([
+  const tzPromise = getAgencyTimezone(agencyId);
+
+  const [brands, total, tz] = await Promise.all([
     prisma.brand.findMany({
       where,
       orderBy: { name: "asc" },
@@ -52,6 +54,7 @@ export async function listBrands(
       },
     }),
     prisma.brand.count({ where }),
+    tzPromise,
   ]);
 
   const ids = brands.map((b) => b.id);
@@ -59,7 +62,7 @@ export async function listBrands(
     return { items: [], total, page, pageSize, totalPages: totalPages(total, pageSize) };
   }
 
-  const since = daysAgoStartInTz(await getAgencyTimezone(agencyId), 30);
+  const since = daysAgoStartInTz(tz, 30);
 
   // Agency revenue attributed to each brand's campaigns (last 30 days)
   const [campaignAgg, campaignCounts, productCounts] = await Promise.all([

@@ -2,6 +2,7 @@
 // agencyId and applies it to the query — this is the server-side enforcement
 // of multi-tenant isolation (PLAN §18).
 
+import { cache } from "react";
 import prisma from "@/lib/prisma";
 import { DEFAULT_TIMEZONE, normalizeTimezone } from "@/lib/timezone";
 
@@ -29,14 +30,17 @@ export type SortDir = "asc" | "desc";
  * Resolve the tenant's business timezone (Agency.timezone, default
  * Asia/Jakarta). DB columns stay UTC; only the day-boundary interpretation of
  * filters/reports uses this. Invalid stored values fall back to the default.
+ * Wrapped in React cache() to eliminate duplicate lookups within the same request.
  */
-export async function getAgencyTimezone(agencyId: string): Promise<string> {
+export const getAgencyTimezone = cache(async function getAgencyTimezone(
+  agencyId: string,
+): Promise<string> {
   const agency = await prisma.agency.findUnique({
     where: { id: agencyId },
     select: { timezone: true },
   });
   return normalizeTimezone(agency?.timezone ?? DEFAULT_TIMEZONE);
-}
+});
 
 /**
  * String filter for user search. Case-insensitive on PostgreSQL via

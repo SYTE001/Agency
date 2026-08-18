@@ -80,16 +80,30 @@ export async function listLiveSessions(agencyId: string, filters: LiveFilters = 
 
 /** LIVE dashboard data (PLAN §11): live now, upcoming today, today's totals. */
 export async function getLiveDashboard(agencyId: string) {
+  const liveNowPromise = prisma.liveSession.findMany({
+    where: { agencyId, status: "Live" },
+    include: { creator: { select: { displayName: true } }, campaign: { select: { name: true } } },
+    orderBy: { startTime: "asc" },
+  });
+  const underperformingPromise = prisma.liveSession.findMany({
+    where: {
+      agencyId,
+      status: { in: ["Ended", "NeedsReview"] },
+      targetGmv: { gt: 0 },
+      startTime: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+    },
+    include: { creator: { select: { displayName: true } } },
+    orderBy: { startTime: "desc" },
+    take: 10,
+  });
+
   const tz = await getAgencyTimezone(agencyId);
   const today = new Date();
   const todayStart = dayStartInTz(tz, today);
   const todayEnd = dayEndInTz(tz, today);
+
   const [liveNow, upcoming, todayStats, underperforming] = await Promise.all([
-    prisma.liveSession.findMany({
-      where: { agencyId, status: "Live" },
-      include: { creator: { select: { displayName: true } }, campaign: { select: { name: true } } },
-      orderBy: { startTime: "asc" },
-    }),
+    liveNowPromise,
     prisma.liveSession.findMany({
       where: {
         agencyId,
@@ -104,17 +118,7 @@ export async function getLiveDashboard(agencyId: string) {
       _sum: { actualGmv: true, orders: true },
       _count: { _all: true },
     }),
-    prisma.liveSession.findMany({
-      where: {
-        agencyId,
-        status: { in: ["Ended", "NeedsReview"] },
-        targetGmv: { gt: 0 },
-        startTime: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-      },
-      include: { creator: { select: { displayName: true } } },
-      orderBy: { startTime: "desc" },
-      take: 50,
-    }),
+    underperformingPromise,
   ]);
 
   const under = underperforming

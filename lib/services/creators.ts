@@ -66,9 +66,9 @@ export async function listCreators(
     if (filters.maxFollowers != null) where.followers.lte = filters.maxFollowers;
   }
 
-  const tz = await getAgencyTimezone(agencyId);
+  const tzPromise = getAgencyTimezone(agencyId);
 
-  const [creators, total] = await Promise.all([
+  const [creators, total, tz] = await Promise.all([
     prisma.creator.findMany({
       where,
       orderBy: mapStaticSort(filters.sortBy, filters.sortDir),
@@ -77,6 +77,7 @@ export async function listCreators(
       include: { manager: { select: { id: true, name: true } } },
     }),
     prisma.creator.count({ where }),
+    tzPromise,
   ]);
 
   const ids = creators.map((c) => c.id);

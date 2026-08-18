@@ -40,7 +40,9 @@ export async function listProducts(
   if (filters.status) where.status = filters.status;
   if (filters.category) where.category = filters.category;
 
-  const [products, total] = await Promise.all([
+  const tzPromise = getAgencyTimezone(agencyId);
+
+  const [products, total, tz] = await Promise.all([
     prisma.product.findMany({
       where,
       orderBy: { name: "asc" },
@@ -49,6 +51,7 @@ export async function listProducts(
       include: { brand: { select: { id: true, name: true } } },
     }),
     prisma.product.count({ where }),
+    tzPromise,
   ]);
 
   const ids = products.map((p) => p.id);
@@ -56,7 +59,7 @@ export async function listProducts(
     return { items: [], total, page, pageSize, totalPages: totalPages(total, pageSize) };
   }
 
-  const since = daysAgoStartInTz(await getAgencyTimezone(agencyId), 30);
+  const since = daysAgoStartInTz(tz, 30);
   const recent = await prisma.productMetric.groupBy({
     by: ["productId"],
     where: { productId: { in: ids }, date: { gte: since } },

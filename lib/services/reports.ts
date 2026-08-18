@@ -35,13 +35,15 @@ const LIVE_DONE = ["Ended", "NeedsReview", "Live"] as const;
 // ---------------------------------------------------------------------------
 
 export async function getClientReport(agencyId: string, campaignId: string, period: Period) {
-  const campaign = await prisma.campaign.findFirst({
-    where: { id: campaignId, agencyId },
-    include: { brand: { select: { name: true, industry: true } } },
-  });
+  const [campaign, timeZone] = await Promise.all([
+    prisma.campaign.findFirst({
+      where: { id: campaignId, agencyId },
+      include: { brand: { select: { name: true, industry: true } } },
+    }),
+    getAgencyTimezone(agencyId),
+  ]);
   if (!campaign) return null;
 
-  const timeZone = await getAgencyTimezone(agencyId);
   const { days, start, prevStart, end } = resolvePeriod(period, timeZone);
   const inCampaignProducts = {
     date: { gte: start },

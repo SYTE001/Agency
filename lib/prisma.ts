@@ -9,8 +9,6 @@ const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefi
 
 export const prisma: PrismaClient = globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}
+globalForPrisma.prisma = prisma;
 
 export default prisma;

@@ -9,6 +9,42 @@ import { getOperationalAlerts } from "@/lib/services/alerts";
  * Day boundaries use the tenant's timezone (Agency.timezone); DB stays UTC.
  */
 export async function getOverview(agencyId: string) {
+  // Start alerts computation concurrently with overview metrics
+  const alertsPromise = getOperationalAlerts(agencyId);
+
+  // Queries that do not depend on timezone boundaries can start immediately
+  const activeCreatorsPromise = prisma.creator.count({ where: { agencyId, status: "Active" } });
+  const activeCampaignsPromise = prisma.campaign.count({
+    where: { agencyId, status: { in: ["Recruiting", "Active", "ContentReview", "Published"] } },
+  });
+  const activeBrandsPromise = prisma.brand.count({ where: { agencyId, status: "Active" } });
+  const pendingSettlementsPromise = prisma.settlement.aggregate({
+    where: { agencyId, status: { in: ["Pending", "Overdue"] } },
+    _sum: { amount: true },
+    _count: { _all: true },
+  });
+  const campaignProgressPromise = prisma.campaign.findMany({
+    where: { agencyId, status: { in: ["Recruiting", "Active", "ContentReview", "Published"] } },
+    select: {
+      id: true,
+      name: true,
+      status: true,
+      startDate: true,
+      endDate: true,
+      gmvTarget: true,
+      actualGmv: true,
+      brand: { select: { name: true } },
+    },
+    orderBy: { endDate: "asc" },
+    take: 5,
+  });
+  const recentActivityPromise = prisma.activity.findMany({
+    where: { agencyId },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    include: { actor: { select: { name: true } } },
+  });
+
   const tz = await getAgencyTimezone(agencyId);
   const since30 = daysAgoStartInTz(tz, 30);
   const since60 = daysAgoStartInTz(tz, 60);
@@ -27,6 +63,7 @@ export async function getOverview(agencyId: string) {
     gmvDaily,
     topCreators,
     recentActivity,
+    alerts,
   ] = await Promise.all([
     prisma.creatorMetric.aggregate({
       where: { creator: { agencyId }, date: { gte: since30 } },
@@ -40,11 +77,9 @@ export async function getOverview(agencyId: string) {
       where: { agencyId, createdAt: { gte: since30 } },
       _sum: { agencyRevenue: true },
     }),
-    prisma.creator.count({ where: { agencyId, status: "Active" } }),
-    prisma.campaign.count({
-      where: { agencyId, status: { in: ["Recruiting", "Active", "ContentReview", "Published"] } },
-    }),
-    prisma.brand.count({ where: { agencyId, status: "Active" } }),
+    activeCreatorsPromise,
+    activeCampaignsPromise,
+    activeBrandsPromise,
     prisma.liveSession.findMany({
       where: { agencyId, startTime: { gte: todayStart } },
       orderBy: { startTime: "asc" },
@@ -60,26 +95,8 @@ export async function getOverview(agencyId: string) {
       },
       take: 10,
     }),
-    prisma.settlement.aggregate({
-      where: { agencyId, status: { in: ["Pending", "Overdue"] } },
-      _sum: { amount: true },
-      _count: { _all: true },
-    }),
-    prisma.campaign.findMany({
-      where: { agencyId, status: { in: ["Recruiting", "Active", "ContentReview", "Published"] } },
-      select: {
-        id: true,
-        name: true,
-        status: true,
-        startDate: true,
-        endDate: true,
-        gmvTarget: true,
-        actualGmv: true,
-        brand: { select: { name: true } },
-      },
-      orderBy: { endDate: "asc" },
-      take: 5,
-    }),
+    pendingSettlementsPromise,
+    campaignProgressPromise,
     prisma.creatorMetric.groupBy({
       by: ["date"],
       where: { creator: { agencyId }, date: { gte: since30 } },
@@ -92,24 +109,22 @@ export async function getOverview(agencyId: string) {
       orderBy: { _sum: { gmv: "desc" } },
       take: 5,
     }),
-    prisma.activity.findMany({
-      where: { agencyId },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-      include: { actor: { select: { name: true } } },
-    }),
+    recentActivityPromise,
+    alertsPromise,
   ]);
 
   const totalGmv = gmvCur._sum.gmv?.toNumber() ?? 0;
   const prevGmv = gmvPrev._sum.gmv?.toNumber() ?? 0;
 
-  const topCreatorRows = await prisma.creator.findMany({
-    where: { id: { in: topCreators.map((c) => c.creatorId) } },
-    select: { id: true, displayName: true, username: true, avatarUrl: true, category: true },
-  });
+  const topCreatorIds = topCreators.map((c) => c.creatorId);
+  const topCreatorRows =
+    topCreatorIds.length > 0
+      ? await prisma.creator.findMany({
+          where: { id: { in: topCreatorIds } },
+          select: { id: true, displayName: true, username: true, avatarUrl: true, category: true },
+        })
+      : [];
   const creatorInfo = new Map(topCreatorRows.map((c) => [c.id, c]));
-
-  const alerts = await getOperationalAlerts(agencyId);
 
   return {
     kpis: {

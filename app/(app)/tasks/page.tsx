@@ -6,6 +6,7 @@ import { can } from "@/lib/authorization";
 import { TASK_PRIORITY, TASK_STATUS } from "@/lib/constants";
 import { getTaskCounts, listTasks } from "@/lib/services/tasks";
 import type { TaskFilters } from "@/lib/services/tasks";
+import { getAgencyTimezone } from "@/lib/services/common";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { EmptyState } from "@/components/empty-state";
@@ -43,6 +44,7 @@ const TABS = [
   { key: "Open", label: "Open" },
   { key: "InProgress", label: "Dikerjakan" },
   { key: "Done", label: "Selesai" },
+  { key: "Cancelled", label: "Dibatalkan" },
 ] as const;
 
 export default async function TasksPage(props: PageProps<"/tasks">) {
@@ -59,7 +61,9 @@ export default async function TasksPage(props: PageProps<"/tasks">) {
     page: num(searchParams.page) ?? 1,
   };
 
-  const [result, counts, owners] = await Promise.all([
+  // Due dates render in the tenant's business timezone; the overdue badge
+  // itself is an instant comparison (dueDate < now) and stays timezone-neutral.
+  const [result, counts, owners, tz] = await Promise.all([
     listTasks(user.agencyId, filters),
     getTaskCounts(user.agencyId),
     prisma.user.findMany({
@@ -67,6 +71,7 @@ export default async function TasksPage(props: PageProps<"/tasks">) {
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
+    getAgencyTimezone(user.agencyId),
   ]);
   const canWrite = can(user.role, "task", "write");
   const hasFilter = Boolean(filters.q || filters.status || filters.priority || filters.ownerId || filters.overdue);
@@ -86,6 +91,7 @@ export default async function TasksPage(props: PageProps<"/tasks">) {
     { label: "Dikerjakan", value: counts.inProgress },
     { label: "Terlambat", value: counts.overdue, tone: counts.overdue > 0 ? "text-destructive" : "" },
     { label: "Selesai", value: counts.done },
+    { label: "Dibatalkan", value: counts.cancelled },
   ];
 
   return (
@@ -102,7 +108,7 @@ export default async function TasksPage(props: PageProps<"/tasks">) {
       </PageHeader>
 
       {/* KPI chips */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {kpis.map((k) => (
           <Card key={k.label}>
             <CardContent className="p-4">
@@ -217,7 +223,7 @@ export default async function TasksPage(props: PageProps<"/tasks">) {
                       {t.dueDate ? (
                         <span className="inline-flex items-center gap-1">
                           <CalendarDays className="h-3.5 w-3.5" />
-                          {formatDate(t.dueDate)}
+                          {formatDate(t.dueDate, tz)}
                         </span>
                       ) : (
                         "—"
@@ -234,6 +240,9 @@ export default async function TasksPage(props: PageProps<"/tasks">) {
                           ) : null}
                           {t.status !== "Done" && t.status !== "Cancelled" ? (
                             <TaskStatusButton taskId={t.id} status="Done" label="Selesai" variant="success" />
+                          ) : null}
+                          {t.status === "Open" || t.status === "InProgress" ? (
+                            <TaskStatusButton taskId={t.id} status="Cancelled" label="Batalkan" variant="destructive" />
                           ) : null}
                           {t.status === "Done" ? (
                             <TaskStatusButton taskId={t.id} status="Open" label="Buka lagi" />

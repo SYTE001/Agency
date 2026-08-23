@@ -1,4 +1,4 @@
-import { Bell, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { Avatar } from "@/components/ui/avatar";
 import { CommandPalette } from "@/components/command-palette";
@@ -18,7 +18,9 @@ export function AppTopbar({
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/70 bg-card px-4">
       <div className="flex items-center gap-2">
         {leading}
-        <span className="text-sm font-semibold tracking-tight">Kreatif Nusantara</span>
+        <span className="hidden truncate text-sm font-semibold tracking-tight sm:inline">
+          {user.agencyName}
+        </span>
         <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
           Agency OS
         </span>
@@ -26,9 +28,6 @@ export function AppTopbar({
 
       <div className="flex items-center gap-1">
         <CommandPalette />
-        <Button variant="ghost" size="icon" aria-label="Notifikasi">
-          <Bell />
-        </Button>
         <ThemeToggle />
         <div className="ml-2 flex items-center gap-2.5 border-l pl-3">
           <Avatar name={user.name} />

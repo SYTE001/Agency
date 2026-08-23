@@ -4,6 +4,7 @@
 
 import { cache } from "react";
 import prisma from "@/lib/prisma";
+import { isSqliteProvider } from "@/lib/dbProvider";
 import { DEFAULT_TIMEZONE, normalizeTimezone } from "@/lib/timezone";
 
 export type ListResult<T> = {
@@ -44,11 +45,11 @@ export const getAgencyTimezone = cache(async function getAgencyTimezone(
 
 /**
  * String filter for user search. Case-insensitive on PostgreSQL via
- * `mode: "insensitive"` (ILIKE). The SQLite dev/test client has no `mode`
- * option in its generated types, but SQLite `LIKE` is case-insensitive for
- * ASCII by default and Prisma ignores unknown filter keys there — so the same
- * object literal works on both providers.
+ * `mode: "insensitive"` (ILIKE). The SQLite dev/test runtime must NOT send
+ * `mode` — Prisma 7 rejects unknown filter keys at request validation — but
+ * its LIKE is already case-insensitive for ASCII. Provider detection mirrors
+ * the runtime client selection in lib/prismaClient.ts.
  */
-export function containsInsensitive(q: string): { contains: string; mode: "insensitive" } {
-  return { contains: q, mode: "insensitive" };
+export function containsInsensitive(q: string): { contains: string; mode?: "insensitive" } {
+  return isSqliteProvider() ? { contains: q } : { contains: q, mode: "insensitive" };
 }

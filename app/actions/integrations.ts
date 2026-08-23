@@ -8,6 +8,7 @@ import {
   importProductsCsv,
   runMockSync,
   getOrCreateIntegration,
+  isMockSyncEnabled,
 } from "@/lib/services/integrations";
 import { logActivity } from "@/lib/services/activity";
 
@@ -73,6 +74,16 @@ export async function runSyncAction(): Promise<IntegrationFormState> {
   const user = await requireIntegrationManager();
   if (!user) return { error: "Anda tidak memiliki izin untuk mengelola integrasi." };
 
+  // Server-side opt-in gate (Phase 3 P0 #1): mock sync must be enabled
+  // explicitly and can never run in production. The service re-checks this,
+  // so the refusal holds even if the mutation is invoked from elsewhere.
+  if (!isMockSyncEnabled()) {
+    return {
+      error:
+        "Sinkronisasi mock dinonaktifkan. Aktifkan hanya di development/demo dengan variabel lingkungan MOCK_SYNC_ENABLED=true.",
+    };
+  }
+
   const outcome = await runMockSync(user.agencyId);
   const integration = await getOrCreateIntegration(user.agencyId);
   await logActivity({
@@ -86,6 +97,6 @@ export async function runSyncAction(): Promise<IntegrationFormState> {
 
   revalidatePath("/settings/integrations");
   return outcome.status === "Success"
-    ? { success: "Sinkronisasi selesai. Metrik creator dan GMV campaign diperbarui." }
+    ? { success: "Sinkronisasi selesai. Metrik creator simulasi dibuat — data campaign tidak diubah." }
     : { error: "Sinkronisasi gagal. Lihat log sync untuk detailnya." };
 }

@@ -17,6 +17,7 @@ import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
 import { getLiveDetail } from "@/lib/services/live";
 import { getNotes } from "@/lib/services/activity";
+import { getAgencyTimezone } from "@/lib/services/common";
 import { StatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,13 +54,16 @@ export default async function LiveDetailPage(props: PageProps<"/live/[id]">) {
   const { session, metrics, activity } = detail;
   const canWrite = can(user.role, "live", "write");
 
-  const [notes, tasks] = await Promise.all([
+  // Rendered timestamps (start/end, metric snapshots, relative note/activity
+  // times) follow the tenant's business timezone, not the server's.
+  const [notes, tasks, tz] = await Promise.all([
     getNotes("LiveSession", session.id, user.agencyId),
     prisma.task.findMany({
       where: { agencyId: user.agencyId, relatedType: "LiveSession", relatedId: session.id },
       orderBy: { dueDate: "asc" },
       take: 10,
     }),
+    getAgencyTimezone(user.agencyId),
   ]);
 
   const targetGmv = session.targetGmv.toNumber();
@@ -165,9 +169,9 @@ export default async function LiveDetailPage(props: PageProps<"/live/[id]">) {
           <CardContent className="space-y-3 text-sm">
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               <span className="text-muted-foreground">Waktu mulai</span>
-              <span>{formatDateTime(session.startTime)}</span>
+              <span>{formatDateTime(session.startTime, tz)}</span>
               <span className="text-muted-foreground">Waktu selesai</span>
-              <span>{session.endTime ? formatDateTime(session.endTime) : "—"}</span>
+              <span>{session.endTime ? formatDateTime(session.endTime, tz) : "—"}</span>
               <span className="text-muted-foreground">Room / Studio</span>
               <span>{session.room ?? "—"}</span>
               <span className="text-muted-foreground">Operator</span>
@@ -219,7 +223,7 @@ export default async function LiveDetailPage(props: PageProps<"/live/[id]">) {
                     key={m.id}
                     className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md bg-muted/50 px-3 py-2 text-sm"
                   >
-                    <span className="w-28 shrink-0 font-medium">{formatDateTime(m.timestamp)}</span>
+                    <span className="w-28 shrink-0 font-medium">{formatDateTime(m.timestamp, tz)}</span>
                     <span className="inline-flex items-center gap-1 text-muted-foreground">
                       <Eye className="h-3.5 w-3.5" />{formatNumber(m.viewers)}
                     </span>
@@ -273,7 +277,7 @@ export default async function LiveDetailPage(props: PageProps<"/live/[id]">) {
                 <div key={n.id} className="rounded-md bg-muted/50 p-3 text-sm">
                   <p>{n.content}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {n.author.name} · {timeAgo(n.createdAt)}
+                    {n.author.name} · {timeAgo(n.createdAt, tz)}
                   </p>
                 </div>
               ))
@@ -301,7 +305,7 @@ export default async function LiveDetailPage(props: PageProps<"/live/[id]">) {
                       <p className="font-medium">{a.action}</p>
                       {a.details ? <p className="text-xs text-muted-foreground">{a.details}</p> : null}
                       <p className="text-xs text-muted-foreground">
-                        {a.actor?.name ?? "Sistem"} · {timeAgo(a.createdAt)}
+                        {a.actor?.name ?? "Sistem"} · {timeAgo(a.createdAt, tz)}
                       </p>
                     </div>
                   </div>

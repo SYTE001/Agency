@@ -8,6 +8,7 @@ import {
   HandCoins,
   Megaphone,
   Package,
+  Pencil,
   StickyNote,
   TrendingUp,
   Users,
@@ -89,19 +90,30 @@ export default async function BrandDetailPage(props: PageProps<"/brands/[id]">) 
             ) : null}
           </div>
         </div>
-        <div className="flex gap-6 text-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">Campaign</p>
-            <p className="font-semibold">{totals.campaignCount}</p>
+        <div className="flex items-start gap-6">
+          <div className="flex gap-6 text-sm">
+            <div>
+              <p className="text-xs text-muted-foreground">Campaign</p>
+              <p className="font-semibold">{totals.campaignCount}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Produk</p>
+              <p className="font-semibold">{totals.productCount}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Kontak</p>
+              <p className="font-semibold">{brand.contacts.length}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Produk</p>
-            <p className="font-semibold">{totals.productCount}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Kontak</p>
-            <p className="font-semibold">{brand.contacts.length}</p>
-          </div>
+          {canWrite ? (
+            <Link
+              href={`/brands/${brand.id}/edit`}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border bg-card px-4 text-sm font-medium transition-colors hover:bg-accent"
+            >
+              <Pencil className="h-4 w-4" />
+              Ubah
+            </Link>
+          ) : null}
         </div>
       </div>
 

@@ -1,568 +1,1033 @@
-# Agency OS — Production-Safe Development
+# Agency OS — Portfolio Completion Plan
 
-Kamu bekerja langsung pada repository `SYTE001/Agency`.
-
-Repository ini SUDAH memiliki arsitektur aplikasi yang berjalan. Jangan melakukan rewrite, migrasi framework, atau restrukturisasi besar hanya untuk menyelesaikan task.
-
-## Tujuan
-
-Siapkan repository agar aman untuk:
-
-1. Local development
-2. Vercel preview deployment
-3. Production deployment
-4. Pengembangan fitur/UI berikutnya tanpa merusak auth, database, RBAC, multi-tenancy, atau financial logic.
-
-## HARD CONSTRAINTS
-
-JANGAN:
-
-* mengganti Next.js
-* mengganti React
-* mengganti Prisma
-* mengganti PostgreSQL sebagai database production
-* menghapus service layer
-* memindahkan database query langsung ke component
-* menghapus RBAC
-* mengubah mekanisme multi-tenancy `agencyId`
-* mengubah formula finance tanpa alasan dan test
-* menggunakan SQLite sebagai database production
-* memasukkan secret/API key/password ke source code
-* menjalankan seed development terhadap production
-* membuat mock API sebagai pengganti database/API production
-* melakukan rewrite besar terhadap architecture
-* menghapus fitur existing hanya karena belum sempurna
-
-Jika sebuah perubahan tidak diperlukan untuk task, JANGAN ubah.
+> This PLAN.md replaces the previous enterprise-heavy roadmap.
+>
+> The goal is no longer to make Agency OS an enterprise production SaaS.
+> The goal is to make it a convincing portfolio product:
+>
+> **clean UI/UX + complete visible workflows + responsive/mobile-safe + fast + lightweight + no errors + no fake business data.**
+>
+> Production deployment is OUT OF SCOPE for this coding phase.
 
 ---
 
-# 1. Production Environment
+# 0. MAIN GOAL
 
-Audit dan pastikan environment production menggunakan:
+Agency OS should feel like a real, polished agency-management product when someone opens the portfolio demo.
 
-```env
-DATABASE_URL=postgresql://...
-AUTH_SECRET=<random-secret-minimum-32-chars>
-DB_PROVIDER=postgresql
-TZ=Asia/Jakarta
+The final experience must satisfy:
+
+```text
+Looks premium
++
+Feels fast
++
+Works end-to-end
++
+Works on desktop
++
+Works on mobile
++
+No broken routes
++
+No visible runtime errors
++
+No fake customer/business data
++
+No unnecessary complexity
 ```
 
-Jangan pernah commit nilai asli secret.
+Priority:
 
-Pastikan `.env`, credential, database URL production, password, token, API key, dan session secret tetap berada di environment Vercel/local.
+```text
+1. Data cleanliness
+2. Core functionality
+3. UI/UX quality
+4. Responsive/mobile experience
+5. Performance
+6. Final demo QA
+```
 
-Pertahankan `.env.example` sebagai template tanpa credential asli.
+Do NOT optimize for enterprise completeness.
 
 ---
 
-# 2. Database
+# 1. HARD RULES
 
-Production wajib menggunakan PostgreSQL.
+## 1.1 No dummy business data
 
-Local development tetap boleh menggunakan SQLite.
+The database must contain NO invented/demo business records by default.
 
-Jangan menggabungkan database local dan production.
+Remove or neutralize all demo data for:
 
-Pastikan:
+- Agency
+- Brand
+- BrandContact
+- Creator
+- CreatorMetric
+- CreatorPlatformAccount
+- Product
+- ProductMetric
+- Campaign
+- CampaignCreator
+- CampaignProduct
+- ContentItem
+- ContentRevision
+- LiveSession
+- LiveMetric
+- Task
+- Activity
+- Note
+- Commission
+- CreatorPayout
+- Settlement
+- Report
+- Integration
+- SyncJob
+- SyncLog
+- any other business entity
 
-```text
-Local:
-SQLite → better-sqlite3
+Do NOT leave fake names, fake customers, fake creators, fake campaign values, fake GMV, fake revenue, fake reports, or fake metrics.
 
-Production:
-PostgreSQL → pg / @prisma/adapter-pg
-```
-
-Jangan menggunakan `prisma/dev.db` sebagai persistent production storage.
-
-Sebelum mengubah schema Prisma:
-
-1. inspect schema existing
-2. inspect migration existing
-3. cek impact terhadap PostgreSQL
-4. jangan menghapus migration existing
-5. jangan reset production database
-
-Jika membutuhkan perubahan schema, buat migration yang proper.
-
----
-
-# 3. Timezone — Asia/Jakarta
-
-Perbaiki masalah timezone production.
-
-Agency menggunakan:
-
-```text
-Asia/Jakarta
-```
-
-Pastikan fungsi seperti:
-
-* daily metrics
-* date range
-* overdue task
-* laporan
-* campaign date
-* finance date
-* dashboard statistics
-
-tidak bergantung secara tidak sengaja pada timezone UTC server.
-
-Jangan hanya mengubah tampilan tanggal.
-
-Perhitungan boundary hari harus konsisten dengan timezone bisnis.
-
-Jika architecture saat ini belum mendukung timezone tenant secara penuh, gunakan `Agency.timezone` sebagai source of truth tanpa melakukan rewrite architecture.
-
-Default:
-
-```text
-Asia/Jakarta
-```
+Do NOT use placeholder business records to make the dashboard look populated.
 
 ---
 
-# 4. PostgreSQL Search Compatibility
+## 1.2 No fake dashboard numbers
 
-Audit semua penggunaan Prisma:
+When the database is empty:
 
-```text
-contains
-startsWith
-endsWith
-```
+- revenue = 0
+- GMV = 0
+- campaigns = 0
+- creators = 0
+- products = 0
+- LIVE sessions = 0
+- tasks = 0
+- reports = empty
 
-Perhatikan perbedaan case sensitivity antara SQLite dan PostgreSQL.
+Do not generate fake numbers.
 
-Jika search UI sebelumnya bersifat case-insensitive, pertahankan behavior tersebut di PostgreSQL.
+Do not use random values.
 
-Jangan mengubah UX search.
+Do not silently invoke mock sync.
 
-Jangan melakukan perubahan database yang tidak diperlukan.
-
----
-
-# 5. Authentication
-
-Pertahankan:
-
-```text
-JWT
-httpOnly cookie
-jose
-AUTH_SECRET
-```
-
-Pastikan:
-
-* unauthenticated user tidak bisa membuka protected routes
-* session diverifikasi server-side
-* user tidak bisa mengganti `agencyId` melalui request payload
-* role tidak dipercaya dari client
-* perubahan role berlaku setelah session/user reload
-* password tidak pernah disimpan plaintext
-* password production tidak berada di repository
-
-Jangan mengganti auth system.
+Do not create synthetic metrics during page load.
 
 ---
 
-# 6. Multi-Tenancy
+## 1.3 Empty state must look intentional
 
-Ini adalah bagian CRITICAL.
+An empty database must produce a polished product experience.
 
-Semua business data harus tetap terisolasi berdasarkan:
+Every major module needs a useful empty state:
 
 ```text
-agencyId
+Title
+Short explanation
+Primary action
+Optional secondary action
 ```
 
-Jangan pernah mengambil:
+Examples:
 
-```ts
-agencyId
+```text
+No creators yet
+Add your first creator to start managing your roster.
+
+[ Add Creator ]
 ```
 
-dari form/client payload sebagai source of truth.
+Do NOT display broken-looking blank pages.
 
-Gunakan agency dari authenticated server session/database.
-
-Audit:
-
-* creators
-* brands
-* products
-* campaigns
-* content
-* live sessions
-* tasks
-* finance
-* commissions
-* payouts
-* settlements
-* reports
-* search
-
-Pastikan tenant A tidak bisa membaca, mengubah, atau menghapus data tenant B.
-
-Jangan menghapus integration tests untuk tenant isolation.
+Do NOT fill empty tables with fake rows.
 
 ---
 
-# 7. RBAC
+# 2. AUTH / BOOTSTRAP DATA
 
-Pertahankan role system existing:
+The application still needs a legitimate way for an owner to access the system.
+
+Allowed:
 
 ```text
-owner
-admin
-account_manager
-creator_manager
-campaign_manager
-live_manager
-finance
-viewer
+bootstrap owner
 ```
 
-Semua mutation harus tetap melewati server-side authorization.
+Not allowed:
 
-Jangan hanya menyembunyikan tombol UI.
+```text
+demo owner
+demo agency
+demo customers
+demo creators
+demo campaigns
+```
 
-Authorization harus tetap dilakukan di server action/service layer.
+A bootstrap owner is an actual system access mechanism, not business demo data.
 
-Jika UI menampilkan tombol berdasarkan permission, itu hanya UX layer; bukan security layer.
+Requirements:
+
+- production secrets never committed
+- no hardcoded production password
+- bootstrap process remains explicit
+- no automatic creation of fake business records
+- no demo seed on normal development startup
+
+If the current seed script creates business demo data:
+
+- remove that behavior
+- split system/bootstrap behavior from demo data
+- make normal initialization data-empty
+- preserve a safe owner/bootstrap path
+
+Do NOT require a fake agency/customer dataset just to make login work.
 
 ---
 
-# 8. Service Layer
+# 3. DATABASE CLEANUP
 
-Pertahankan prinsip:
+Audit all seed/demo mechanisms.
+
+Inspect:
+
+- prisma/seed.ts
+- database initialization
+- bootstrap scripts
+- mock sync
+- fixtures
+- test-only data
+- demo constants
+- hardcoded dashboard values
+- sample CSVs used as fake records
+- development data generators
+
+Classify each one:
 
 ```text
-UI
- ↓
-Server Action
- ↓
-Authorization
- ↓
-Service
- ↓
-Prisma
- ↓
-PostgreSQL
+SYSTEM BOOTSTRAP
+TEST FIXTURE
+DEMO DATA
+PRODUCTION DATA
 ```
 
-Jangan membuat component seperti:
+Rules:
 
-```ts
-prisma.creator.findMany(...)
-```
-
-langsung dari UI/page/component.
-
-Semua database access tetap melalui service layer yang sudah ada.
+- TEST FIXTURE may remain if isolated from real/dev database.
+- SYSTEM BOOTSTRAP may remain.
+- DEMO DATA must not populate the normal application database.
+- PRODUCTION DATA must never be committed.
 
 ---
 
-# 9. Financial Logic
+# 4. REMOVE DEMO / MOCK DATA FROM UI
 
-Jangan mengubah formula existing tanpa alasan.
+Search entire repository for:
 
-Pertahankan:
+- hardcoded names
+- sample agency names
+- sample creators
+- fake GMV
+- fake revenue
+- placeholder campaigns
+- demo task rows
+- mock chart series
+- static analytics arrays
+- example customer names
+- fake TikTok handles
+- sample dashboard totals
+
+Replace only where they are actually used as business data.
+
+Do NOT replace legitimate:
+
+- labels
+- empty-state copy
+- form placeholders
+- examples inside documentation
+- constants
+- test fixtures
+
+The target is:
 
 ```text
-creatorCommission
-= GMV × creatorRate%
-
-agencyRevenue
-= creatorCommission × agencyShareRate%
-
-creatorPayout
-= creatorCommission − agencyRevenue
+UI gets business data from DB
+OR
+UI renders an honest empty state
 ```
 
-Money tetap menggunakan Decimal/integer-safe calculation sesuai implementation existing.
-
-Jangan menggunakan floating-point arithmetic baru untuk financial calculation.
-
-Setiap perubahan finance wajib memiliki/update test.
-
----
-
-# 10. API / Integration
-
-Jangan menganggap halaman:
+Never:
 
 ```text
-settings/integrations
-```
-
-sebagai official TikTok API integration jika implementation existing masih berupa internal simulation.
-
-Jangan mengklaim:
-
-```text
-TikTok API connected
-```
-
-jika sebenarnya belum ada official API integration.
-
-Jika nanti membuat integration nyata, buat abstraction terpisah tanpa merusak existing internal workflow.
-
----
-
-# 11. Error Handling
-
-Audit production error handling.
-
-User harus mendapatkan error yang jelas seperti:
-
-```text
-Something went wrong.
-Please try again.
-```
-
-Jangan expose:
-
-* database connection string
-* stack trace
-* Prisma internal error
-* JWT secret
-* API key
-* SQL query
-* server filesystem path
-
-ke browser.
-
-Server log boleh memiliki detail debugging yang diperlukan, tetapi jangan log secret/password/token.
-
----
-
-# 12. Loading & Performance
-
-Pertahankan architecture server-first.
-
-Jangan menambahkan:
-
-* unnecessary polling
-* `setInterval`
-* massive client-side fetching
-* duplicate API requests
-* giant client components
-* unnecessary global state
-
-Audit halaman dashboard dan tab yang sebelumnya terasa lambat.
-
-Jika data yang sama diminta berkali-kali saat navigation, identifikasi penyebabnya sebelum menambahkan cache.
-
-Jangan menambahkan artificial loading animation sebagai solusi terhadap query lambat.
-
-Jika query lambat:
-
-```text
-inspect query
-→ inspect indexes
-→ inspect duplicated requests
-→ inspect server/client boundary
-→ optimize actual bottleneck
+UI invents business data
 ```
 
 ---
 
-# 13. UI Development Rule
+# 5. CORE FUNCTIONALITY
 
-Mulai sekarang repository dianggap sebagai:
+The portfolio demo does not need every enterprise feature.
 
-```text
-FUNCTIONAL BASELINE
-```
+The following visible workflows must work:
 
-UI boleh di-enhance secara agresif selama functionality tidak rusak.
+## Auth
 
-Gunakan prinsip:
+- [ ] Login
+- [ ] Logout
+- [ ] Session persistence
+- [ ] Protected routes
+- [ ] RBAC
+
+## Dashboard
+
+- [ ] Loads with empty database
+- [ ] Zero values are correct
+- [ ] Empty/zero state is visually polished
+- [ ] No runtime errors
+- [ ] No fake charts
+
+## Creators
+
+- [ ] List
+- [ ] Search/filter
+- [ ] Create
+- [ ] Detail
+- [ ] Edit
+- [ ] Archive/status
+
+## Brands
+
+- [ ] List
+- [ ] Search/filter
+- [ ] Create
+- [ ] Detail
+- [ ] Edit
+- [ ] Archive/status
+
+## Products
+
+- [ ] List
+- [ ] Search/filter/sort
+- [ ] Create
+- [ ] Detail
+- [ ] Edit
+- [ ] Archive/status
+
+## Campaigns
+
+Only implement the minimum visible flow needed for a strong demo:
+
+- [ ] List
+- [ ] Create
+- [ ] Detail
+- [ ] Edit
+- [ ] Brand relation
+- [ ] Creator relation
+- [ ] Product relation
+- [ ] Status
+- [ ] Basic campaign metrics from real DB values
+
+Do not build enterprise workflow complexity unless already present and stable.
+
+## Content
+
+Minimum useful flow:
+
+- [ ] List
+- [ ] Create/edit where already supported
+- [ ] Campaign relation
+- [ ] Creator relation
+- [ ] Status
+- [ ] Empty state
+
+## LIVE
+
+Minimum useful flow:
+
+- [ ] List/calendar
+- [ ] Schedule
+- [ ] Detail/edit where already supported
+- [ ] Creator relation
+- [ ] Campaign relation
+- [ ] Product/brand relation where already present
+- [ ] Empty calendar state
+
+## Tasks
+
+- [ ] List
+- [ ] Create
+- [ ] Status change
+- [ ] Cancel
+- [ ] Filter
+- [ ] Empty state
+
+## Finance / Reports
+
+Only preserve existing working functionality.
+
+Requirements:
+
+- [ ] no fake numbers
+- [ ] zero/empty state when no transactions exist
+- [ ] existing Decimal-safe calculations remain intact
+- [ ] existing exports do not break
+
+Do not build new accounting features for this phase.
+
+---
+
+# 6. UI / UX POLISH
+
+This is now a PRIMARY objective.
+
+Do not redesign the product concept.
+
+Improve the existing visual system consistently.
+
+## 6.1 Global design goals
+
+Target:
 
 ```text
 Apple-inspired
 minimal
-clean
+premium
+quiet
 high information density
-subtle borders
 clear hierarchy
-responsive
 fast
+restrained
 ```
 
-Tetapi:
+Use:
 
-JANGAN:
+- consistent spacing
+- predictable card structure
+- clear typography hierarchy
+- subtle borders
+- restrained shadows
+- strong alignment
+- consistent radius
+- consistent button sizing
+- consistent form patterns
+- clear active states
 
-* rewrite architecture hanya demi UI
-* mengganti data flow
-* menghapus existing functionality
-* mengganti route structure tanpa alasan
-* memindahkan business logic ke client
-* membuat dummy data untuk menggantikan real data
+Avoid:
 
----
-
-# 14. Before Every Change
-
-Sebelum mengubah file:
-
-1. inspect existing implementation
-2. identify dependencies
-3. identify data flow
-4. identify server/client boundary
-5. identify auth/RBAC impact
-6. identify database impact
-7. make the smallest safe change
-
-Jangan langsung overwrite file besar.
+- excessive gradients
+- excessive animations
+- giant empty whitespace
+- oversized cards
+- unnecessary decorative effects
+- visual noise
+- fake "AI SaaS" styling
 
 ---
 
-# 15. Validation
+# 7. NAVIGATION / INFORMATION ARCHITECTURE
 
-Setelah perubahan jalankan:
+Audit the entire sidebar/topbar/navigation.
+
+Goal:
+
+```text
+User should know where they are
+and what to do next within seconds.
+```
+
+Check:
+
+- active navigation state
+- section grouping
+- labels
+- icon consistency
+- nested routes
+- breadcrumb usage where useful
+- back navigation
+- mobile navigation
+
+Remove confusing duplication.
+
+Do not remove useful existing routes.
+
+---
+
+# 8. DASHBOARD POLISH
+
+Dashboard is the portfolio first impression.
+
+Optimize:
+
+## Top section
+
+- clear greeting
+- concise context
+- useful primary actions
+- correct tenant/timezone context
+
+## Metric cards
+
+- visually consistent
+- zero-safe
+- no fake numbers
+- no unnecessary animation
+- fast rendering
+
+## Charts
+
+When empty:
+
+Do NOT draw fabricated graphs.
+
+Use a polished empty visualization state:
+
+```text
+No data yet
+Metrics will appear once activity is recorded.
+```
+
+## Activity / Tasks
+
+Prioritize useful information instead of filling space.
+
+---
+
+# 9. TABLE UX
+
+Tables are important for Agency OS.
+
+Improve:
+
+- row spacing
+- column alignment
+- status badges
+- numeric formatting
+- sort affordances
+- filters
+- search
+- empty state
+- hover state
+- row actions
+- mobile behavior
+
+On mobile:
+
+Do NOT force a desktop table into a tiny viewport.
+
+Use the best existing pattern:
+
+```text
+responsive table
+OR
+horizontal scroll
+OR
+mobile card/list representation
+```
+
+Choose based on information density.
+
+---
+
+# 10. FORMS
+
+All major forms should feel consistent.
+
+Standardize:
+
+- label hierarchy
+- input height
+- spacing
+- required indicators
+- validation text
+- loading state
+- disabled state
+- success feedback
+- error feedback
+- submit/cancel actions
+
+Avoid:
+
+- giant forms with unclear grouping
+- generic browser validation as the only feedback
+- silent failures
+
+---
+
+# 11. EMPTY / LOADING / ERROR STATES
+
+Every major page must explicitly handle:
+
+## Empty
+
+No data yet.
+
+## Loading
+
+Data is being fetched.
+
+## Error
+
+Something went wrong.
+
+## Success
+
+Mutation succeeded.
+
+No route should visually collapse when one of these states occurs.
+
+---
+
+# 12. MOBILE / RESPONSIVE
+
+This is a PRIMARY requirement.
+
+Test at least:
+
+```text
+360px
+390px
+430px
+768px
+1024px
+1280px+
+```
+
+Check:
+
+- login
+- dashboard
+- sidebar/navigation
+- tables
+- forms
+- detail pages
+- charts
+- modals
+- dropdowns
+- buttons
+- cards
+- tabs
+- calendar
+- finance pages
+
+Requirements:
+
+- no horizontal overflow unless intentional
+- no clipped text
+- no unusable controls
+- no giant desktop-only components
+- no broken fixed positioning
+- no inaccessible mobile menus
+
+Touch targets should remain comfortable.
+
+---
+
+# 13. PERFORMANCE
+
+Goal:
+
+```text
+fast first render
+low unnecessary JavaScript
+low network duplication
+low memory use
+```
+
+Audit:
+
+- unnecessary `"use client"`
+- giant client components
+- duplicate requests
+- unnecessary `router.refresh()`
+- repeated server actions
+- excessive re-renders
+- oversized images
+- unoptimized images
+- unnecessary libraries
+- polling
+- setInterval
+- heavy chart rendering
+- giant data fetches
+
+Do NOT optimize prematurely.
+
+Only change confirmed bottlenecks or obvious waste.
+
+---
+
+# 14. DATA FETCHING
+
+Prefer:
+
+```text
+Server Component
+→ service
+→ Prisma
+```
+
+Use Client Components where interaction genuinely requires them.
+
+Avoid:
+
+```text
+Server Component
+→ API
+→ client fetch
+→ refresh
+→ duplicate fetch
+```
+
+Do not rewrite working architecture merely for theoretical purity.
+
+---
+
+# 15. SEARCH / FILTER / SORT
+
+Verify every major data table:
+
+- search works
+- filter works
+- sort works
+- empty results are clear
+- query state survives expected navigation
+- SQLite development still works
+- PostgreSQL compatibility remains intact
+
+Preserve the provider-aware `containsInsensitive()` fix.
+
+Do not regress it.
+
+---
+
+# 16. PERFORMANCE ON MOBILE
+
+Do a focused mobile audit.
+
+Pay special attention to:
+
+- dashboard charts
+- large tables
+- calendar
+- settings
+- forms
+- sidebar
+- global search
+
+Do not send unnecessary datasets to the client.
+
+---
+
+# 17. CONSOLE / RUNTIME CLEANUP
+
+Before code-complete:
+
+Search for:
+
+- console errors
+- hydration warnings
+- React warnings
+- missing keys
+- invalid nesting
+- failed requests
+- failed image loads
+- unhandled promise rejections
+
+The portfolio demo should open cleanly without obvious runtime errors.
+
+Allowed:
+
+```text
+intentional server logging
+```
+
+Not allowed:
+
+```text
+browser console red errors
+framework runtime error overlays
+```
+
+---
+
+# 18. ACCESSIBILITY BASELINE
+
+Do not perform an enterprise accessibility rewrite.
+
+Ensure at minimum:
+
+- buttons are accessible
+- inputs have labels
+- dialogs can close
+- keyboard focus is visible
+- icons with actions have accessible labels
+- contrast is readable
+- mobile controls are usable
+
+---
+
+# 19. CODE QUALITY BOUNDARIES
+
+During polish:
+
+DO:
+
+- remove obvious duplication
+- extract repeated UI patterns
+- simplify unnecessarily large components
+- fix clear naming inconsistencies
+- remove dead UI code
+- reduce obvious client-side weight
+
+DO NOT:
+
+- rewrite architecture
+- replace Next.js
+- replace Prisma
+- replace auth
+- replace RBAC
+- rewrite the database layer
+- add frameworks without need
+- build a new design system from scratch
+
+---
+
+# 20. FINAL DEMO QA
+
+Run the actual app and manually verify:
+
+## Desktop
+
+- [ ] Login
+- [ ] Dashboard
+- [ ] Creator
+- [ ] Brand
+- [ ] Product
+- [ ] Campaign
+- [ ] Content
+- [ ] LIVE
+- [ ] Tasks
+- [ ] Finance
+- [ ] Reports
+- [ ] Settings
+
+## Mobile
+
+Repeat the important flows on:
+
+- [ ] 360px
+- [ ] 390px
+- [ ] 430px
+
+## Empty database
+
+Confirm:
+
+- [ ] no fake business records
+- [ ] no fake dashboard metrics
+- [ ] no fake charts
+- [ ] empty tables look intentional
+- [ ] empty states have useful CTA
+- [ ] login still works with legitimate owner/bootstrap flow
+
+## Runtime
+
+- [ ] no error overlay
+- [ ] no browser console errors
+- [ ] no hydration warnings
+- [ ] no broken navigation
+- [ ] no infinite loading
+- [ ] no obvious duplicate requests
+
+---
+
+# 21. FINAL AUTOMATED CHECKS
+
+Run:
 
 ```bash
 npm run lint
-npm run test
+npm test
 npm run build
 ```
 
-Jika tersedia environment PostgreSQL test, jalankan test terhadap PostgreSQL juga.
+Also verify Prisma only when relevant.
 
-Pastikan tidak ada:
+Record exact results.
 
-```text
-TypeScript errors
-ESLint errors
-Prisma errors
-build errors
-missing environment variable errors
-auth regression
-tenant isolation regression
-```
-
-Jika build gagal karena environment variable lokal tidak tersedia, bedakan:
-
-```text
-real code error
-```
-
-dengan:
-
-```text
-missing local configuration
-```
-
-Jangan membuat fake secret untuk menyembunyikan error.
+Never write PASS without running the command.
 
 ---
 
-# 16. Git Safety
+# 22. DATABASE STATE CHECK
 
-Sebelum perubahan besar:
+Before declaring code complete:
 
-```bash
-git status
-git branch
-git log -5 --oneline
+Audit the local development database.
+
+Goal:
+
+```text
+NO DEMO BUSINESS DATA
 ```
 
-Jangan melakukan:
+Expected:
 
-```bash
-git reset --hard
-git clean -fd
-```
+- no fake creators
+- no fake brands
+- no fake products
+- no fake campaigns
+- no fake finance records
+- no fake metrics
+- no fake tasks
+- no fake reports
 
-kecuali secara eksplisit diminta.
+Only legitimate bootstrap/auth state may exist if required for local access.
 
-Jangan menghapus perubahan user yang belum committed.
+If the development database currently contains demo data:
 
-Setiap perubahan harus mudah di-review dan di-revert.
+- remove it safely
+- do not reset unrelated schema
+- do not touch production
+- verify that empty states still work afterward
 
 ---
 
-# 17. Definition of Done
+# 23. CODE-COMPLETE STOP CONDITION
 
-Task dianggap selesai hanya jika:
+When all above passes:
 
-* existing functionality tetap bekerja
-* authentication tetap bekerja
-* RBAC tetap bekerja
-* tenant isolation tetap bekerja
-* PostgreSQL production path tetap bekerja
-* SQLite local development tetap bekerja
-* finance calculation tidak berubah secara tidak sengaja
-* no secrets committed
-* lint passed
-* tests passed
-* production build passed
-* UI responsive
-* tidak ada console error yang berasal dari perubahan
-* tidak ada unnecessary architecture rewrite
+```text
+UI/UX POLISH: PASS
+RESPONSIVE: PASS
+PERFORMANCE: PASS
+EMPTY DATA: PASS
+RUNTIME: PASS
+LINT: PASS
+TEST: PASS
+BUILD: PASS
+```
+
+STOP CODE DEVELOPMENT.
+
+Do NOT continue into production deployment.
+
+The application is then:
+
+```text
+PORTFOLIO COMPLETE
+```
+
+not:
+
+```text
+PRODUCTION LIVE
+```
 
 ---
 
-# PRIORITY
+# 24. OUTSIDE CODE — USER'S WORK
 
-Jika menemukan konflik antara:
+After code completion, remaining work belongs outside Claude Code:
+
+## Vercel
+
+- environment variables
+- deployment configuration
+- production settings
+
+## PostgreSQL / Supabase
+
+- create production database
+- connection string
+- migration
+- production owner
+- production data
+
+## Real integrations
+
+- TikTok developer account
+- OAuth credentials
+- API scopes
+- approval
+- production callback URL
+
+## Domain
+
+- DNS
+- domain
+- OAuth callback URLs
+- HTTPS
+
+## Real business data
+
+- agency
+- users
+- brands
+- creators
+- products
+- campaigns
+- finance
+- reports
+
+No demo data should be copied into production.
+
+---
+
+# 25. OPERATING MODE FOR CLAUDE CODE
+
+At the start of every task:
 
 ```text
-visual improvement
+Read PLAN.md.
+Find the next unchecked item.
+Implement only that scope.
+Do not revisit completed work without a concrete regression.
+Run validation.
+Update PLAN.md.
+Report.
+Continue.
 ```
 
-dan:
+The agent may continue sequentially through the plan until:
 
 ```text
-security / data integrity / architecture
+PORTFOLIO COMPLETE
 ```
 
-selalu prioritaskan:
+Then it must STOP.
+
+---
+
+# 26. FINAL SUCCESS CRITERIA
+
+Agency OS is finished for portfolio purposes when:
 
 ```text
-Security
->
-Data integrity
->
-Authentication
->
-Multi-tenancy
->
-RBAC
->
-Database integrity
->
-Performance
->
-UX
->
-Visual polish
+No fake business data
++
+Core workflows work
++
+UI looks polished
++
+Desktop works
++
+Mobile works
++
+Empty states look intentional
++
+No visible runtime errors
++
+No obvious console errors
++
+Pages load quickly
++
+No obvious unnecessary client weight
++
+Lint PASS
++
+Tests PASS
++
+Build PASS
 ```
 
-Kerjakan perubahan secara incremental.
-
-Sebelum coding, jelaskan singkat:
-
-```text
-Current state
-Risk
-Files affected
-Plan
-```
-
-Setelah coding, laporkan:
-
-```text
-Changed
-Test result
-Build result
-Remaining issue
-```
-
-Jangan mengarang hasil test. Jika sebuah test tidak dapat dijalankan, nyatakan alasannya secara eksplisit.
+That is the end of the coding phase.

@@ -33,33 +33,28 @@ npm install          # postinstall: generate client PostgreSQL + SQLite
 # AUTH_SECRET="<minimal 32 karakter, wajib di production>"
 
 npx prisma migrate deploy   # terapkan migration SQLite ke prisma/dev.db (local dev)
+
+# bootstrap akses: buat agency + satu akun Owner (tanpa data bisnis apa pun)
+OWNER_EMAIL="owner@agency.test" OWNER_PASSWORD="minimal-12-karakter" npx prisma db seed
+
 npm run dev                 # http://localhost:3000
 ```
 
-Untuk mengisi database dengan data contoh (1 agensi demo + users, brands, creators,
-campaigns, metrics, transaksi keuangan):
+Seed TIDAK mengisi data contoh — database baru selalu kosong dan setiap modul
+menampilkan empty state masing-masing; semua data bisnis (brand, creator,
+produk, campaign, dst.) dibuat lewat UI aplikasi. Seed hanya memastikan agency
+dan satu akun Owner ada sehingga Anda bisa login:
 
-```bash
-npx prisma db seed
-```
-
-Akun seed (semua memakai password `password123`):
-
-| Role | Email |
-|---|---|
-| owner | andi@kreatifnusantara.id |
-| account_manager | siti@kreatifnusantara.id |
-| creator_manager | budi@kreatifnusantara.id |
-| campaign_manager | dewi@kreatifnusantara.id |
-| finance | rina@kreatifnusantara.id |
-
-> Data seed hanya untuk development. Jangan jalankan seed di database production.
+- idempoten — aman dijalankan berulang; owner yang sudah ada tidak pernah
+  ditimpa password-nya;
+- kredensial hanya lewat environment variable (`OWNER_EMAIL`, `OWNER_PASSWORD`,
+  opsional `AGENCY_NAME`/`AGENCY_SLUG`/`OWNER_NAME`), tidak pernah di-commit;
+- `OWNER_PASSWORD` minimal 12 karakter.
 
 ## Bootstrap akun Owner produksi
 
-Database production tidak pernah di-seed dengan data contoh. Setelah
-`npx prisma migrate deploy` selesai di database PostgreSQL produksi, jalankan
-satu kali bootstrap untuk memastikan agency + satu akun Owner ada:
+Untuk database PostgreSQL produksi, gunakan script bootstrap khusus produksi
+(menolak target selain `postgres://`, jadi tidak pernah menyentuh SQLite lokal):
 
 ```bash
 OWNER_PASSWORD='password-aman-anda' npx tsx scripts/bootstrap-owner.mts
@@ -85,7 +80,8 @@ Perilaku script:
 | `DATABASE_URL` | Tidak (dev) | Connection string Prisma. Skema URL memilih provider: `file:./prisma/dev.db` → SQLite (dev), `postgres://…` → PostgreSQL (production). Tanpa env apa pun: SQLite |
 | `DB_PROVIDER` | Tidak | Override eksplisit `sqlite` atau `postgresql` bila skema URL ambigu |
 | `AUTH_SECRET` | **Ya (production)** | Kunci penanda-tanganan JWT sesi (HS256), minimal 32 karakter. Di production aplikasi menolak berjalan tanpanya; di dev dipakai kunci lokal sementara |
-| `OWNER_PASSWORD` | Tidak | Password untuk bootstrap satu kali (`scripts/bootstrap-owner.mts`) — hanya dibutuhkan saat eksekusi, tidak disimpan/di-commit |
+| `OWNER_EMAIL` / `OWNER_PASSWORD` | Tidak (dev) | Kredensial bootstrap satu kali (`npx prisma db seed`, `scripts/bootstrap-owner.mts`) — hanya dibutuhkan saat eksekusi, tidak disimpan/di-commit |
+| `AGENCY_NAME` / `AGENCY_SLUG` / `OWNER_NAME` | Tidak | Override nama agensi/slug/nama owner saat `prisma db seed`; default: Kreatif Nusantara / kreatif-nusantara / Agency Owner |
 
 ## Development, build, test
 
@@ -136,7 +132,7 @@ prisma/
   schema.sqlite.prisma           # twin skema SQLite (local dev & test)
   migrations/                    # riwayat migration SQLite
   migrations-pg/                 # riwayat migration PostgreSQL (baseline)
-  seed.ts                        # data contoh development
+  seed.ts                        # bootstrap sistem: agency + akun Owner saja (tanpa data bisnis)
 generated/prisma-pg/             # client PostgreSQL hasil generate (jangan diedit)
 generated/prisma-sqlite/         # client SQLite hasil generate (jangan diedit)
 docs/
@@ -189,6 +185,9 @@ Prinsip arsitektur:
   lewat `@/lib/prisma`. Lihat `docs/production-readiness.md` §13 untuk detail
   implementasi dan env production yang wajib diset.
 - Integrasi TikTok (halaman `settings/integrations`, modul sync) adalah modul
-  internal dengan simulasi sync — bukan koneksi API TikTok resmi.
+  internal dengan simulasi sync — bukan koneksi API TikTok resmi. Simulasi
+  (mock sync) hanya jalan bila diaktifkan eksplisit via `MOCK_SYNC_ENABLED=true`
+  di development/demo; production selalu menolaknya, dan sync tidak pernah
+  mengubah `actualGmv` campaign atau data bisnis lain.
 - Laporan (client/internal) dihasilkan dari data yang sudah ada dan dapat
   diekspor sebagai CSV (pemisah `;` sesuai locale id-ID untuk Excel).

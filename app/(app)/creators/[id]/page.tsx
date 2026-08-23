@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarDays, Coins, Megaphone, Radio, StickyNote, TrendingUp, Video } from "lucide-react";
+import { CalendarDays, Coins, Megaphone, Pencil, Radio, StickyNote, TrendingUp, Video } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { can } from "@/lib/authorization";
 import { getCreatorDetail } from "@/lib/services/creators";
 import { getActivity, getNotes } from "@/lib/services/activity";
 import { StatusBadge } from "@/components/status-badge";
@@ -66,19 +67,30 @@ export default async function CreatorDetailPage(props: PageProps<"/creators/[id]
             {creator.bio ? <p className="mt-1 max-w-xl text-sm text-muted-foreground">{creator.bio}</p> : null}
           </div>
         </div>
-        <div className="flex gap-6 text-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">Followers</p>
-            <p className="font-semibold">{formatCompactNumber(creator.followers)}</p>
+        <div className="flex items-start gap-6">
+          <div className="flex gap-6 text-sm">
+            <div>
+              <p className="text-xs text-muted-foreground">Followers</p>
+              <p className="font-semibold">{formatCompactNumber(creator.followers)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Engagement</p>
+              <p className="font-semibold">{creator.engagementRate.toFixed(1).replace(".", ",")}%</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Campaign Aktif</p>
+              <p className="font-semibold">{campaigns.filter((c) => ["Recruiting", "Active", "ContentReview", "Published"].includes(c.campaign.status)).length}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Engagement</p>
-            <p className="font-semibold">{creator.engagementRate.toFixed(1).replace(".", ",")}%</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Campaign Aktif</p>
-            <p className="font-semibold">{campaigns.filter((c) => ["Recruiting", "Active", "ContentReview", "Published"].includes(c.campaign.status)).length}</p>
-          </div>
+          {can(user.role, "creator", "write") ? (
+            <Link
+              href={`/creators/${creator.id}/edit`}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border bg-card px-4 text-sm font-medium transition-colors hover:bg-accent"
+            >
+              <Pencil className="h-4 w-4" />
+              Ubah
+            </Link>
+          ) : null}
         </div>
       </div>
 

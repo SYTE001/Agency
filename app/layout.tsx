@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kreatif Nusantara — Agency OS",
+  title: "Agency OS",
   description: "Operating system for TikTok commerce agencies.",
 };
 

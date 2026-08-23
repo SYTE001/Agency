@@ -13,7 +13,7 @@ export function TaskStatusButton({
   taskId: string;
   status: string;
   label: string;
-  variant?: "default" | "success";
+  variant?: "default" | "success" | "destructive";
 }) {
   const [pending, startTransition] = useTransition();
 
@@ -31,7 +31,9 @@ export function TaskStatusButton({
         className={
           variant === "success"
             ? "inline-flex h-7 items-center justify-center rounded-md border border-success/40 px-2.5 text-xs font-medium text-success transition-colors hover:bg-success/10 disabled:opacity-50"
-            : "inline-flex h-7 items-center justify-center rounded-md border bg-card px-2.5 text-xs font-medium transition-colors hover:bg-accent disabled:opacity-50"
+            : variant === "destructive"
+              ? "inline-flex h-7 items-center justify-center rounded-md border border-destructive/40 px-2.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
+              : "inline-flex h-7 items-center justify-center rounded-md border bg-card px-2.5 text-xs font-medium transition-colors hover:bg-accent disabled:opacity-50"
         }
       >
         {label}

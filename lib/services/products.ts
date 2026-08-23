@@ -1,7 +1,14 @@
 import prisma from "@/lib/prisma";
-import { paginate, totalPages, getAgencyTimezone, containsInsensitive } from "@/lib/services/common";
+import {
+  paginate,
+  totalPages,
+  getAgencyTimezone,
+  containsInsensitive,
+  type SortDir,
+} from "@/lib/services/common";
 import { daysAgoStartInTz } from "@/lib/timezone";
 import type { ListResult } from "@/lib/services/common";
+import { isProductStatus } from "@/lib/constants";
 import type { Prisma } from "@/lib/prisma";
 
 export type ProductRow = {
@@ -24,15 +31,31 @@ export type ProductListFilters = {
   brandId?: string;
   status?: string;
   category?: string;
+  sortBy?: "name" | "price" | "gmv";
+  sortDir?: SortDir;
   page?: number;
   pageSize?: number;
 };
+
+function mapStaticSort(
+  sortBy: ProductListFilters["sortBy"],
+  sortDir: SortDir = "asc",
+): Prisma.ProductOrderByWithRelationInput {
+  switch (sortBy) {
+    case "price":
+      return { price: sortDir };
+    default:
+      return { name: sortDir };
+  }
+}
 
 export async function listProducts(
   agencyId: string,
   filters: ProductListFilters = {},
 ): Promise<ListResult<ProductRow>> {
   const { skip, take, page, pageSize } = paginate(filters.page ?? 1, filters.pageSize ?? 20);
+  const sortDir: SortDir =
+    filters.sortBy === undefined ? "asc" : filters.sortDir === "asc" ? "asc" : "desc";
 
   const where: Prisma.ProductWhereInput = { agencyId };
   if (filters.q) where.name = containsInsensitive(filters.q);
@@ -45,7 +68,7 @@ export async function listProducts(
   const [products, total, tz] = await Promise.all([
     prisma.product.findMany({
       where,
-      orderBy: { name: "asc" },
+      orderBy: mapStaticSort(filters.sortBy, sortDir),
       skip,
       take,
       include: { brand: { select: { id: true, name: true } } },
@@ -84,6 +107,12 @@ export async function listProducts(
       units30: m?._sum.units ?? 0,
     };
   });
+
+  // Derived sort that needs the aggregation result (same idiom as creators).
+  if (filters.sortBy === "gmv") {
+    const dir = sortDir === "asc" ? 1 : -1;
+    rows.sort((a, b) => (a.gmv30 - b.gmv30) * dir);
+  }
 
   return { items: rows, total, page, pageSize, totalPages: totalPages(total, pageSize) };
 }
@@ -133,6 +162,27 @@ export async function getProductDetail(agencyId: string, productId: string) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Mutations
+// ---------------------------------------------------------------------------
+
+function assertValidPrice(price?: number) {
+  if (price != null && (!Number.isFinite(price) || price < 0)) {
+    throw new Error("Harga tidak boleh negatif");
+  }
+}
+
+/** The optional brand FK must point at a brand of the SAME agency. */
+async function resolveBrand(agencyId: string, brandId: string | null | undefined) {
+  if (!brandId) return null;
+  const brand = await prisma.brand.findFirst({
+    where: { id: brandId, agencyId },
+    select: { id: true },
+  });
+  if (!brand) throw new Error("Brand tidak ditemukan");
+  return brand.id;
+}
+
 export async function createProduct(
   agencyId: string,
   data: {
@@ -144,24 +194,34 @@ export async function createProduct(
     status?: string;
   },
 ) {
-  if (data.brandId) {
-    const brand = await prisma.brand.findFirst({
-      where: { id: data.brandId, agencyId },
-      select: { id: true },
+  const name = data.name.trim();
+  if (!name) throw new Error("Nama produk wajib diisi");
+  const status = data.status ?? "Active";
+  if (!isProductStatus(status)) throw new Error("Status produk tidak valid");
+  assertValidPrice(data.price);
+  const brandId = await resolveBrand(agencyId, data.brandId);
+
+  try {
+    return await prisma.product.create({
+      data: {
+        agencyId, // always derived from the authenticated session by the caller
+        name,
+        brandId,
+        sku: (data.sku ?? "").trim() || null,
+        category: (data.category ?? "").trim() || null,
+        price: data.price ?? 0,
+        status,
+      },
     });
-    if (!brand) throw new Error("Brand tidak ditemukan");
+  } catch (e) {
+    console.error("createProduct failed", e);
+    // Tenant-scoped unique violation on @@unique([agencyId, sku]) — same
+    // detection idiom as lib/services/creators.ts (works across both providers).
+    if (e instanceof Error && /unique constraint/i.test(e.message)) {
+      throw new Error("SKU sudah dipakai produk lain. Gunakan SKU yang berbeda.");
+    }
+    throw new Error("Gagal menyimpan produk");
   }
-  return prisma.product.create({
-    data: {
-      agencyId,
-      name: data.name,
-      brandId: data.brandId ?? null,
-      sku: data.sku ?? null,
-      category: data.category ?? null,
-      price: data.price ?? 0,
-      status: data.status ?? "Active",
-    },
-  });
 }
 
 export async function updateProduct(
@@ -176,5 +236,44 @@ export async function updateProduct(
     status: string;
   }>,
 ) {
-  return prisma.product.update({ where: { id: productId, agencyId }, data });
+  // Tenant-scoped existence check — replaces the raw P2025 a filtered update
+  // would throw for a missing OR cross-tenant row.
+  const existing = await prisma.product.findFirst({
+    where: { id: productId, agencyId },
+    select: { id: true },
+  });
+  if (!existing) throw new Error("Produk tidak ditemukan");
+
+  if (data.status !== undefined && !isProductStatus(data.status)) {
+    throw new Error("Status produk tidak valid");
+  }
+  const name = data.name !== undefined ? data.name.trim() : undefined;
+  if (name !== undefined && !name) throw new Error("Nama produk wajib diisi");
+  assertValidPrice(data.price);
+
+  // undefined = leave unchanged; null clears; a value must be same-agency.
+  const brandId =
+    data.brandId === undefined ? undefined : await resolveBrand(agencyId, data.brandId);
+  const sku = data.sku !== undefined ? ((data.sku ?? "").trim() || null) : undefined;
+  const category = data.category !== undefined ? ((data.category ?? "").trim() || null) : undefined;
+
+  try {
+    return await prisma.product.update({
+      where: { id: productId },
+      data: {
+        ...(name !== undefined ? { name } : {}),
+        ...(brandId !== undefined ? { brandId } : {}),
+        ...(sku !== undefined ? { sku } : {}),
+        ...(category !== undefined ? { category } : {}),
+        ...(data.price !== undefined ? { price: data.price } : {}),
+        ...(data.status !== undefined ? { status: data.status } : {}),
+      },
+    });
+  } catch (e) {
+    console.error("updateProduct failed", e);
+    if (e instanceof Error && /unique constraint/i.test(e.message)) {
+      throw new Error("SKU sudah dipakai produk lain. Gunakan SKU yang berbeda.");
+    }
+    throw new Error("Gagal menyimpan perubahan produk");
+  }
 }

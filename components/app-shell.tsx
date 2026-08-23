@@ -3,7 +3,7 @@
 import { useState, useEffect, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen, Menu, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, initials } from "@/lib/utils";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 import { Button } from "@/components/ui/button";
@@ -84,11 +84,11 @@ export function AppShell({
       >
         <div className="flex h-14 items-center gap-2.5 border-b border-border/70 px-4">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-brand text-xs font-bold text-brand-foreground">
-            KN
+            {initials(user.agencyName)}
           </div>
           {!collapsed ? (
             <span className="truncate text-sm font-semibold tracking-tight">
-              Kreatif Nusantara
+              {user.agencyName}
             </span>
           ) : null}
         </div>
@@ -112,10 +112,10 @@ export function AppShell({
             <div className="flex h-14 items-center justify-between border-b border-border/70 px-4">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-brand text-xs font-bold text-brand-foreground">
-                  KN
+                  {initials(user.agencyName)}
                 </div>
                 <span className="truncate text-sm font-semibold tracking-tight">
-                  Kreatif Nusantara
+                  {user.agencyName}
                 </span>
               </div>
               <Button

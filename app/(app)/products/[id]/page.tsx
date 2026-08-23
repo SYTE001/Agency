@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarDays, Megaphone, ShoppingCart, TrendingUp, Video } from "lucide-react";
+import { CalendarDays, Megaphone, Pencil, ShoppingCart, TrendingUp, Video } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { can } from "@/lib/authorization";
 import { getProductDetail } from "@/lib/services/products";
 import { getActivity } from "@/lib/services/activity";
 import { StatusBadge } from "@/components/status-badge";
@@ -33,6 +34,7 @@ export default async function ProductDetailPage(props: PageProps<"/products/[id]
   if (!detail) notFound();
 
   const { product, metrics, campaigns, recentContent, totals } = detail;
+  const canWrite = can(user.role, "product", "write");
   const activity = await getActivity("Product", product.id, user.agencyId, 15);
 
   const stats = [
@@ -71,19 +73,30 @@ export default async function ProductDetailPage(props: PageProps<"/products/[id]
             </p>
           </div>
         </div>
-        <div className="flex gap-6 text-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">Campaign</p>
-            <p className="font-semibold">{campaigns.length}</p>
+        <div className="flex items-start gap-6">
+          <div className="flex gap-6 text-sm">
+            <div>
+              <p className="text-xs text-muted-foreground">Campaign</p>
+              <p className="font-semibold">{campaigns.length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Konten</p>
+              <p className="font-semibold">{recentContent.length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Data Harian</p>
+              <p className="font-semibold">{metrics.length}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Konten</p>
-            <p className="font-semibold">{recentContent.length}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Data Harian</p>
-            <p className="font-semibold">{metrics.length}</p>
-          </div>
+          {canWrite ? (
+            <Link
+              href={`/products/${product.id}/edit`}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border bg-card px-4 text-sm font-medium transition-colors hover:bg-accent"
+            >
+              <Pencil className="h-4 w-4" />
+              Ubah
+            </Link>
+          ) : null}
         </div>
       </div>
 

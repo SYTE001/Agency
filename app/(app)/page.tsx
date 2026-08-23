@@ -12,6 +12,7 @@ import {
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
 import type { Resource } from "@/lib/constants";
+import { getAgencyTimezone } from "@/lib/services/common";
 import { getOverview } from "@/lib/services/overview";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -21,8 +22,16 @@ import { GmvChart } from "@/components/overview/gmv-chart";
 import { formatCompactIDR, formatDelta, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-const idTime = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit" });
-const idHour = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "numeric", hour12: false });
+// Greeting/live times render in the authenticated tenant's Agency.timezone —
+// the formatters are built per request from the resolved zone, never the
+// server's runtime timezone.
+function tenantTimeFormatter(timeZone: string): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat("id-ID", { timeZone, hour: "2-digit", minute: "2-digit" });
+}
+function tenantHourInTz(timeZone: string, d: Date): number {
+  const fmt = new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", hour12: false });
+  return Number(fmt.format(d)) % 24;
+}
 
 function greetingFor(hour: number): string {
   if (hour < 11) return "Selamat pagi";
@@ -61,6 +70,9 @@ const ACTIVITY_LABEL: Record<string, string> = {
 export default async function OverviewPage() {
   const user = await requireUser();
   const overview = await getOverview(user.agencyId);
+  // Tenant business timezone (Agency.timezone) drives every rendered date.
+  const tz = await getAgencyTimezone(user.agencyId);
+  const idTime = tenantTimeFormatter(tz);
   const { kpis } = overview;
 
   // Only surface alerts the user can actually act on (their target module may
@@ -79,9 +91,9 @@ export default async function OverviewPage() {
   });
 
   const now = new Date();
-  const hour = Number(idHour.format(now)) % 24;
+  const hour = tenantHourInTz(tz, now);
   const dateLine = new Intl.DateTimeFormat("id-ID", {
-    timeZone: "Asia/Jakarta",
+    timeZone: tz,
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -228,7 +240,7 @@ export default async function OverviewPage() {
               Total {formatCompactIDR(kpis.totalGmv)}
             </span>
           </div>
-          <GmvChart data={overview.gmvDaily} />
+          <GmvChart data={overview.gmvDaily} timeZone={tz} />
         </CardContent>
       </Card>
 
@@ -439,7 +451,7 @@ export default async function OverviewPage() {
                   return (
                     <li key={a.id} className="flex items-baseline gap-2 px-2 py-1.5">
                       <span className="w-14 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-                        {timeAgo(a.createdAt)}
+                        {timeAgo(a.createdAt, tz)}
                       </span>
                       <span className="min-w-0 flex-1 text-sm">
                         <span className="font-medium">{a.actor?.name ?? "Sistem"}</span>{" "}

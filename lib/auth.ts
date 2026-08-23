@@ -40,6 +40,8 @@ export type SessionUser = {
   role: Role;
   email: string;
   name: string;
+  /** Tenant branding — always from the Agency row, never hardcoded. */
+  agencyName: string;
 };
 
 type TokenPayload = {
@@ -99,7 +101,10 @@ export const resolveSessionUser = cache(async function resolveSessionUser(
   const payload = await verifySessionToken(token);
   if (!payload?.sub) return null;
 
-  const user = await prisma.user.findUnique({ where: { id: payload.sub } });
+  const user = await prisma.user.findUnique({
+    where: { id: payload.sub },
+    include: { agency: { select: { name: true } } },
+  });
   if (!user) return null;
 
   // Validate the role against the known union before trusting it — the column
@@ -113,6 +118,7 @@ export const resolveSessionUser = cache(async function resolveSessionUser(
     role: user.role,
     email: user.email,
     name: user.name,
+    agencyName: user.agency.name,
   };
 });
 

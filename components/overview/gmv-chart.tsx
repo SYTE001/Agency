@@ -1,9 +1,12 @@
 import { dayShort, formatCompactIDR } from "@/lib/format";
+import { normalizeTimezone, DEFAULT_TIMEZONE } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
 
 // Pure server-side SVG bar chart (no client JS). Renders GMV per day over the
-// last 30 days. Labels are shown every ~7 bars to stay readable.
-export function GmvChart({ data }: { data: { date: Date; gmv: number }[] }) {
+// last 30 days. Labels are shown every ~7 bars to stay readable. Day numbers
+// render in the tenant timezone so each bucket is labelled with the tenant's
+// own calendar date.
+export function GmvChart({ data, timeZone }: { data: { date: Date; gmv: number }[]; timeZone?: string }) {
   if (data.length === 0) {
     return (
       <p className="flex h-48 items-center justify-center text-sm text-muted-foreground">
@@ -11,6 +14,9 @@ export function GmvChart({ data }: { data: { date: Date; gmv: number }[] }) {
       </p>
     );
   }
+
+  const tz = normalizeTimezone(timeZone ?? DEFAULT_TIMEZONE);
+  const dayNumFmt = new Intl.DateTimeFormat("id-ID", { timeZone: tz, day: "numeric" });
 
   const W = 900;
   const H = 200;
@@ -38,7 +44,7 @@ export function GmvChart({ data }: { data: { date: Date; gmv: number }[] }) {
           return (
             <g key={d.date.getTime()}>
               <rect x={x} y={y} width={bw} height={h} rx={1.5} className="fill-brand/80">
-                <title>{`${dayShort(d.date)} ${d.date.getDate()}: ${formatCompactIDR(d.gmv)}`}</title>
+                <title>{`${dayShort(d.date, tz)} ${dayNumFmt.format(d.date)}: ${formatCompactIDR(d.gmv)}`}</title>
               </rect>
               {i % step === 0 ? (
                 <text
@@ -48,7 +54,7 @@ export function GmvChart({ data }: { data: { date: Date; gmv: number }[] }) {
                   fontSize={11}
                   className="fill-muted-foreground"
                 >
-                  {d.date.getDate()} {dayShort(d.date)}
+                  {dayNumFmt.format(d.date)} {dayShort(d.date, tz)}
                 </text>
               ) : null}
             </g>

@@ -6,10 +6,11 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
 import { isBrandStatus } from "@/lib/constants";
-import { createBrand, createBrandContact } from "@/lib/services/brands";
+import { createBrand, updateBrand, createBrandContact } from "@/lib/services/brands";
 import { addNote, entityBelongsToAgency, logActivity } from "@/lib/services/activity";
 
-const brandSchema = z.object({
+// Shared fields between create and edit.
+const brandFieldsSchema = z.object({
   name: z.string().trim().min(2, "Nama brand minimal 2 karakter").max(80),
   industry: z.string().trim().max(60).transform((v) => v || null),
   website: z
@@ -22,10 +23,21 @@ const brandSchema = z.object({
   status: z.string().default("Active").refine(isBrandStatus, "Status tidak valid"),
 });
 
+const brandUpdateSchema = brandFieldsSchema.extend({
+  brandId: z.string().min(1, "Brand tidak valid"),
+});
+
 export type BrandFormState = {
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
 };
+
+// Services throw neutral, user-facing Indonesian messages and log the
+// original error server-side — safe to surface as-is.
+function toFormError(e: unknown): BrandFormState {
+  if (e instanceof Error && e.message) return { error: e.message };
+  return { error: "Gagal menyimpan brand. Coba lagi." };
+}
 
 export async function createBrandAction(
   _prev: BrandFormState,
@@ -36,7 +48,7 @@ export async function createBrandAction(
     return { error: "Anda tidak memiliki izin untuk menambah brand." };
   }
 
-  const parsed = brandSchema.safeParse({
+  const parsed = brandFieldsSchema.safeParse({
     name: formData.get("name"),
     industry: formData.get("industry") ?? "",
     website: formData.get("website") ?? "",
@@ -51,18 +63,69 @@ export async function createBrandAction(
     };
   }
 
-  const brand = await createBrand(user.agencyId, parsed.data);
-  await logActivity({
-    agencyId: user.agencyId,
-    entityType: "Brand",
-    entityId: brand.id,
-    actorId: user.id,
-    action: "Brand ditambahkan",
-    details: brand.name,
-  });
+  try {
+    const brand = await createBrand(user.agencyId, parsed.data);
+    await logActivity({
+      agencyId: user.agencyId,
+      entityType: "Brand",
+      entityId: brand.id,
+      actorId: user.id,
+      action: "Brand ditambahkan",
+      details: brand.name,
+    });
+  } catch (e) {
+    return toFormError(e);
+  }
 
   revalidatePath("/brands");
   redirect("/brands");
+}
+
+export async function updateBrandAction(
+  _prev: BrandFormState,
+  formData: FormData,
+): Promise<BrandFormState> {
+  const user = await requireUser();
+  if (!can(user.role, "brand", "write")) {
+    return { error: "Anda tidak memiliki izin untuk mengubah brand." };
+  }
+
+  const parsed = brandUpdateSchema.safeParse({
+    brandId: formData.get("brandId"),
+    name: formData.get("name"),
+    industry: formData.get("industry") ?? "",
+    website: formData.get("website") ?? "",
+    description: formData.get("description") ?? "",
+    status: formData.get("status") || "Active",
+  });
+
+  if (!parsed.success) {
+    return {
+      error: "Periksa kembali data yang diisi.",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+  const { brandId, ...fields } = parsed.data;
+
+  let updatedId: string;
+  try {
+    const updated = await updateBrand(user.agencyId, brandId, fields);
+    await logActivity({
+      agencyId: user.agencyId,
+      entityType: "Brand",
+      entityId: updated.id,
+      actorId: user.id,
+      action: "Brand diperbarui",
+      details: updated.name,
+    });
+    updatedId = updated.id;
+  } catch (e) {
+    return toFormError(e);
+  }
+
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${updatedId}`);
+  redirect(`/brands/${updatedId}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -122,12 +185,18 @@ export async function addBrandContactAction(
       action: "Kontak ditambahkan",
       details: contact.name,
     });
-  } catch {
-    return { error: "Brand tidak ditemukan." };
+  } catch (e) {
+    // Service throws neutral messages ("Brand tidak ditemukan", storage failures).
+    return toContactError(e);
   }
 
   revalidatePath(`/brands/${brandId}`);
   return { ok: true };
+}
+
+function toContactError(e: unknown): ContactFormState {
+  if (e instanceof Error && e.message) return { error: e.message };
+  return { error: "Gagal menyimpan kontak. Coba lagi." };
 }
 
 // ---------------------------------------------------------------------------

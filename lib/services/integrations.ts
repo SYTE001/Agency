@@ -223,13 +223,66 @@ export type SyncOutcome = {
   logCount: number;
 };
 
+// ---------------------------------------------------------------------------
+// Mock sync gate (Phase 3 P0 #1). The simulation must never silently mutate
+// real business data, so it only runs when BOTH hold:
+//   1. MOCK_SYNC_ENABLED=true — an explicit operator opt-in (default: off)
+//   2. NODE_ENV !== "production" — production rejects mock sync outright,
+//      even when the flag is accidentally left set
+// The check lives in this service layer so every caller is gated server-side;
+// whether the UI renders the button is UX only, never the security boundary.
+// ---------------------------------------------------------------------------
+
+export function isMockSyncEnabled(): boolean {
+  if (process.env.MOCK_SYNC_ENABLED !== "true") return false;
+  return process.env.NODE_ENV !== "production";
+}
+
+export type MockMetricSource = {
+  id: string;
+  externalId?: string | null;
+  followers: number;
+  engagementRate: number;
+};
+
+/** Deterministic simulated daily metric for one creator. A pure function of
+ * (creator identity, calendar day of `ref`) — no Math.random, no clock reads
+ * beyond the passed-in ref — so identical inputs always yield identical
+ * numbers and re-runs are reproducible instead of drifting. */
+export function computeMockCreatorMetric(c: MockMetricSource, ref: Date) {
+  const seed = [...(c.externalId ?? c.id)].reduce((a, ch) => a + ch.charCodeAt(0), 0);
+  const jitter = ((seed + ref.getDate()) % 20) / 100; // 0..0.19
+  const gmv = Math.round(c.followers * (200 + (seed % 300)) * (1 + jitter));
+  const videos = 1 + (seed % 3);
+  const liveGmv = seed % 2 === 0 ? Math.round(gmv * 0.4) : 0;
+  return {
+    followers: c.followers + Math.round(c.followers * jitter * 0.1),
+    engagementRate: Math.min(20, c.engagementRate + jitter * 2),
+    gmv,
+    videos,
+    avgViews: Math.round(c.followers * (0.05 + jitter)),
+    liveGmv,
+  };
+}
+
 /**
  * Mock sync (PLAN §20 "Mock Data" first step). Simulates pulling recent
  * creator metrics from TikTok: for each synced creator (has externalId) we
- * upsert a metric row for today with plausible numbers, and bump each active
- * campaign's actualGmv a little — so the dashboard visibly reacts.
+ * write one simulated metric row for today with deterministic plausible
+ * numbers (see computeMockCreatorMetric). Hardened in Phase 3 P0 #1:
+ *  - refused unless explicitly enabled via isMockSyncEnabled() — production
+ *    can never run it, and nothing is written for a refused run
+ *  - campaigns are NEVER touched: actualGmv is real business data, the old
+ *    random bump is gone; the only writes are SyncJob/SyncLog audit rows and
+ *    simulated CreatorMetric rows
  */
 export async function runMockSync(agencyId: string): Promise<SyncOutcome> {
+  if (!isMockSyncEnabled()) {
+    // Thrown before any DB access: a blocked run leaves zero rows behind.
+    throw new Error(
+      "Sinkronisasi mock dinonaktifkan — aktifkan hanya di development/demo dengan MOCK_SYNC_ENABLED=true (production tidak pernah diizinkan).",
+    );
+  }
   const integration = await getOrCreateIntegration(agencyId);
   const job = await prisma.syncJob.create({
     data: { integrationId: integration.id, type: "mock_pull", status: "Running", startedAt: new Date() },
@@ -252,42 +305,33 @@ export async function runMockSync(agencyId: string): Promise<SyncOutcome> {
     const today = new Date();
     let metricCount = 0;
     for (const c of creators) {
-      // Deterministic pseudo-random from the externalId so re-runs differ a little
-      const seed = [...(c.externalId ?? c.id)].reduce((a, ch) => a + ch.charCodeAt(0), 0);
-      const jitter = ((seed + today.getDate()) % 20) / 100; // 0..0.19
-      const gmv = Math.round(c.followers * (200 + seed % 300) * (1 + jitter));
-      const videos = 1 + (seed % 3);
-      const liveGmv = seed % 2 === 0 ? Math.round(gmv * 0.4) : 0;
+      const mock = computeMockCreatorMetric(
+        {
+          id: c.id,
+          externalId: c.externalId,
+          followers: c.followers,
+          engagementRate: c.engagementRate,
+        },
+        today,
+      );
       await prisma.creatorMetric.create({
         data: {
           creatorId: c.id,
           date: today,
-          followers: c.followers + Math.round(c.followers * jitter * 0.1),
-          engagementRate: Math.min(20, c.engagementRate + jitter * 2),
-          gmv,
-          videos,
-          avgViews: Math.round(c.followers * (0.05 + jitter)),
-          liveGmv,
+          ...mock,
         },
       });
       metricCount++;
-      log("info", `Metrik ${c.displayName} (${c.externalId}) — GMV ${gmv}, ${videos} video`);
+      log("info", `Metrik simulasi ${c.displayName} (${c.externalId}) — GMV ${mock.gmv}, ${mock.videos} video`);
     }
 
-    const campaigns = await prisma.campaign.findMany({
-      where: { agencyId, status: "Active" },
-      select: { id: true, name: true, actualGmv: true },
-    });
-    for (const c of campaigns) {
-      const bump = Math.round(500_000 + Math.random() * 2_000_000);
-      await prisma.campaign.update({
-        where: { id: c.id },
-        data: { actualGmv: c.actualGmv.toNumber() + bump },
-      });
-      log("info", `Campaign ${c.name} — GMV bertambah ${bump}`);
-    }
+    // Campaigns are deliberately NOT mutated by the mock sync — actualGmv is
+    // real business data. The count is logged only so the run summary still
+    // shows what was (not) touched.
+    const campaignCount = await prisma.campaign.count({ where: { agencyId, status: "Active" } });
+    log("info", `${campaignCount} campaign aktif tidak diubah — sync mock tidak pernah menyentuh data bisnis`);
 
-    log("info", `Selesai: ${metricCount} metrik creator, ${campaigns.length} campaign diperbarui`);
+    log("info", `Selesai: ${metricCount} metrik creator simulasi`);
     await prisma.syncLog.createMany({ data: logs.map((l) => ({ syncJobId: job.id, ...l })) });
     await prisma.syncJob.update({
       where: { id: job.id },

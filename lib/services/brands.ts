@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { paginate, totalPages, getAgencyTimezone, containsInsensitive } from "@/lib/services/common";
 import { daysAgoStartInTz } from "@/lib/timezone";
 import type { ListResult } from "@/lib/services/common";
+import { isBrandStatus } from "@/lib/constants";
 import type { Prisma } from "@/lib/prisma";
 
 export type BrandRow = {
@@ -231,16 +232,26 @@ export async function createBrand(
     status?: string;
   },
 ) {
-  return prisma.brand.create({
-    data: {
-      agencyId,
-      name: data.name,
-      industry: data.industry ?? null,
-      website: data.website ?? null,
-      description: data.description ?? null,
-      status: data.status ?? "Active",
-    },
-  });
+  const name = data.name.trim();
+  if (!name) throw new Error("Nama brand wajib diisi");
+  const status = data.status ?? "Active";
+  if (!isBrandStatus(status)) throw new Error("Status brand tidak valid");
+
+  try {
+    return await prisma.brand.create({
+      data: {
+        agencyId, // always derived from the authenticated session by the caller
+        name,
+        industry: (data.industry ?? "").trim() || null,
+        website: (data.website ?? "").trim() || null,
+        description: (data.description ?? "").trim() || null,
+        status,
+      },
+    });
+  } catch (e) {
+    console.error("createBrand failed", e);
+    throw new Error("Gagal menyimpan brand");
+  }
 }
 
 export async function updateBrand(
@@ -254,7 +265,37 @@ export async function updateBrand(
     status: string;
   }>,
 ) {
-  return prisma.brand.update({ where: { id: brandId, agencyId }, data });
+  // Tenant-scoped existence check — replaces the raw P2025 a filtered update
+  // would throw for a missing OR cross-tenant row.
+  const existing = await prisma.brand.findFirst({
+    where: { id: brandId, agencyId },
+    select: { id: true },
+  });
+  if (!existing) throw new Error("Brand tidak ditemukan");
+
+  if (data.status !== undefined && !isBrandStatus(data.status)) {
+    throw new Error("Status brand tidak valid");
+  }
+  const name = data.name !== undefined ? data.name.trim() : undefined;
+  if (name !== undefined && !name) throw new Error("Nama brand wajib diisi");
+
+  try {
+    return await prisma.brand.update({
+      where: { id: brandId },
+      data: {
+        ...(name !== undefined ? { name } : {}),
+        ...(data.industry !== undefined ? { industry: (data.industry ?? "").trim() || null } : {}),
+        ...(data.website !== undefined ? { website: (data.website ?? "").trim() || null } : {}),
+        ...(data.description !== undefined
+          ? { description: (data.description ?? "").trim() || null }
+          : {}),
+        ...(data.status !== undefined ? { status: data.status } : {}),
+      },
+    });
+  } catch (e) {
+    console.error("updateBrand failed", e);
+    throw new Error("Gagal menyimpan perubahan brand");
+  }
 }
 
 export async function createBrandContact(
@@ -262,17 +303,33 @@ export async function createBrandContact(
   brandId: string,
   data: { name: string; email?: string | null; phone?: string | null; role?: string | null; isPrimary?: boolean },
 ) {
-  // Tenant check on the parent brand
+  // Tenant check on the parent brand — ownership derives through the parent.
   const brand = await prisma.brand.findFirst({ where: { id: brandId, agencyId }, select: { id: true } });
   if (!brand) throw new Error("Brand tidak ditemukan");
-  return prisma.brandContact.create({
-    data: {
-      brandId,
-      name: data.name,
-      email: data.email ?? null,
-      phone: data.phone ?? null,
-      role: data.role ?? null,
-      isPrimary: data.isPrimary ?? false,
-    },
-  });
+
+  const name = data.name.trim();
+  if (!name) throw new Error("Nama kontak wajib diisi");
+  const isPrimary = data.isPrimary ?? false;
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      // Keep a single primary contact per brand — list/detail surfaces rely on it.
+      if (isPrimary) {
+        await tx.brandContact.updateMany({ where: { brandId, isPrimary: true }, data: { isPrimary: false } });
+      }
+      return tx.brandContact.create({
+        data: {
+          brandId,
+          name,
+          email: (data.email ?? "").trim() || null,
+          phone: (data.phone ?? "").trim() || null,
+          role: (data.role ?? "").trim() || null,
+          isPrimary,
+        },
+      });
+    });
+  } catch (e) {
+    console.error("createBrandContact failed", e);
+    throw new Error("Gagal menyimpan kontak");
+  }
 }

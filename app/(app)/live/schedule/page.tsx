@@ -2,7 +2,17 @@ import Link from "next/link";
 import { Radio } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
+import { getAgencyTimezone } from "@/lib/services/common";
 import { listLiveSessions } from "@/lib/services/live";
+import {
+  dateKeyInTz,
+  daysAgoStartInTz,
+  dayStartInTz,
+  monthStartInTz,
+  parseDateKeyInTz,
+  shiftDateKey,
+  startOfWeekInTz,
+} from "@/lib/timezone";
 import { PageHeader } from "@/components/page-header";
 import { ScheduleCalendar } from "@/components/live/schedule-calendar";
 import { cn } from "@/lib/utils";
@@ -22,61 +32,46 @@ function str(v: string | string[] | undefined): string | undefined {
 export default async function LiveSchedulePage(props: PageProps<"/live/schedule">) {
   const user = await requireUser();
   const searchParams = await props.searchParams;
+  // The whole calendar lives in the tenant's business timezone: anchors,
+  // fetch windows and URL keys are tenant-local calendar days, never the
+  // server's runtime timezone.
+  const tz = await getAgencyTimezone(user.agencyId);
 
   const viewParam = str(searchParams.view);
   const view: View = VIEWS.some((v) => v.key === viewParam) ? (viewParam as View) : "week";
 
-  // Anchor date from ?date=YYYY-MM-DD, clamped to a valid date
-  let anchor = new Date();
+  // Anchor date from ?date=YYYY-MM-DD interpreted in the tenant timezone;
+  // invalid/missing keys fall back to the tenant's today.
   const dateParam = str(searchParams.date);
-  if (dateParam) {
-    const d = new Date(`${dateParam}T00:00:00`);
-    if (!Number.isNaN(d.getTime())) anchor = d;
-  }
+  const parsedAnchor = dateParam ? parseDateKeyInTz(tz, dateParam) : null;
+  const anchor = parsedAnchor ?? new Date();
+  const anchorKey = dateKeyInTz(tz, anchor);
 
-  // Fetch window that always covers the current view (day / week / month grid)
-  const windowStart = (() => {
-    if (view === "month") {
-      const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
-      const s = new Date(first);
-      s.setDate(first.getDate() - ((first.getDay() + 6) % 7)); // Monday of grid
-      return s;
-    }
-    if (view === "week") {
-      const s = new Date(anchor);
-      s.setHours(0, 0, 0, 0);
-      s.setDate(s.getDate() - ((s.getDay() + 6) % 7));
-      return s;
-    }
-    const s = new Date(anchor);
-    s.setHours(0, 0, 0, 0);
-    return s;
-  })();
-  const windowEnd = (() => {
-    const days = view === "month" ? 42 : view === "week" ? 7 : 1;
-    const e = new Date(windowStart);
-    e.setDate(e.getDate() + days);
-    return e;
-  })();
+  // Fetch window that always covers the current view (day / week / month grid),
+  // computed as tenant-local midnights so it stays exact across DST changes.
+  const windowStart =
+    view === "month"
+      ? startOfWeekInTz(tz, monthStartInTz(tz, anchor))
+      : view === "week"
+        ? startOfWeekInTz(tz, anchor)
+        : dayStartInTz(tz, anchor);
+  const gridDays = view === "month" ? 42 : view === "week" ? 7 : 1;
+  const windowEnd = daysAgoStartInTz(tz, -gridDays, windowStart);
+
   const result = await listLiveSessions(user.agencyId, {
     rangeStart: windowStart,
     rangeEnd: windowEnd,
   });
   const canWrite = can(user.role, "live", "write");
 
-  const dateKey = (d: Date) => d.toISOString().slice(0, 10);
-  const shift = (days: number) => {
-    const d = new Date(anchor);
-    d.setDate(d.getDate() + days);
-    return `/live/schedule?view=${view}&date=${dateKey(d)}`;
+  const shiftHref = (delta: { days?: number; months?: number }) => {
+    const key = shiftDateKey(anchorKey, delta) ?? anchorKey;
+    return `/live/schedule?view=${view}&date=${key}`;
   };
-  const shiftMonth = (dir: 1 | -1) => {
-    const d = new Date(anchor.getFullYear(), anchor.getMonth() + dir, 1);
-    return `/live/schedule?view=${view}&date=${dateKey(d)}`;
-  };
-
-  const prevHref = view === "day" ? shift(-1) : view === "week" ? shift(-7) : shiftMonth(-1);
-  const nextHref = view === "day" ? shift(1) : view === "week" ? shift(7) : shiftMonth(1);
+  const prevHref =
+    view === "day" ? shiftHref({ days: -1 }) : view === "week" ? shiftHref({ days: -7 }) : shiftHref({ months: -1 });
+  const nextHref =
+    view === "day" ? shiftHref({ days: 1 }) : view === "week" ? shiftHref({ days: 7 }) : shiftHref({ months: 1 });
   const todayHref = `/live/schedule?view=${view}`;
 
   return (
@@ -108,7 +103,7 @@ export default async function LiveSchedulePage(props: PageProps<"/live/schedule"
           {VIEWS.map((v) => (
             <Link
               key={v.key}
-              href={`/live/schedule?view=${v.key}&date=${dateKey(anchor)}`}
+              href={`/live/schedule?view=${v.key}&date=${anchorKey}`}
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 view === v.key
@@ -126,6 +121,7 @@ export default async function LiveSchedulePage(props: PageProps<"/live/schedule"
         sessions={result.sessions}
         view={view}
         anchor={anchor}
+        timeZone={tz}
         prevHref={prevHref}
         nextHref={nextHref}
         todayHref={todayHref}

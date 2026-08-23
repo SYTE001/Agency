@@ -61,3 +61,6 @@ skills-lock.json
 
 .vercel
 .env*
+
+# logs
+*.log

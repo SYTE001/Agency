@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
 import { LIVE_STATUS } from "@/lib/constants";
 import { getLiveDashboard, listLiveSessions } from "@/lib/services/live";
+import { getAgencyTimezone } from "@/lib/services/common";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
@@ -13,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatCompactIDR, formatDateTime, formatNumber, formatPercent } from "@/lib/format";
+import { formatCompactIDR, formatDateTime, formatNumber, formatPercent, formatTime } from "@/lib/format";
 import { LiveStatusButton } from "@/components/live/live-status-button";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +32,9 @@ export default async function LivePage(props: PageProps<"/live">) {
     creatorId: str(searchParams.creatorId),
   };
 
-  const [result, dashboard, creators] = await Promise.all([
+  // Rendered times (upcoming slots, the sessions table) follow the tenant's
+  // business timezone, not the server's.
+  const [result, dashboard, creators, tz] = await Promise.all([
     listLiveSessions(user.agencyId, filters),
     getLiveDashboard(user.agencyId),
     prisma.creator.findMany({
@@ -40,6 +43,7 @@ export default async function LivePage(props: PageProps<"/live">) {
       orderBy: { displayName: "asc" },
       take: 100,
     }),
+    getAgencyTimezone(user.agencyId),
   ]);
   const canWrite = can(user.role, "live", "write");
 
@@ -148,9 +152,7 @@ export default async function LivePage(props: PageProps<"/live">) {
                     href={`/live/${s.id}`}
                     className="flex items-center gap-3 rounded-md border bg-card px-3 py-2 transition-colors hover:bg-accent"
                   >
-                    <span className="w-14 shrink-0 text-sm font-semibold">
-                      {s.startTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
-                    </span>
+                    <span className="w-14 shrink-0 text-sm font-semibold">{formatTime(s.startTime, tz)}</span>
                     <span className="min-w-0 flex-1 truncate text-sm">{s.creator.displayName}</span>
                     <StatusBadge status={s.status} />
                   </Link>
@@ -265,7 +267,7 @@ export default async function LivePage(props: PageProps<"/live">) {
                           </span>
                         </Link>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">{formatDateTime(s.startTime)}</TableCell>
+                      <TableCell className="whitespace-nowrap text-muted-foreground">{formatDateTime(s.startTime, tz)}</TableCell>
                       <TableCell><StatusBadge status={s.status} /></TableCell>
                       <TableCell className="text-right text-muted-foreground">{s.targetGmv > 0 ? formatCompactIDR(s.targetGmv) : "—"}</TableCell>
                       <TableCell className="text-right">

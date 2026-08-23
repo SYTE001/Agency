@@ -13,9 +13,9 @@ export default async function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-lg font-bold text-brand-foreground">
-            KN
+            AO
           </div>
-          <h1 className="text-xl font-semibold tracking-tight">Kreatif Nusantara</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Agency OS</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Agency Operating System — masuk untuk melanjutkan.
           </p>

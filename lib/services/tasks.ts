@@ -49,15 +49,16 @@ export async function listTasks(agencyId: string, filters: TaskFilters = {}) {
 }
 
 export async function getTaskCounts(agencyId: string) {
-  const [open, inProgress, overdue, done] = await Promise.all([
+  const [open, inProgress, overdue, done, cancelled] = await Promise.all([
     prisma.task.count({ where: { agencyId, status: "Open" } }),
     prisma.task.count({ where: { agencyId, status: "InProgress" } }),
     prisma.task.count({
       where: { agencyId, status: { in: ["Open", "InProgress"] }, dueDate: { lt: new Date() } },
     }),
     prisma.task.count({ where: { agencyId, status: "Done" } }),
+    prisma.task.count({ where: { agencyId, status: "Cancelled" } }),
   ]);
-  return { open, inProgress, overdue, done };
+  return { open, inProgress, overdue, done, cancelled };
 }
 
 export async function createTask(
@@ -105,6 +106,17 @@ export async function updateTask(
   const task = await prisma.task.findFirst({ where: { id: taskId, agencyId }, select: { id: true, status: true } });
   if (!task) throw new Error("Task tidak ditemukan");
   if (data.status && !isTaskStatus(data.status)) throw new Error("Status tidak valid");
+
+  // Cancelling is only meaningful for unfinished work: Done must be reopened
+  // first, and Cancelled itself is terminal. Enforced here so every caller —
+  // the status action today, any future caller — hits the same rule.
+  if (
+    data.status === "Cancelled" &&
+    task.status !== "Open" &&
+    task.status !== "InProgress"
+  ) {
+    throw new Error("Hanya task berstatus Open atau InProgress yang dapat dibatalkan");
+  }
 
   const willComplete = data.status === "Done" && task.status !== "Done";
   const reopened = data.status && data.status !== "Done" && task.status === "Done";

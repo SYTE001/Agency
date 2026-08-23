@@ -111,3 +111,86 @@ export function daysAgoStartInTz(timeZone: string, n: number, ref: Date = new Da
     shifted.getUTCDate(),
   );
 }
+
+// ---------------------------------------------------------------------------
+// Calendar-key helpers (LIVE schedule grid & URL navigation). The grid works
+// on "YYYY-MM-DD" keys interpreted in the tenant's timezone so day placement
+// never depends on the server's runtime timezone, and stays correct across
+// DST transitions (keys are calendar dates, not 24h multiples).
+// ---------------------------------------------------------------------------
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+/** Parse a strict "YYYY-MM-DD" key; null when malformed or an impossible date (Feb 30). */
+function parseYMD(key: string): YMD | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key.trim());
+  if (!m) return null;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  const probe = new Date(Date.UTC(year, month - 1, day));
+  if (probe.getUTCMonth() !== month - 1 || probe.getUTCDate() !== day) return null;
+  return { year, month, day };
+}
+
+/** "YYYY-MM-DD" of the calendar day containing `ref`, as seen in `timeZone`. */
+export function dateKeyInTz(timeZone: string, ref: Date = new Date()): string {
+  const tz = normalizeTimezone(timeZone);
+  const { year, month, day } = calendarDateInTz(tz, ref);
+  return `${year}-${pad2(month)}-${pad2(day)}`;
+}
+
+/**
+ * UTC instant of local midnight (00:00) on the "YYYY-MM-DD" calendar date in
+ * `timeZone`. Returns null for malformed/impossible keys so callers can fall
+ * back to "today" instead of silently rolling over to another day.
+ */
+export function parseDateKeyInTz(timeZone: string, key: string): Date | null {
+  const ymd = parseYMD(key);
+  if (!ymd) return null;
+  return dayStartForDateInTz(normalizeTimezone(timeZone), ymd.year, ymd.month, ymd.day);
+}
+
+/**
+ * Shift a "YYYY-MM-DD" key by whole calendar days and/or months. Pure calendar
+ * arithmetic (no timezone math needed): month-end clamps (Jan 31 → Feb 28) and
+ * year rollovers normalize via UTC-date arithmetic. Null for invalid keys.
+ */
+export function shiftDateKey(
+  key: string,
+  delta: { days?: number; months?: number },
+): string | null {
+  const from = parseYMD(key);
+  if (!from) return null;
+  const months = delta.months ?? 0;
+  const days = delta.days ?? 0;
+  const anchor = new Date(Date.UTC(from.year, from.month - 1 + months, 1));
+  // Clamp the day to the target month's length before adding days.
+  const lastDay = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 0)).getUTCDate();
+  const shifted = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), Math.min(from.day, lastDay) + days));
+  return `${shifted.getUTCFullYear()}-${pad2(shifted.getUTCMonth() + 1)}-${pad2(shifted.getUTCDate())}`;
+}
+
+/**
+ * UTC instant of local midnight on Monday of the week containing `ref`, weeks
+ * starting Monday (id-ID business convention), in `timeZone`.
+ */
+export function startOfWeekInTz(timeZone: string, ref: Date = new Date()): Date {
+  const tz = normalizeTimezone(timeZone);
+  const { year, month, day } = calendarDateInTz(tz, ref);
+  // Weekday of the LOCAL calendar date — weekday is a property of the date
+  // itself, so UTC arithmetic on the Y/M/D triple gives the right answer.
+  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay(); // 0=Sun…6=Sat
+  const monday = new Date(Date.UTC(year, month - 1, day - ((weekday + 6) % 7)));
+  return dayStartForDateInTz(tz, monday.getUTCFullYear(), monday.getUTCMonth() + 1, monday.getUTCDate());
+}
+
+/** UTC instant of local midnight on the first day of `ref`'s month in `timeZone`. */
+export function monthStartInTz(timeZone: string, ref: Date = new Date()): Date {
+  const tz = normalizeTimezone(timeZone);
+  const { year, month } = calendarDateInTz(tz, ref);
+  return dayStartForDateInTz(tz, year, month, 1);
+}

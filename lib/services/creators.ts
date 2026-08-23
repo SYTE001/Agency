@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { paginate, totalPages, getAgencyTimezone, containsInsensitive } from "@/lib/services/common";
 import { daysAgoStartInTz } from "@/lib/timezone";
 import type { ListResult } from "@/lib/services/common";
+import { CREATOR_HEALTH, isCreatorStatus } from "@/lib/constants";
 import type { CreatorHealth } from "@/lib/constants";
 import type { Prisma } from "@/lib/prisma";
 
@@ -286,6 +287,26 @@ export function computeHealth(args: {
 // Mutations
 // ---------------------------------------------------------------------------
 
+function assertValidMetrics(followers?: number, engagementRate?: number) {
+  if (followers != null && (!Number.isInteger(followers) || followers < 0)) {
+    throw new Error("Jumlah followers tidak valid");
+  }
+  if (engagementRate != null && (engagementRate < 0 || engagementRate > 100)) {
+    throw new Error("Engagement rate harus antara 0 dan 100");
+  }
+}
+
+/** The optional manager FK must point at a user of the SAME agency. */
+async function resolveManager(agencyId: string, managerId: string | null | undefined) {
+  if (!managerId) return null;
+  const manager = await prisma.user.findFirst({
+    where: { id: managerId, agencyId },
+    select: { id: true },
+  });
+  if (!manager) throw new Error("Manager tidak ditemukan di agensi ini");
+  return manager.id;
+}
+
 export async function createCreator(
   agencyId: string,
   data: {
@@ -299,19 +320,40 @@ export async function createCreator(
     status?: string;
   },
 ) {
-  return prisma.creator.create({
-    data: {
-      agencyId,
-      username: data.username,
-      displayName: data.displayName,
-      category: data.category,
-      followers: data.followers ?? 0,
-      engagementRate: data.engagementRate ?? 0,
-      managerId: data.managerId ?? null,
-      bio: data.bio ?? null,
-      status: data.status ?? "Active",
-    },
-  });
+  const username = data.username.trim();
+  const displayName = data.displayName.trim();
+  const category = data.category.trim();
+  if (!username || !displayName || !category) {
+    throw new Error("Username, nama tampilan, dan kategori creator wajib diisi");
+  }
+  const status = data.status ?? "Active";
+  if (!isCreatorStatus(status)) throw new Error("Status creator tidak valid");
+  assertValidMetrics(data.followers, data.engagementRate);
+  const managerId = await resolveManager(agencyId, data.managerId);
+
+  try {
+    return await prisma.creator.create({
+      data: {
+        agencyId, // always derived from the authenticated session by the caller
+        username,
+        displayName,
+        category,
+        followers: data.followers ?? 0,
+        engagementRate: data.engagementRate ?? 0,
+        managerId,
+        bio: (data.bio ?? "").trim() || null,
+        status,
+      },
+    });
+  } catch (e) {
+    console.error("createCreator failed", e);
+    // Tenant-scoped unique violation on @@unique([agencyId, username]) — same
+    // detection idiom as lib/services/users.ts (works across both providers).
+    if (e instanceof Error && /unique constraint/i.test(e.message)) {
+      throw new Error("Username sudah dipakai. Pilih username lain.");
+    }
+    throw new Error("Gagal menyimpan creator");
+  }
 }
 
 export async function updateCreator(
@@ -328,8 +370,48 @@ export async function updateCreator(
     health: string;
   }>,
 ) {
-  return prisma.creator.update({
+  // Tenant-scoped existence check — replaces the raw P2025 a filtered update
+  // would throw for a missing OR cross-tenant row.
+  const existing = await prisma.creator.findFirst({
     where: { id: creatorId, agencyId },
-    data,
+    select: { id: true },
   });
+  if (!existing) throw new Error("Creator tidak ditemukan");
+
+  if (data.status !== undefined && !isCreatorStatus(data.status)) {
+    throw new Error("Status creator tidak valid");
+  }
+  if (data.health !== undefined && !(CREATOR_HEALTH as readonly string[]).includes(data.health)) {
+    throw new Error("Health creator tidak valid");
+  }
+  assertValidMetrics(data.followers, data.engagementRate);
+
+  const displayName = data.displayName !== undefined ? data.displayName.trim() : undefined;
+  if (displayName !== undefined && !displayName) throw new Error("Nama tampilan wajib diisi");
+  const category = data.category !== undefined ? data.category.trim() : undefined;
+  if (category !== undefined && !category) throw new Error("Kategori wajib dipilih");
+
+  // undefined = leave unchanged; null clears; a value must be same-agency.
+  const managerId =
+    data.managerId === undefined ? undefined : await resolveManager(agencyId, data.managerId);
+  const bio = data.bio !== undefined ? ((data.bio ?? "").trim() || null) : undefined;
+
+  try {
+    return await prisma.creator.update({
+      where: { id: creatorId },
+      data: {
+        ...(displayName !== undefined ? { displayName } : {}),
+        ...(category !== undefined ? { category } : {}),
+        ...(data.followers !== undefined ? { followers: data.followers } : {}),
+        ...(data.engagementRate !== undefined ? { engagementRate: data.engagementRate } : {}),
+        ...(managerId !== undefined ? { managerId } : {}),
+        ...(bio !== undefined ? { bio } : {}),
+        ...(data.status !== undefined ? { status: data.status } : {}),
+        ...(data.health !== undefined ? { health: data.health } : {}),
+      },
+    });
+  } catch (e) {
+    console.error("updateCreator failed", e);
+    throw new Error("Gagal menyimpan perubahan creator");
+  }
 }

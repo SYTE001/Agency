@@ -1,4 +1,11 @@
 // Formatting helpers. Indonesian (id-ID) conventions throughout.
+//
+// Date/time formatting is timezone-aware: every formatter accepts an optional
+// IANA `timeZone` (the authenticated tenant's Agency.timezone) and falls back
+// to the app default (Asia/Jakarta — lib/timezone DEFAULT_TIMEZONE) when
+// omitted. Nothing here ever uses the server's runtime timezone, so rendered
+// dates match the tenant's calendar regardless of where the app runs.
+import { DEFAULT_TIMEZONE, normalizeTimezone } from "@/lib/timezone";
 
 /** Accepts plain numbers and Prisma Decimal objects (monetary values are whole Rupiah). */
 type DecimalLike = number | { toNumber(): number };
@@ -62,31 +69,53 @@ export function formatDelta(n: number): string {
   return n > 0 ? `+${v}%` : `${v}%`;
 }
 
-const dateFmt = new Intl.DateTimeFormat("id-ID", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
-
-const dateTimeFmt = new Intl.DateTimeFormat("id-ID", {
-  day: "2-digit",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-});
+// Formatter cache — one Intl instance per (kind, timezone). Keeps hot render
+// paths cheap without hardcoding any zone.
+const fmtCache = new Map<string, Intl.DateTimeFormat>();
+function idFormatter(kind: string, opts: Intl.DateTimeFormatOptions, timeZone?: string): Intl.DateTimeFormat {
+  const tz = normalizeTimezone(timeZone ?? DEFAULT_TIMEZONE);
+  const key = `${kind}|${tz}`;
+  let fmt = fmtCache.get(key);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat("id-ID", { ...opts, timeZone: tz });
+    fmtCache.set(key, fmt);
+  }
+  return fmt;
+}
 
 /** "17 Agu 2026" */
-export function formatDate(d: Date): string {
-  return dateFmt.format(d);
+export function formatDate(d: Date, timeZone?: string): string {
+  return idFormatter(
+    "date",
+    { day: "2-digit", month: "short", year: "numeric" },
+    timeZone,
+  ).format(d);
 }
 
 /** "17 Agu, 14:30" */
-export function formatDateTime(d: Date): string {
-  return dateTimeFmt.format(d);
+export function formatDateTime(d: Date, timeZone?: string): string {
+  return idFormatter(
+    "dateTime",
+    { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" },
+    timeZone,
+  ).format(d);
 }
 
-/** Relative time: "2j lalu", "5m lalu", "baru saja" */
-export function timeAgo(d: Date): string {
+/** Clock time "14:30" in the given timezone (parts joined manually so the
+ * separator stays ":" regardless of ICU locale punctuation). */
+export function formatTime(d: Date, timeZone?: string): string {
+  const parts = idFormatter(
+    "time",
+    { hour: "2-digit", minute: "2-digit", hour12: false },
+    timeZone,
+  ).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  return `${get("hour").padStart(2, "0").slice(-2)}:${get("minute")}`;
+}
+
+/** Relative time: "2j lalu", "5m lalu", "baru saja". Deltas are
+ * timezone-independent; the >30-day fallback renders a tenant-local date. */
+export function timeAgo(d: Date, timeZone?: string): string {
   const diff = Date.now() - d.getTime();
   const sec = Math.floor(diff / 1000);
   if (sec < 60) return "baru saja";
@@ -96,10 +125,10 @@ export function timeAgo(d: Date): string {
   if (hr < 24) return `${hr}j lalu`;
   const day = Math.floor(hr / 24);
   if (day < 30) return `${day}h lalu`;
-  return formatDate(d);
+  return formatDate(d, timeZone);
 }
 
 /** Day-of-week short: "Sen", "Sel" */
-export function dayShort(d: Date): string {
-  return new Intl.DateTimeFormat("id-ID", { weekday: "short" }).format(d);
+export function dayShort(d: Date, timeZone?: string): string {
+  return idFormatter("weekday", { weekday: "short" }, timeZone).format(d);
 }

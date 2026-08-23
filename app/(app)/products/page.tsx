@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Package, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Package, Search } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
@@ -25,15 +25,23 @@ function num(v: string | string[] | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+// Whitelist URL input — never cast arbitrary strings into the filter type.
+const SORT_FIELDS = new Set(["name", "price", "gmv"]);
+
 export default async function ProductsPage(props: PageProps<"/products">) {
   const user = await requireUser();
   const searchParams = await props.searchParams;
 
+  const rawSortBy = str(searchParams.sortBy);
   const filters: ProductListFilters = {
     q: str(searchParams.q),
     brandId: str(searchParams.brandId),
     status: str(searchParams.status),
     category: str(searchParams.category),
+    sortBy: rawSortBy && SORT_FIELDS.has(rawSortBy)
+      ? (rawSortBy as ProductListFilters["sortBy"])
+      : undefined,
+    sortDir: str(searchParams.sortDir) === "asc" ? "asc" : "desc",
     page: num(searchParams.page) ?? 1,
   };
 
@@ -114,12 +122,12 @@ export default async function ProductsPage(props: PageProps<"/products">) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-52">Produk</TableHead>
+                <SortHead label="Produk" sortBy="name" current={filters.sortBy} dir={filters.sortDir ?? "asc"} params={searchParams} className="min-w-52" />
                 <TableHead>Brand</TableHead>
                 <TableHead>Kategori</TableHead>
-                <TableHead className="text-right">Harga</TableHead>
+                <SortHead label="Harga" sortBy="price" current={filters.sortBy} dir={filters.sortDir ?? "asc"} params={searchParams} className="text-right" />
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">GMV 30d</TableHead>
+                <SortHead label="GMV 30d" sortBy="gmv" current={filters.sortBy} dir={filters.sortDir ?? "asc"} params={searchParams} className="text-right" />
                 <TableHead className="text-right">Order 30d</TableHead>
                 <TableHead className="text-right">Unit 30d</TableHead>
               </TableRow>
@@ -173,4 +181,42 @@ function flattenParams(params: Record<string, string | string[] | undefined>): R
     if (typeof v === "string" && v !== "") out[k] = v;
   }
   return out;
+}
+
+function SortHead({
+  label,
+  sortBy,
+  current,
+  dir,
+  params,
+  className,
+}: {
+  label: string;
+  sortBy: NonNullable<ProductListFilters["sortBy"]>;
+  current?: ProductListFilters["sortBy"];
+  dir: "asc" | "desc";
+  params: Record<string, string | string[] | undefined>;
+  className?: string;
+}) {
+  const active = current === sortBy;
+  // Default direction per column: name reads naturally A→Z, price/GMV top-first.
+  const defaultDir = sortBy === "name" ? "asc" : "desc";
+  const nextDir = !active ? defaultDir : dir === "asc" ? "desc" : "asc";
+  const p = new URLSearchParams(
+    Object.entries(flattenParams(params)).filter(([k]) => k !== "page"),
+  );
+  p.set("sortBy", sortBy);
+  p.set("sortDir", nextDir);
+  return (
+    <TableHead className={className}>
+      <Link href={`/products?${p.toString()}`} className="inline-flex items-center gap-1 hover:text-foreground">
+        {label}
+        {active ? (
+          dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </Link>
+    </TableHead>
+  );
 }

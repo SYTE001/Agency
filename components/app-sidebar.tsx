@@ -26,7 +26,7 @@ type NavItem = { href: string; label: string; icon: typeof Users; resource: Reso
 const NAV_GROUPS: { label: string | null; items: NavItem[] }[] = [
   {
     label: null,
-    items: [{ href: "/", label: "Overview", icon: LayoutDashboard, resource: null }],
+    items: [{ href: "/overview", label: "Overview", icon: LayoutDashboard, resource: null }],
   },
   {
     label: "Data Induk",
@@ -89,7 +89,9 @@ export function AppSidebar({
             ) : null}
             {items.map((item) => {
               const active =
-                item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                item.href === "/overview"
+                  ? pathname === "/overview"
+                  : pathname.startsWith(item.href);
               const Icon = item.icon;
               return (
                 <Link

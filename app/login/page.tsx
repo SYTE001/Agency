@@ -6,7 +6,7 @@ export const metadata = { title: "Masuk — Agency OS" };
 
 export default async function LoginPage() {
   const user = await getSessionUser();
-  if (user) redirect("/");
+  if (user) redirect("/overview");
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-subtle px-4">

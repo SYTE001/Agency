@@ -38,7 +38,7 @@ export async function login(
     maxAge: 60 * 60 * 24 * 7,
   });
 
-  redirect("/");
+  redirect("/overview");
 }
 
 export async function logout() {

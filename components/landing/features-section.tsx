@@ -1,142 +1,116 @@
-import {
-  Users,
-  Building2,
-  Megaphone,
-  FileText,
-  Radio,
-  CheckSquare,
-  BarChart3,
-  Wallet,
-  Activity,
-  Calendar,
-  Layers,
-  ArrowUpRight,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { CheckCircle2 } from "lucide-react";
 
 export function FeaturesSection() {
-  const features = [
+  const pillars = [
     {
-      icon: Users,
-      title: "Creator Management",
-      badge: "Master Data",
+      num: "01",
+      tag: "Master Data",
+      title: "Creator & Brand Directory",
       description:
-        "Manage creator profiles, platform handles, niche categories, manager assignments, and operational health status (Healthy, Watch, AtRisk).",
-      tags: ["Health Tracking", "Manager Assignments", "Platform Roster"],
+        "Centralize your creator roster and client brand relationships. Track creator tier categories, health indicators (Healthy, Watch, AtRisk), platform handles, and dedicated talent managers in one directory.",
+      specs: [
+        "Creator health & status tracking",
+        "Assigned manager accountability",
+        "Client brand profiles & product catalogs",
+        "Historical GMV contribution per creator",
+      ],
     },
     {
-      icon: Building2,
-      title: "Brand Management",
-      badge: "Client Directory",
+      num: "02",
+      tag: "Execution",
+      title: "Campaigns & Content Pipeline",
       description:
-        "Centralize brand clients, primary contacts, product portfolios, linked campaigns, and brand settlement histories.",
-      tags: ["Brand Directory", "Contact Rosters", "Settlement Ledger"],
+        "Drive brand campaigns with end-to-end milestone tracking. Link creator rosters to campaign briefs, track GMV target pacing against live sales, and manage script reviews and video deliverables.",
+      specs: [
+        "Campaign GMV target vs actual tracking",
+        "Multi-creator assignment and briefing",
+        "Script approval and revision workflows",
+        "Publishing deadlines & deliverable status",
+      ],
     },
     {
-      icon: Megaphone,
-      title: "Campaign Management",
-      badge: "Execution",
+      num: "03",
+      tag: "Studio Ops",
+      title: "LIVE Commerce Scheduling",
       description:
-        "Track campaign operations, GMV targets vs actuals, assigned creator rosters, and delivery milestones from brief to completion.",
-      tags: ["GMV Pacing", "Creator Linkage", "Status Milestones"],
+        "Coordinate your physical studio rooms, schedule host creator shifts, assign stream operators, and track session GMV fulfillment in real time across the agency.",
+      specs: [
+        "Studio room reservation and availability",
+        "Host and operator shift assignments",
+        "Live GMV target and actual fulfillment",
+        "Agency timezone-synchronized calendar",
+      ],
     },
     {
-      icon: FileText,
-      title: "Content Management",
-      badge: "Production Pipeline",
+      num: "04",
+      tag: "Financial Engine",
+      title: "Automated Commissions & Settlements",
       description:
-        "Organize campaign video deliverables, review stages, script approvals, revision notes, and publishing schedules.",
-      tags: ["Review Stages", "Script Approvals", "Publishing Deadlines"],
-    },
-    {
-      icon: Radio,
-      title: "LIVE Commerce",
-      badge: "Studio Ops",
-      description:
-        "Coordinate studio room allocations, host creator shifts, live operator assignments, target GMVs, and real-time live performance.",
-      tags: ["Studio Rooms", "Shift Scheduling", "Operator Tracking"],
-    },
-    {
-      icon: CheckSquare,
-      title: "Task Management",
-      badge: "Collaboration",
-      description:
-        "Coordinate team responsibilities, priority levels (Low, Medium, High, Critical), due dates, and direct links to creators and campaigns.",
-      tags: ["Role-Based Tasks", "Priority Queues", "Linked Entities"],
-    },
-    {
-      icon: BarChart3,
-      title: "Reports & Analytics",
-      badge: "Business Intelligence",
-      description:
-        "Turn operational and financial data into actionable insights with multi-dimensional breakdowns by creator, brand, and campaign.",
-      tags: ["GMV Trends", "Performance Deltas", "Exportable Summaries"],
-    },
-    {
-      icon: Wallet,
-      title: "Finance & Settlements",
-      badge: "Financial Engine",
-      description:
-        "Calculate tiered commissions, approve batch creator payouts, and reconcile brand invoice settlements with full audit trails.",
-      tags: ["Commission Splits", "Batch Payouts", "Brand Settlements"],
+        "Eliminate spreadsheet commission math. Automatically compute creator commission splits from verified campaign and live GMVs, generate payout approval batches, and reconcile brand invoices.",
+      specs: [
+        "Multi-tier contract commission formulas",
+        "Batch creator payout approval queues",
+        "Brand settlement ledger and invoice tracking",
+        "Full audit trail for agency accounting",
+      ],
     },
   ];
 
   return (
-    <section id="features" className="py-20 sm:py-28 bg-card border-b border-border/70">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto">
-          <p className="text-xs font-semibold uppercase tracking-wider text-brand">
-            Core Modules
+    <section id="capabilities" className="border-b border-border/70 py-20 sm:py-28 lg:py-32">
+      <div className="mx-auto max-w-6xl px-6 sm:px-8">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            System Capabilities
           </p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Everything your agency needs in one system.
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            Engineered for high-velocity agency execution.
           </h2>
-          <p className="mt-3 text-base text-muted-foreground">
-            Purpose-built tools for managing talent, executing brand campaigns, running live
-            commerce studios, and handling agency finances.
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            Four specialized modules working on the same underlying relational database.
           </p>
         </div>
 
-        {/* Feature Cards Grid */}
-        <div className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map((f, idx) => {
-            const Icon = f.icon;
-            return (
-              <div
-                key={f.title}
-                className="group relative flex flex-col justify-between rounded-xl border border-border/80 bg-background/60 p-5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-brand/40 hover:bg-card hover:shadow-md"
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand transition-colors group-hover:bg-brand group-hover:text-brand-foreground">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      {f.badge}
-                    </span>
-                  </div>
-
-                  <h3 className="mt-4 text-base font-semibold text-foreground">{f.title}</h3>
-                  <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-                    {f.description}
-                  </p>
+        {/* 2-Column Editorial Grid */}
+        <div className="mt-16 grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
+          {pillars.map((pillar) => (
+            <div
+              key={pillar.title}
+              className="flex flex-col justify-between border-t border-border/80 pt-8"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-sm font-semibold text-brand">
+                    {pillar.num}
+                  </span>
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    {pillar.tag}
+                  </span>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-border/50 flex flex-wrap gap-1.5">
-                  {f.tags.map((t) => (
-                    <span
-                      key={t}
-                      className="rounded bg-muted/60 px-1.5 py-0.5 text-[10px] text-muted-foreground font-medium"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
+                <h3 className="mt-4 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                  {pillar.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {pillar.description}
+                </p>
               </div>
-            );
-          })}
+
+              <div className="mt-6 border-t border-border/50 pt-4">
+                <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {pillar.specs.map((spec) => (
+                    <li
+                      key={spec}
+                      className="flex items-start gap-2 text-xs text-muted-foreground"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5 text-brand shrink-0 mt-0.5" />
+                      <span>{spec}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

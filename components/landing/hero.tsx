@@ -1,77 +1,72 @@
 import Link from "next/link";
-import { ArrowRight, Sparkles, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
+import { ArrowRight, ShieldCheck, Database, Wallet } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { DashboardMockup } from "@/components/landing/dashboard-mockup";
 import { cn } from "@/lib/utils";
 import type { SessionUser } from "@/lib/auth";
 
-export function LandingHero({ user }: { user: SessionUser | null }) {
+export function Hero({ user }: { user: SessionUser | null }) {
   const ctaHref = user ? "/overview" : "/login";
 
   return (
-    <section className="relative overflow-hidden pt-12 pb-20 sm:pt-16 sm:pb-24 lg:pt-20 lg:pb-32">
-      {/* Background subtle radial illumination */}
-      <div
-        className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-brand/10 blur-3xl dark:bg-brand/15"
-        aria-hidden="true"
-      />
+    <section id="product" className="relative overflow-hidden pt-12 pb-20 sm:pt-16 sm:pb-28 lg:pt-24 lg:pb-36">
+      <div className="mx-auto max-w-6xl px-6 sm:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          {/* Subtle status tag */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-subtle px-3.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-border">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+            <span>TikTok Shop &amp; LIVE Commerce OS</span>
+          </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-        {/* Hero Headline */}
-        <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl max-w-4xl mx-auto leading-[1.12]">
-          Run Your TikTok Commerce Agency{" "}
-          <span className="text-brand">From One Workspace.</span>
-        </h1>
+          {/* Core Headline */}
+          <h1 className="mt-6 text-balance text-4xl font-semibold tracking-[-0.035em] text-foreground sm:text-5xl lg:text-[4rem] lg:leading-[1.08]">
+            Run Your TikTok Commerce Agency{" "}
+            <span className="text-brand">From One Workspace.</span>
+          </h1>
 
-        {/* Supporting text */}
-        <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Manage creators, brands, campaigns, content, LIVE operations, tasks, and finances in one
-          centralized operating system.
-        </p>
+          {/* Supporting Statement */}
+          <p className="mt-6 text-pretty text-lg leading-relaxed text-muted-foreground sm:text-xl">
+            Creators, brands, campaigns, content, LIVE operations, tasks, and finance — unified in a single high-performance operating system.
+          </p>
 
-        {/* Call to action buttons */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5">
-          <Link
-            href={ctaHref}
-            className={cn(
-              buttonVariants({ size: "lg" }),
-              "w-full sm:w-auto gap-2 bg-brand text-brand-foreground hover:bg-brand/90 font-semibold px-6 shadow-sm",
-            )}
-          >
-            <span>{user ? "Open Dashboard" : "Open Agency OS"}</span>
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+          {/* Clean Dual CTAs */}
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href={ctaHref}
+              className={cn(
+                buttonVariants({ size: "lg" }),
+                "w-full sm:w-auto h-12 gap-2 bg-brand px-7 text-sm font-semibold text-brand-foreground hover:bg-brand/90 shadow-sm",
+              )}
+            >
+              <span>{user ? "Open Dashboard" : "Open Agency OS"}</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
 
-          <a
-            href="#features"
-            className={cn(
-              buttonVariants({ variant: "outline", size: "lg" }),
-              "w-full sm:w-auto px-6 font-medium",
-            )}
-          >
-            Explore Features
-          </a>
-        </div>
+            <a
+              href="#capabilities"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "w-full sm:w-auto h-12 px-7 text-sm font-medium border-border/80 hover:bg-subtle",
+              )}
+            >
+              Explore Capabilities
+            </a>
+          </div>
 
-        {/* Honest Architecture highlights */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground font-medium">
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-3.5 w-3.5 text-brand" />
-            Multi-Tenant Isolated Data
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-3.5 w-3.5 text-brand" />
-            Role-Based Access Control
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-3.5 w-3.5 text-brand" />
-            Automated Commission Engine
-          </span>
-        </div>
-
-        {/* Live Hero UI Mockup */}
-        <div id="product" className="mt-12 sm:mt-16 pt-2">
-          <DashboardMockup />
+          {/* Verifiable Architecture Indicators */}
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Database className="h-3.5 w-3.5 text-brand" />
+              <span>Multi-Tenant Isolated Database</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-3.5 w-3.5 text-brand" />
+              <span>Server-Side RBAC (8 Roles)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Wallet className="h-3.5 w-3.5 text-brand" />
+              <span>Automated Commission Splits</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>

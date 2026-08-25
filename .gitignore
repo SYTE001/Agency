@@ -64,3 +64,10 @@ skills-lock.json
 
 # logs
 *.log
+
+# QA and test artifacts
+.captoken
+/qa-shots/
+qa-*.mjs
+measure.mjs
+mktoken.mts

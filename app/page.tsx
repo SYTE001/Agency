@@ -1,50 +1,59 @@
 import type { Metadata } from "next";
 import { getSessionUser } from "@/lib/auth";
-import { LandingNavbar } from "@/components/landing/navbar";
-import { LandingHero } from "@/components/landing/hero";
-import { CapabilityStrip } from "@/components/landing/capability-strip";
+import { Navbar } from "@/components/landing/navbar";
+import { Hero } from "@/components/landing/hero";
+import { CapabilityStatement } from "@/components/landing/capability-statement";
 import { ProblemSection } from "@/components/landing/problem-section";
 import { FeaturesSection } from "@/components/landing/features-section";
 import { ProductShowcase } from "@/components/landing/product-showcase";
 import { HowItWorks } from "@/components/landing/how-it-works";
-import { UseCasesSection } from "@/components/landing/use-cases";
+import { UseCases } from "@/components/landing/use-cases";
 import { SecuritySection } from "@/components/landing/security-section";
 import { FaqSection } from "@/components/landing/faq-section";
 import { CtaSection } from "@/components/landing/cta-section";
-import { LandingFooter } from "@/components/landing/footer";
+import { Footer } from "@/components/landing/footer";
 
 export const metadata: Metadata = {
-  title: "Agency OS — Operating System for TikTok Commerce Agencies",
+  title: "Agency OS — One workspace for your TikTok commerce agency",
   description:
-    "Run your TikTok Commerce Agency from one workspace. Manage creators, brands, campaigns, content, LIVE operations, tasks, and finances in one centralized operating system.",
+    "Creators, brands, campaigns, content deliverables, LIVE operations, tasks, and finance in a single system. Built specifically for TikTok Shop agencies.",
   openGraph: {
-    title: "Agency OS — TikTok Commerce Agency Operating System",
+    title: "Agency OS — Run Your TikTok Commerce Agency From One Workspace",
     description:
-      "Manage creators, brands, campaigns, content, LIVE operations, tasks, and finances in one centralized workspace.",
+      "Manage creators, brands, campaigns, LIVE studio operations, and finance in one centralized operating system.",
     type: "website",
   },
 };
 
 export default async function LandingPage() {
-  // Non-blocking read of active session to customize CTAs for signed-in users
+  // Read active session for session-aware CTA routing (/overview vs /login)
   const user = await getSessionUser();
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-brand selection:text-brand-foreground">
-      <LandingNavbar user={user} />
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-6 focus:top-4 focus:z-50 focus:border focus:border-border focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:text-foreground focus:shadow-md"
+      >
+        Skip to content
+      </a>
+
+      <Navbar user={user} />
+
       <main id="main-content" className="flex-1">
-        <LandingHero user={user} />
-        <CapabilityStrip />
+        <Hero user={user} />
+        <CapabilityStatement />
         <ProblemSection />
         <FeaturesSection />
         <ProductShowcase />
         <HowItWorks />
-        <UseCasesSection />
+        <UseCases />
         <SecuritySection />
         <FaqSection />
         <CtaSection user={user} />
       </main>
-      <LandingFooter />
+
+      <Footer />
     </div>
   );
 }

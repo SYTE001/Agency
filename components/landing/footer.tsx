@@ -5,58 +5,60 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border/70 bg-card py-12 sm:py-16">
-      <div className="mx-auto max-w-6xl px-6 sm:px-8">
+    <footer className="border-t border-[#e2ded6] dark:border-[#2f2e2a] bg-[#f2efe8] dark:bg-[#111110] py-14 sm:py-16 transition-colors">
+      <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
           {/* Brand Info */}
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-brand text-xs font-semibold text-brand-foreground shadow-xs">
-                AO
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#111111] dark:bg-[#f5f4f0] text-[#f5f4f0] dark:text-[#111111]">
+                <svg
+                  className="h-3.5 w-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 1 12 2z" fill="currentColor" stroke="none" />
+                  <circle cx="17" cy="7" r="2" fill="#ff5a1f" stroke="none" />
+                </svg>
               </div>
-              <span className="text-sm font-semibold tracking-tight text-foreground">
+              <span className="text-sm font-bold tracking-tight text-[#111111] dark:text-[#f5f4f0]">
                 Agency OS
               </span>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="mt-2 text-xs text-[#706e66] dark:text-[#9e9c94]">
               Operating system for TikTok Shop and LIVE commerce agencies.
             </p>
           </div>
 
-          {/* Quick Links */}
+          {/* Nav Links */}
           <nav
-            className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground"
+            className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-xs font-medium text-[#55534e] dark:text-[#9e9c94]"
             aria-label="Footer Navigation"
           >
-            <a href="#product" className="transition-colors hover:text-foreground">
-              Product
+            <a href="#platform" className="transition-colors hover:text-[#111111] dark:hover:text-[#f5f4f0]">
+              Platform
             </a>
-            <a href="#problem" className="transition-colors hover:text-foreground">
-              Problem
+            <a href="#capabilities" className="transition-colors hover:text-[#111111] dark:hover:text-[#f5f4f0]">
+              Features
             </a>
-            <a href="#capabilities" className="transition-colors hover:text-foreground">
-              Capabilities
+            <a href="#workflow" className="transition-colors hover:text-[#111111] dark:hover:text-[#f5f4f0]">
+              How it works
             </a>
-            <a href="#showcase" className="transition-colors hover:text-foreground">
-              Showcase
+            <a href="#security" className="transition-colors hover:text-[#111111] dark:hover:text-[#f5f4f0]">
+              Security
             </a>
-            <a href="#workflow" className="transition-colors hover:text-foreground">
-              Workflow
-            </a>
-            <a href="#use-cases" className="transition-colors hover:text-foreground">
-              Use Cases
-            </a>
-            <a href="#faq" className="transition-colors hover:text-foreground">
-              FAQ
-            </a>
-            <Link href="/login" className="text-foreground hover:text-brand font-medium">
+            <Link href="/login" className="text-[#111111] dark:text-[#f5f4f0] font-semibold hover:underline">
               Log in
             </Link>
           </nav>
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/60 pt-6 text-xs text-muted-foreground">
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#e2ded6] dark:border-[#262522] pt-6 text-xs text-[#706e66] dark:text-[#9e9c94]">
           <p>© {currentYear} Agency OS. All rights reserved.</p>
 
           <div className="flex items-center gap-4 text-[11px]">
@@ -66,7 +68,7 @@ export function Footer() {
             <span>·</span>
             <span>Prisma Decimal</span>
             <span>·</span>
-            <ThemeToggle className="h-8 w-8" />
+            <ThemeToggle className="h-7 w-7 text-[#706e66] dark:text-[#9e9c94]" />
           </div>
         </div>
       </div>

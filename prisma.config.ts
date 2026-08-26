@@ -4,9 +4,9 @@
 //  - Local dev & tests (SQLite file):            `prisma/schema.sqlite.prisma`
 //
 // The schema (and therefore the generated client directory) is selected from
-// DATABASE_URL unless DB_PROVIDER=sqlite forces the SQLite twin. The runtime
-// client in `lib/prisma.ts` and `lib/prismaClient.ts` makes the same choice,
-// so the CLI and the app always agree on the provider.
+// DB_PROVIDER / DATABASE_URL.
+// Prisma CLI / migrations uses DIRECT_URL (direct PostgreSQL connection) when
+// PostgreSQL is selected, falling back to DATABASE_URL if DIRECT_URL is omitted.
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
@@ -19,6 +19,21 @@ export function isSqliteProvider(): boolean {
 
 const sqlite = isSqliteProvider();
 
+function getCliDatasourceUrl(): string {
+  if (sqlite) {
+    return process.env.DATABASE_URL ?? "file:./prisma/dev.db";
+  }
+  const directUrl = process.env.DIRECT_URL;
+  const databaseUrl = process.env.DATABASE_URL;
+  const url = directUrl || databaseUrl;
+  if (!url) {
+    throw new Error(
+      "DIRECT_URL atau DATABASE_URL wajib diisi untuk operasi Prisma CLI / migrations di PostgreSQL.",
+    );
+  }
+  return url;
+}
+
 // One migration history per provider (Prisma stores a provider lock in
 // migration_lock.toml): prisma/migrations (SQLite dev history) and
 // prisma/migrations-pg (PostgreSQL production history, starts with the
@@ -30,6 +45,6 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: getCliDatasourceUrl(),
   },
 });

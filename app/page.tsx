@@ -2,14 +2,9 @@ import type { Metadata } from "next";
 import { getSessionUser } from "@/lib/auth";
 import { Navbar } from "@/components/landing/navbar";
 import { Hero } from "@/components/landing/hero";
-import { CapabilityStatement } from "@/components/landing/capability-statement";
-import { ProblemSection } from "@/components/landing/problem-section";
 import { FeaturesSection } from "@/components/landing/features-section";
-import { ProductShowcase } from "@/components/landing/product-showcase";
 import { HowItWorks } from "@/components/landing/how-it-works";
-import { UseCases } from "@/components/landing/use-cases";
 import { SecuritySection } from "@/components/landing/security-section";
-import { FaqSection } from "@/components/landing/faq-section";
 import { CtaSection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
 
@@ -30,10 +25,10 @@ export default async function LandingPage() {
   const user = await getSessionUser();
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-brand selection:text-brand-foreground">
+    <div className="flex min-h-screen flex-col bg-[#f7f6f0] dark:bg-[#141412] text-[#111111] dark:text-[#f5f4f0] selection:bg-[#ff5a1f] selection:text-white transition-colors">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-6 focus:top-4 focus:z-50 focus:border focus:border-border focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:text-foreground focus:shadow-md"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-6 focus:top-4 focus:z-50 focus:border focus:border-[#111111] focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:text-[#111111] focus:shadow-md"
       >
         Skip to content
       </a>
@@ -42,14 +37,9 @@ export default async function LandingPage() {
 
       <main id="main-content" className="flex-1">
         <Hero user={user} />
-        <CapabilityStatement />
-        <ProblemSection />
         <FeaturesSection />
-        <ProductShowcase />
         <HowItWorks />
-        <UseCases />
         <SecuritySection />
-        <FaqSection />
         <CtaSection user={user} />
       </main>
 

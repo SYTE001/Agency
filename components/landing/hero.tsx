@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, ArrowDownRight, Radio, Sparkles, SlidersHorizontal, ArrowDown } from "lucide-react";
 import type { SessionUser } from "@/lib/auth";
 
@@ -59,78 +60,18 @@ export function Hero({ user }: { user: SessionUser | null }) {
 
               {/* Main Visual Anchor Card: Creator Studio Portrait */}
               <div className="relative z-10 mx-auto lg:mr-8 w-[260px] sm:w-[320px] lg:w-[340px] aspect-[4/5] rounded-[32px] overflow-hidden border border-[#dedad0] dark:border-[#33322e] bg-[#eae5dc] dark:bg-[#201f1c] shadow-md flex items-end justify-center">
-                {/* Stylized High-Fidelity Creator Artwork / Visual */}
-                <div className="relative h-full w-full flex flex-col justify-between overflow-hidden bg-gradient-to-b from-[#e8e3d8] via-[#e2ddd1] to-[#d6cfc2] dark:from-[#262522] dark:via-[#1e1d1b] dark:to-[#171614]">
-                  {/* Studio Lighting Ambient Glow */}
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.4),transparent_60%)] dark:bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.06),transparent_60%)] pointer-events-none" />
-                  
-                  {/* Creator Portrait Illustration with Swiss Aesthetic */}
-                  <svg 
-                    className="w-full h-full object-cover select-none" 
-                    viewBox="0 0 340 425" 
-                    fill="none" 
-                    xmlns="http://www.w3.org/2000/svg"
-                    role="img"
-                    aria-label="Agency creator portrait illustration"
-                  >
-                    <defs>
-                      <linearGradient id="skinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#7a4931" />
-                        <stop offset="50%" stopColor="#693c26" />
-                        <stop offset="100%" stopColor="#542f1c" />
-                      </linearGradient>
-                      <linearGradient id="shirtGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#c5ba9d" />
-                        <stop offset="100%" stopColor="#aba082" />
-                      </linearGradient>
-                      <linearGradient id="hairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#1a1816" />
-                        <stop offset="100%" stopColor="#0d0c0b" />
-                      </linearGradient>
-                    </defs>
-
-                    {/* Afro Curls Volume Silhouette */}
-                    <circle cx="170" cy="180" r="105" fill="url(#hairGrad)" />
-                    <circle cx="110" cy="160" r="45" fill="url(#hairGrad)" />
-                    <circle cx="230" cy="160" r="45" fill="url(#hairGrad)" />
-                    <circle cx="125" cy="115" r="40" fill="url(#hairGrad)" />
-                    <circle cx="215" cy="115" r="40" fill="url(#hairGrad)" />
-                    <circle cx="170" cy="95" r="42" fill="url(#hairGrad)" />
-
-                    {/* Neck and Shoulders */}
-                    <path d="M142 220 L142 285 Q142 300 170 300 Q198 300 198 285 L198 220 Z" fill="url(#skinGrad)" />
-                    {/* T-shirt */}
-                    <path d="M70 425 L70 335 Q100 300 140 295 Q170 310 200 295 Q240 300 270 335 L270 425 Z" fill="url(#shirtGrad)" />
-                    <path d="M140 295 Q170 312 200 295" stroke="#948a6f" strokeWidth="2.5" fill="none" />
-
-                    {/* Face Oval */}
-                    <ellipse cx="170" cy="190" rx="55" ry="68" fill="url(#skinGrad)" />
-
-                    {/* Joyful Eyes with Subtle Lashes */}
-                    <path d="M136 175 Q146 170 156 175" stroke="#2b1408" strokeWidth="3" strokeLinecap="round" fill="none" />
-                    <path d="M184 175 Q194 170 204 175" stroke="#2b1408" strokeWidth="3" strokeLinecap="round" fill="none" />
-
-                    {/* Metallic Wire Round Glasses */}
-                    <circle cx="145" cy="176" r="23" stroke="#2c2822" strokeWidth="2.5" fill="rgba(255,255,255,0.12)" />
-                    <circle cx="195" cy="176" r="23" stroke="#2c2822" strokeWidth="2.5" fill="rgba(255,255,255,0.12)" />
-                    <path d="M168 174 Q170 172 172 174" stroke="#2c2822" strokeWidth="2.5" fill="none" />
-                    <path d="M122 174 L110 170" stroke="#2c2822" strokeWidth="2" strokeLinecap="round" />
-                    <path d="M218 174 L230 170" stroke="#2c2822" strokeWidth="2" strokeLinecap="round" />
-
-                    {/* Nose */}
-                    <path d="M167 195 Q170 202 173 195" stroke="#4a2614" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-
-                    {/* Big Radiant Smile */}
-                    <path d="M142 215 Q170 248 198 215 Z" fill="#ffffff" />
-                    <path d="M140 215 Q170 252 200 215" stroke="#361709" strokeWidth="2" fill="none" />
-                    <path d="M146 221 Q170 235 194 221" stroke="#dc2626" strokeWidth="1.5" fill="none" opacity="0.4" />
-
-                    {/* Hand softly touching neck like reference */}
-                    <path d="M208 265 Q225 240 235 260 Q240 280 220 295 Z" fill="url(#skinGrad)" />
-                  </svg>
-
-                  {/* Soft bottom vignette overlay */}
-                  <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                {/* Visual Image */}
+                <div className="relative h-full w-full overflow-hidden bg-[#1c1b18]">
+                  <Image
+                    src="/images/image1.jpeg"
+                    alt="Agency Creator Commerce"
+                    fill
+                    priority
+                    sizes="(max-width: 768px) 320px, 340px"
+                    className="object-cover object-center"
+                  />
+                  {/* Subtle ambient lighting vignette overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10 pointer-events-none" />
                 </div>
               </div>
 

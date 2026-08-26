@@ -83,8 +83,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-sans: var(--font-sans-custom), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-custom), var(--font-sans-custom), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-mono-custom), ui-monospace, monospace;
 }
 
 * {
@@ -104,6 +105,10 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
 }
 
 /* Native <select> dropdowns follow the active theme so the opened option-list

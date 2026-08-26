@@ -2,23 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, ArrowRight, LayoutDashboard, LogIn } from "lucide-react";
+import { X, ArrowRight, LayoutDashboard, LogIn } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { SessionUser } from "@/lib/auth";
 
 export function Navbar({ user }: { user: SessionUser | null }) {
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   // Lock body scroll and handle Escape key on mobile drawer
   useEffect(() => {
@@ -36,173 +27,146 @@ export function Navbar({ user }: { user: SessionUser | null }) {
   }, [mobileOpen]);
 
   const navLinks = [
-    { href: "#product", label: "Product" },
-    { href: "#problem", label: "Problem" },
-    { href: "#capabilities", label: "Capabilities" },
-    { href: "#showcase", label: "Showcase" },
-    { href: "#workflow", label: "Workflow" },
-    { href: "#use-cases", label: "Use Cases" },
-    { href: "#faq", label: "FAQ" },
+    { href: "#platform", label: "Platform" },
+    { href: "#capabilities", label: "Features" },
+    { href: "#workflow", label: "How it works" },
+    { href: "#security", label: "Security" },
   ];
 
   const ctaHref = user ? "/overview" : "/login";
 
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-40 w-full transition-all duration-200",
-        scrolled
-          ? "border-b border-border/70 bg-background/85 backdrop-blur-md shadow-xs"
-          : "border-b border-transparent bg-background/50 backdrop-blur-xs",
-      )}
-    >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 sm:h-20 sm:px-8">
-        {/* Brand Wordmark */}
+    <header className="relative w-full border-b border-[#e2ded6] dark:border-[#282724] bg-[#f7f6f0] dark:bg-[#141412] transition-colors z-40">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 sm:h-20 sm:px-8 lg:px-12">
+        {/* Brand Logo & Wordmark */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
+          className="group flex items-center gap-2.5 rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
           aria-label="Agency OS Home"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-xs font-semibold text-brand-foreground shadow-xs">
-            AO
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#111111] dark:bg-[#f5f4f0] text-[#f5f4f0] dark:text-[#111111] transition-transform group-hover:scale-105">
+            {/* Minimal editorial crescent mark */}
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 1 12 2z" fill="currentColor" stroke="none" />
+              <circle cx="17" cy="7" r="2" fill="#ff5a1f" stroke="none" />
+            </svg>
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold tracking-tight text-foreground sm:text-[15px]">
-              Agency OS
-            </span>
-          </div>
+          <span className="text-base font-bold tracking-tight text-[#111111] dark:text-[#f5f4f0]">
+            Agency<span className="font-light opacity-80">OS</span>
+          </span>
         </Link>
 
         {/* Desktop Navigation Links */}
         <nav
-          className="hidden items-center gap-6 lg:flex xl:gap-8"
+          className="hidden items-center gap-8 md:flex lg:gap-10"
           aria-label="Main Navigation"
         >
           {navLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs whitespace-nowrap"
+              className="text-sm font-medium text-[#55534e] dark:text-[#9e9c94] transition-colors hover:text-[#111111] dark:hover:text-[#f5f4f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs whitespace-nowrap"
             >
               {link.label}
             </a>
           ))}
         </nav>
 
-        {/* Actions (Theme Toggle & CTA) */}
-        <div className="hidden items-center gap-3 lg:flex shrink-0">
-          <ThemeToggle />
+        {/* Right Action: Pill CTA + Menu Toggle */}
+        <div className="flex items-center gap-3">
+          <ThemeToggle className="text-[#55534e] dark:text-[#9e9c94] hover:text-[#111111] dark:hover:text-[#f5f4f0]" />
 
-          {user ? (
+          {/* Desktop Solid Pill Button */}
+          <div className="hidden sm:flex items-center gap-2">
             <Link
-              href="/overview"
-              className={cn(
-                buttonVariants({ size: "sm" }),
-                "gap-2 bg-brand text-brand-foreground hover:bg-brand/90 font-medium px-4 shadow-xs",
-              )}
+              href={ctaHref}
+              className="inline-flex items-center justify-center rounded-full bg-[#111111] px-5 py-2.5 text-xs font-semibold text-white transition-all hover:bg-neutral-800 active:scale-95 dark:bg-[#f5f4f0] dark:text-[#111111] dark:hover:bg-white shadow-xs"
             >
-              <LayoutDashboard className="h-4 w-4" />
-              <span>Dashboard</span>
+              {user ? "Open Dashboard" : "Log in to Workspace"}
             </Link>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link
-                href="/login"
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "sm" }),
-                  "text-sm font-medium text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Log in
-              </Link>
-              <Link
-                href="/login"
-                className={cn(
-                  buttonVariants({ size: "sm" }),
-                  "gap-1.5 bg-brand text-brand-foreground hover:bg-brand/90 font-medium px-4 shadow-xs whitespace-nowrap",
-                )}
-              >
-                <span>Open Agency OS</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          )}
-        </div>
+          </div>
 
-        {/* Mobile & Tablet Controls */}
-        <div className="flex items-center gap-2 lg:hidden">
-          <ThemeToggle />
-          <Button
-            variant="ghost"
-            size="icon"
+          {/* Minimalist Hamburger Button */}
+          <button
+            type="button"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={mobileOpen}
-            className="h-9 w-9 text-foreground"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-[#111111] dark:text-[#f5f4f0] transition-colors hover:bg-black/5 dark:hover:bg-white/10 md:hidden"
           >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+            {mobileOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <div className="flex h-3.5 w-4 flex-col justify-between">
+                <span className="h-0.5 w-full bg-current rounded-full" />
+                <span className="h-0.5 w-full bg-current rounded-full" />
+                <span className="h-0.5 w-3/4 bg-current rounded-full" />
+              </div>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Modal Drawer with Full Opaque Backdrop */}
       {mobileOpen && (
-        <div
-          className="fixed inset-x-0 top-16 z-50 flex flex-col border-b border-border bg-background/95 backdrop-blur-md px-6 py-6 shadow-xl lg:hidden"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Mobile Navigation Drawer"
-        >
-          <nav className="flex flex-col space-y-3">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className="text-base font-medium text-muted-foreground transition-colors hover:text-foreground py-1.5"
-              >
-                {link.label}
-              </a>
-            ))}
-          </nav>
+        <>
+          <div 
+            className="fixed inset-0 top-16 sm:top-20 z-40 bg-black/40 backdrop-blur-xs md:hidden" 
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            className="fixed inset-x-0 top-16 sm:top-20 z-50 flex flex-col border-b border-[#e2ded6] dark:border-[#282724] bg-[#f7f6f0] dark:bg-[#141412] px-6 py-6 shadow-2xl md:hidden animate-in fade-in slide-in-from-top-2 duration-200"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile Navigation Drawer"
+          >
+            <nav className="flex flex-col space-y-3">
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="text-base font-semibold text-[#55534e] dark:text-[#9e9c94] transition-colors hover:text-[#111111] dark:hover:text-[#f5f4f0] py-2 border-b border-[#e2ded6]/50 dark:border-[#282724]/50"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </nav>
 
-          <div className="mt-6 border-t border-border pt-4 flex flex-col gap-3">
-            <Link
-              href={ctaHref}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "w-full justify-center gap-2 bg-brand text-brand-foreground hover:bg-brand/90 font-semibold",
-              )}
-            >
-              {user ? (
-                <>
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span>Open Dashboard</span>
-                </>
-              ) : (
-                <>
-                  <span>Open Agency OS</span>
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </Link>
-
-            {!user && (
+            <div className="mt-6 flex flex-col gap-3">
               <Link
-                href="/login"
+                href={ctaHref}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  buttonVariants({ variant: "outline", size: "lg" }),
-                  "w-full justify-center gap-2 font-medium",
+                  buttonVariants({ size: "lg" }),
+                  "w-full justify-center rounded-full bg-[#111111] text-white hover:bg-neutral-800 font-semibold dark:bg-[#f5f4f0] dark:text-[#111111]",
                 )}
               >
-                <LogIn className="h-4 w-4" />
-                <span>Log in to Workspace</span>
+                {user ? (
+                  <>
+                    <LayoutDashboard className="h-4 w-4 mr-2" />
+                    <span>Go to Dashboard</span>
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="h-4 w-4 mr-2" />
+                    <span>Log in to Workspace</span>
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </>
+                )}
               </Link>
-            )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </header>
   );

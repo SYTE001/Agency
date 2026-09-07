@@ -60,8 +60,10 @@ export async function createProductAction(
     };
   }
 
+  let newId: string;
   try {
     const product = await createProduct(user.agencyId, parsed.data);
+    newId = product.id;
     await logActivity({
       agencyId: user.agencyId,
       entityType: "Product",
@@ -75,7 +77,7 @@ export async function createProductAction(
   }
 
   revalidatePath("/products");
-  redirect("/products");
+  redirect(`/products/${newId}`);
 }
 
 export async function updateProductAction(

@@ -38,17 +38,17 @@ export function HowItWorks() {
   ];
 
   return (
-    <section id="workflow" className="border-t border-[#e2ded6] dark:border-[#2f2e2a] py-20 sm:py-28 lg:py-32">
+    <section id="workflow" className="border-t border-border py-20 sm:py-28 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
         <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#706e66] dark:text-[#9e9c94]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#ff5a1f]" />
+          <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
             <span>Operational Workflow</span>
           </div>
-          <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#111111] dark:text-[#f5f4f0] sm:text-4xl lg:text-5xl">
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Three steps, then it repeats.
           </h2>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-[#5a5852] dark:text-[#9e9c94]">
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
             A predictable operational cadence that connects talent managers, studio teams, and finance in one synchronized loop.
           </p>
         </div>
@@ -58,28 +58,28 @@ export function HowItWorks() {
           {steps.map((s) => (
             <div
               key={s.step}
-              className="flex flex-col justify-between border-t border-[#e2ded6] dark:border-[#2f2e2a] pt-8"
+              className="flex flex-col justify-between border-t border-border pt-8"
             >
               <div>
-                <span className="font-mono text-sm font-bold text-[#111111] dark:text-[#f5f4f0]">
+                <span className="font-mono text-sm font-bold text-foreground">
                   {s.step}
                 </span>
 
-                <h3 className="mt-5 text-xl font-bold tracking-tight text-[#111111] dark:text-[#f5f4f0]">
+                <h3 className="mt-5 text-xl font-bold tracking-tight text-foreground">
                   {s.title}
                 </h3>
-                <p className="mt-3 text-xs sm:text-sm leading-relaxed text-[#5a5852] dark:text-[#9e9c94]">
+                <p className="mt-3 text-xs sm:text-sm leading-relaxed text-muted-foreground">
                   {s.description}
                 </p>
               </div>
 
-              <div className="mt-8 border-t border-[#eae6de] dark:border-[#262522] pt-4 space-y-2.5">
+              <div className="mt-8 border-t border-border pt-4 space-y-2.5">
                 {s.specs.map((spec) => (
                   <div
                     key={spec}
-                    className="flex items-center gap-2 text-xs text-[#5a5852] dark:text-[#9e9c94]"
+                    className="flex items-center gap-2 text-xs text-muted-foreground"
                   >
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#ff5a1f] shrink-0" />
+                    <CheckCircle2 className="h-3.5 w-3.5 text-brand shrink-0" />
                     <span>{spec}</span>
                   </div>
                 ))}

@@ -1,508 +1,109 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  BellRing,
-  Building2,
-  Megaphone,
-  Radio,
-  TrendingUp,
-  Users,
-  Wallet,
-} from "lucide-react";
+import { ArrowRight, BellRing, CalendarDays, ChevronRight, Megaphone, Radio, TrendingUp, Users, Wallet } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
 import type { Resource } from "@/lib/constants";
 import { getAgencyTimezone } from "@/lib/services/common";
 import { getOverview } from "@/lib/services/overview";
-import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
-import { StatusBadge } from "@/components/status-badge";
-import { EmptyState } from "@/components/empty-state";
 import { GmvChart } from "@/components/overview/gmv-chart";
+import { ActiveProjects } from "@/components/overview/active-projects";
 import { formatCompactIDR, formatDelta, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-// Greeting/live times render in the authenticated tenant's Agency.timezone —
-// the formatters are built per request from the resolved zone, never the
-// server's runtime timezone.
-function tenantTimeFormatter(timeZone: string): Intl.DateTimeFormat {
-  return new Intl.DateTimeFormat("id-ID", { timeZone, hour: "2-digit", minute: "2-digit" });
-}
-function tenantHourInTz(timeZone: string, d: Date): number {
-  const fmt = new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", hour12: false });
-  return Number(fmt.format(d)) % 24;
+function tenantHourInTz(timeZone: string, date: Date) {
+  const formatter = new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", hour12: false });
+  return Number(formatter.format(date)) % 24;
 }
 
-function greetingFor(hour: number): string {
+function greetingFor(hour: number) {
   if (hour < 11) return "Selamat pagi";
   if (hour < 15) return "Selamat siang";
   if (hour < 18) return "Selamat sore";
   return "Selamat malam";
 }
 
-// Where each activity entity lives, for the "Lihat" links in the feed.
-const ACTIVITY_HREF: Record<string, (id: string) => string> = {
+const activityHref: Record<string, (id: string) => string> = {
   Creator: (id) => `/creators/${id}`,
   Brand: (id) => `/brands/${id}`,
   Product: (id) => `/products/${id}`,
   Campaign: (id) => `/campaigns/${id}`,
   ContentItem: (id) => `/content/${id}`,
   LiveSession: (id) => `/live/${id}`,
-  Commission: () => `/finance/commissions`,
-  CreatorPayout: () => `/finance/payouts`,
-  Settlement: () => `/finance/settlements`,
-};
-const ACTIVITY_LABEL: Record<string, string> = {
-  Creator: "Creator",
-  Brand: "Brand",
-  Product: "Produk",
-  Campaign: "Campaign",
-  ContentItem: "Konten",
-  LiveSession: "LIVE",
-  Commission: "Komisi",
-  CreatorPayout: "Payout",
-  Settlement: "Settlement",
-  Task: "Task",
-  Agency: "Agensi",
-  User: "Anggota",
+  Commission: () => "/finance/commissions",
+  CreatorPayout: () => "/finance/payouts",
+  Settlement: () => "/finance/settlements",
 };
 
 export default async function OverviewPage() {
   const user = await requireUser();
   const overview = await getOverview(user.agencyId);
-  // Tenant business timezone (Agency.timezone) drives every rendered date.
-  const tz = await getAgencyTimezone(user.agencyId);
-  const idTime = tenantTimeFormatter(tz);
+  const timezone = await getAgencyTimezone(user.agencyId);
   const { kpis } = overview;
-
-  // Only surface alerts the user can actually act on (their target module may
-  // be off-limits for their role — a dead link is not actionable, PLAN §5).
-  const alertResource: Record<string, Resource | undefined> = {
-    Creator: "creator",
-    Content: "content",
-    Campaign: "campaign",
-    LiveSession: "live",
-    Settlement: "finance",
-    Task: "task",
-  };
-  const alerts = overview.alerts.filter((a) => {
-    const res = alertResource[a.entityType];
-    return !res || can(user.role, res, "read");
-  });
-
+  const canRead = (resource: Resource) => can(user.role, resource, "read");
   const now = new Date();
-  const hour = tenantHourInTz(tz, now);
-  const dateLine = new Intl.DateTimeFormat("id-ID", {
-    timeZone: tz,
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(now);
+  const dateLine = new Intl.DateTimeFormat("id-ID", { timeZone: timezone, weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(now);
+  const idTime = new Intl.DateTimeFormat("id-ID", { timeZone: timezone, hour: "2-digit", minute: "2-digit" });
+  const alerts = overview.alerts.filter((alert) => {
+    const resource: Record<string, Resource | undefined> = { Creator: "creator", Content: "content", Campaign: "campaign", LiveSession: "live", Settlement: "finance", Task: "task" };
+    const target = resource[alert.entityType];
+    return !target || canRead(target);
+  });
+  const projects = overview.campaignProgress.map((project) => ({
+    ...project,
+    gmvTarget: project.gmvTarget.toNumber(),
+    actualGmv: project.actualGmv.toNumber(),
+  }));
 
-  const r = (res: Resource) => can(user.role, res, "read");
-  const kpisRow = [
-    {
-      label: "Total GMV (30 hari)",
-      value: formatCompactIDR(kpis.totalGmv),
-      delta: kpis.gmvGrowth,
-      icon: TrendingUp,
-      href: r("report") ? "/reports" : undefined,
-    },
-    {
-      label: "Revenue Agensi (30 hari)",
-      value: formatCompactIDR(kpis.agencyRevenue),
-      icon: Wallet,
-      href: r("finance") ? "/finance" : undefined,
-    },
-    {
-      label: "Creator Aktif",
-      value: String(kpis.activeCreators),
-      icon: Users,
-      href: r("creator") ? "/creators" : undefined,
-    },
-    {
-      label: "Campaign Aktif",
-      value: String(kpis.activeCampaigns),
-      icon: Megaphone,
-      href: r("campaign") ? "/campaigns" : undefined,
-    },
+  const metrics = [
+    { label: "Total GMV", value: formatCompactIDR(kpis.totalGmv), delta: kpis.gmvGrowth, icon: TrendingUp, href: canRead("report") ? "/reports" : undefined },
+    { label: "Revenue agensi", value: formatCompactIDR(kpis.agencyRevenue), icon: Wallet, href: canRead("finance") ? "/finance" : undefined },
+    { label: "Creator aktif", value: String(kpis.activeCreators), icon: Users, href: canRead("creator") ? "/creators" : undefined },
   ];
 
   return (
-    <div className="space-y-5 p-6">
-      {/* Greeting / date */}
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">{greetingFor(hour)}, {user.name}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{dateLine} · Ringkasan operasional agensi Anda</p>
-      </div>
-
-      {/* KPI row */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {kpisRow.map((k) => {
-          const Icon = k.icon;
-          const body = (
-            <>
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted">
-                <Icon className="h-4 w-4 text-muted-foreground" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs font-medium text-muted-foreground">{k.label}</span>
-                <span className="block text-lg font-semibold tracking-tight tabular-nums">{k.value}</span>
-              </span>
-              {k.delta !== undefined ? (
-                <span
-                  className={cn(
-                    "ml-auto text-xs font-medium tabular-nums",
-                    k.delta > 0 ? "text-success" : k.delta < 0 ? "text-destructive" : "text-muted-foreground",
-                  )}
-                >
-                  {formatDelta(k.delta)}
-                </span>
-              ) : null}
-            </>
-          );
-          const cls = "flex items-center gap-3 transition-colors";
-          return k.href ? (
-            <Link key={k.label} href={k.href} className={cls}>
-              <Card className="w-full hover:bg-accent/50">
-                <CardContent className="flex items-center gap-3 p-4">{body}</CardContent>
-              </Card>
-            </Link>
-          ) : (
-            <Card key={k.label}>
-              <CardContent className={cn(cls, "p-4")}>{body}</CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Secondary strip */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Brand Aktif</span>
-            </div>
-            <span className="text-base font-semibold">{kpis.activeBrands}</span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Radio className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">LIVE Hari Ini</span>
-            </div>
-            <span className="text-base font-semibold">{overview.liveToday.length}</span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">GMV dari LIVE (30h)</span>
-            </div>
-            <span className="text-base font-semibold">{formatCompactIDR(kpis.liveGmv30)}</span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Wallet className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Settlement Menunggu</span>
-            </div>
-            <div className="text-right">
-              {r("finance") ? (
-                <Link
-                  href="/finance/settlements"
-                  className="text-base font-semibold text-brand hover:underline"
-                >
-                  {formatCompactIDR(kpis.pendingSettlements)}
-                </Link>
-              ) : (
-                <span className="text-base font-semibold">{formatCompactIDR(kpis.pendingSettlements)}</span>
-              )}
-              <span className="block text-xs text-muted-foreground">
-                {kpis.pendingSettlementCount} settlement
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Performance chart */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-semibold">GMV Harian — 30 hari terakhir</p>
-            <span className="text-xs text-muted-foreground">
-              Total {formatCompactIDR(kpis.totalGmv)}
-            </span>
+    <div className="min-h-full bg-[#F5F5F7]">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <header className="mb-10 flex items-end justify-between gap-4">
+          <div>
+            <p className="mb-2 text-sm font-medium text-zinc-500">{dateLine}</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl">{greetingFor(tenantHourInTz(timezone, now))}, {user.name}</h1>
+            <p className="mt-2 text-sm font-medium text-zinc-500">Ringkasan operasional agensi Anda.</p>
           </div>
-          <GmvChart data={overview.gmvDaily} timeZone={tz} />
-        </CardContent>
-      </Card>
+          <Link href="/campaigns/new" className="hidden shrink-0 items-center gap-2 rounded-full bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5 sm:inline-flex">
+            <Megaphone className="h-4 w-4" />
+            Campaign baru
+          </Link>
+        </header>
 
-      {/* Operational alerts — every alert is actionable (PLAN §15) */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="mb-3 flex items-center gap-2">
-            <BellRing className="h-4 w-4 text-muted-foreground" />
-            <p className="text-sm font-semibold">Peringatan Operasional</p>
-            {alerts.length > 0 ? (
-              <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">
-                {alerts.length}
-              </span>
-            ) : null}
+        <section aria-labelledby="overview-title">
+          <div className="mb-4 flex items-center justify-between"><h2 id="overview-title" className="text-lg font-semibold tracking-tight text-zinc-900">Overview</h2><span className="text-xs font-medium text-zinc-400">30 hari terakhir</span></div>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            {metrics.map((metric) => {
+              const Icon = metric.icon;
+              const content = <><div className="flex items-center justify-between"><span className="text-sm font-medium text-zinc-500">{metric.label}</span><Icon className="h-4 w-4 text-zinc-300" /></div><div className="mt-8 flex items-end gap-3"><span className="text-4xl font-bold tracking-tight text-zinc-900">{metric.value}</span>{metric.delta !== undefined ? <span className={cn("mb-1 rounded-full px-2 py-0.5 text-xs font-semibold", metric.delta >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700")}>{formatDelta(metric.delta)}</span> : null}</div></>;
+              return metric.href ? <Link key={metric.label} href={metric.href} className="rounded-3xl bg-white p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition-transform hover:-translate-y-0.5">{content}</Link> : <div key={metric.label} className="rounded-3xl bg-white p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">{content}</div>;
+            })}
           </div>
-          {alerts.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              Tidak ada peringatan. Semua indikator operasional dalam kondisi baik.
-            </p>
-          ) : (
-            <ul className="divide-y">
-              {alerts.map((a) => (
-                <li key={a.id}>
-                  <Link
-                    href={a.href}
-                    className="group flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-accent"
-                  >
-                    <span
-                      className={cn(
-                        "h-2 w-2 shrink-0 rounded-full",
-                        a.severity === "critical" ? "bg-destructive" : a.severity === "warning" ? "bg-warning" : "bg-success",
-                      )}
-                    />
-                    <span className="min-w-0 flex-1 truncate text-sm">{a.message}</span>
-                    <span className="hidden text-xs text-muted-foreground sm:inline">{a.entityType}</span>
-                    <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-brand">
-                      Lihat
-                      <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+        </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Campaign progress */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-semibold">Progres Campaign Aktif</p>
-              {r("campaign") ? (
-                <Link href="/campaigns?view=active" className="text-xs font-medium text-brand hover:underline">
-                  Lihat semua
-                </Link>
-              ) : null}
-            </div>
-            {overview.campaignProgress.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">Tidak ada campaign aktif.</p>
-            ) : (
-              <ul className="space-y-3">
-                {overview.campaignProgress.map((raw) => {
-                  const c = { ...raw, gmvTarget: raw.gmvTarget.toNumber(), actualGmv: raw.actualGmv.toNumber() };
-                  const pct = c.gmvTarget > 0 ? Math.min(100, Math.round((c.actualGmv / c.gmvTarget) * 100)) : 0;
-                  return (
-                    <li key={c.id}>
-                      {r("campaign") ? (
-                        <Link
-                          href={`/campaigns/${c.id}`}
-                          className="block rounded-md border p-3 transition-colors hover:bg-accent"
-                        >
-                          <CampaignRow c={c} pct={pct} />
-                        </Link>
-                      ) : (
-                        <div className="rounded-md border p-3">
-                          <CampaignRow c={c} pct={pct} />
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+        <section className="mt-10" aria-labelledby="projects-title">
+          <div className="mb-4 flex items-end justify-between"><div><h2 id="projects-title" className="text-lg font-semibold tracking-tight text-zinc-900">Active deliverables</h2><p className="mt-1 text-sm font-medium text-zinc-500">Campaign yang sedang bergerak minggu ini.</p></div>{canRead("campaign") ? <Link href="/campaigns?view=active" className="inline-flex items-center gap-1 text-sm font-semibold text-[#007AFF] hover:underline">Lihat semua <ChevronRight className="h-4 w-4" /></Link> : null}</div>
+          <ActiveProjects projects={projects} />
+        </section>
 
-        {/* LIVE today */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-semibold">LIVE Hari Ini</p>
-              {r("live") ? (
-                <Link href="/live" className="text-xs font-medium text-brand hover:underline">
-                  Jadwal lengkap
-                </Link>
-              ) : null}
-            </div>
-            {overview.liveToday.length === 0 ? (
-              <EmptyState
-                icon={Radio}
-                title="Tidak ada sesi LIVE hari ini"
-                description="Jadwalkan sesi LIVE dari modul LIVE."
-                className="py-8"
-              />
-            ) : (
-              <ul className="space-y-2">
-                {overview.liveToday.map((l) => {
-                  const row = (
-                    <div className="flex items-center gap-3">
-                      <span className="w-16 shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
-                        {idTime.format(l.startTime)}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium">{l.creator.displayName}</span>
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {l.room ?? `Sesi ${l.id.slice(0, 6)}`}
-                          {l.operator ? ` · Op: ${l.operator.name}` : " · Tanpa operator"}
-                        </span>
-                      </span>
-                      {l.status === "Ended" && l.targetGmv.toNumber() > 0 ? (
-                        <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
-                          {formatCompactIDR(l.actualGmv)} / {formatCompactIDR(l.targetGmv)}
-                        </span>
-                      ) : null}
-                      <StatusBadge status={l.status} />
-                    </div>
-                  );
-                  return (
-                    <li key={l.id}>
-                      {r("live") ? (
-                        <Link href={`/live/${l.id}`} className="block rounded-md border px-3 py-2 transition-colors hover:bg-accent">
-                          {row}
-                        </Link>
-                      ) : (
-                        <div className="rounded-md border px-3 py-2">{row}</div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Top creators */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-semibold">Top Creator (GMV 30 hari)</p>
-              {r("creator") ? (
-                <Link href="/creators" className="text-xs font-medium text-brand hover:underline">
-                  Semua creator
-                </Link>
-              ) : null}
-            </div>
-            {overview.topCreators.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">Belum ada data GMV creator.</p>
-            ) : (
-              <ul className="space-y-2">
-                {overview.topCreators.map((c, i) => {
-                  const row = (
-                    <div className="flex items-center gap-3">
-                      <span className="w-4 shrink-0 text-center text-xs font-semibold text-muted-foreground">
-                        {i + 1}
-                      </span>
-                      <Avatar name={c.displayName ?? "?"} src={c.avatarUrl} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium">{c.displayName}</span>
-                        <span className="block truncate text-xs text-muted-foreground">{c.category}</span>
-                      </span>
-                      <span className="shrink-0 text-sm font-semibold tabular-nums">
-                        {formatCompactIDR(c.gmv)}
-                      </span>
-                    </div>
-                  );
-                  return (
-                    <li key={c.id}>
-                      {r("creator") ? (
-                        <Link href={`/creators/${c.id}`} className="block rounded-md px-2 py-1.5 transition-colors hover:bg-accent">
-                          {row}
-                        </Link>
-                      ) : (
-                        <div className="rounded-md px-2 py-1.5">{row}</div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recent activity */}
-        <Card>
-          <CardContent className="p-4">
-            <p className="mb-3 text-sm font-semibold">Aktivitas Terbaru</p>
-            {overview.recentActivity.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">Belum ada aktivitas tercatat.</p>
-            ) : (
-              <ul className="space-y-1">
-                {overview.recentActivity.map((a) => {
-                  const href = ACTIVITY_HREF[a.entityType]?.(a.entityId);
-                  const label = ACTIVITY_LABEL[a.entityType] ?? a.entityType;
-                  return (
-                    <li key={a.id} className="flex items-baseline gap-2 px-2 py-1.5">
-                      <span className="w-14 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-                        {timeAgo(a.createdAt, tz)}
-                      </span>
-                      <span className="min-w-0 flex-1 text-sm">
-                        <span className="font-medium">{a.actor?.name ?? "Sistem"}</span>{" "}
-                        <span className="text-muted-foreground">{a.action}</span> {label}
-                        {a.details ? (
-                          <span className="text-muted-foreground"> — {a.details}</span>
-                        ) : null}
-                      </span>
-                      {href ? (
-                        <Link href={href} className="shrink-0 text-xs font-medium text-brand hover:underline">
-                          Lihat
-                        </Link>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function CampaignRow({ c, pct }: { c: { name: string; status: string; brand: { name: string }; gmvTarget: number; actualGmv: number }; pct: number }) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3">
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium">{c.name}</span>
-          <span className="block truncate text-xs text-muted-foreground">{c.brand.name}</span>
-        </span>
-        <StatusBadge status={c.status} />
-      </div>
-      {c.gmvTarget > 0 ? (
-        <div className="space-y-1">
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-brand"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>GMV {formatCompactIDR(c.actualGmv)} dari target {formatCompactIDR(c.gmvTarget)}</span>
-            <span className="font-medium text-foreground">{pct}%</span>
-          </div>
+        <div className="mt-10 grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
+          <section className="rounded-3xl bg-white p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]" aria-labelledby="performance-title"><div className="mb-5 flex items-center justify-between"><h2 id="performance-title" className="font-semibold tracking-tight text-zinc-900">GMV harian</h2><span className="text-sm font-medium text-zinc-500">Total {formatCompactIDR(kpis.totalGmv)}</span></div><GmvChart data={overview.gmvDaily} timeZone={timezone} /></section>
+          <section className="rounded-3xl bg-white p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]" aria-labelledby="today-title"><div className="mb-5 flex items-center justify-between"><h2 id="today-title" className="font-semibold tracking-tight text-zinc-900">Hari ini</h2><CalendarDays className="h-4 w-4 text-zinc-300" /></div><div className="space-y-4"><div className="flex items-center justify-between"><span className="text-sm font-medium text-zinc-500">Campaign aktif</span><span className="font-semibold text-zinc-900">{kpis.activeCampaigns}</span></div><div className="flex items-center justify-between"><span className="text-sm font-medium text-zinc-500">Brand aktif</span><span className="font-semibold text-zinc-900">{kpis.activeBrands}</span></div><div className="flex items-center justify-between"><span className="flex items-center gap-2 text-sm font-medium text-zinc-500"><Radio className="h-4 w-4" /> LIVE terjadwal</span><span className="font-semibold text-zinc-900">{overview.liveToday.length}</span></div><div className="flex items-center justify-between"><span className="text-sm font-medium text-zinc-500">Settlement menunggu</span><span className="font-semibold text-zinc-900">{formatCompactIDR(kpis.pendingSettlements)}</span></div></div></section>
         </div>
-      ) : (
-        <p className="text-xs text-muted-foreground">Target GMV belum diatur</p>
-      )}
+
+        <div className="mt-10 grid gap-5 lg:grid-cols-2">
+          <section className="rounded-3xl bg-white p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]" aria-labelledby="live-title"><div className="mb-4 flex items-center justify-between"><h2 id="live-title" className="font-semibold tracking-tight text-zinc-900">LIVE hari ini</h2>{canRead("live") ? <Link href="/live" className="text-sm font-semibold text-[#007AFF]">Jadwal lengkap</Link> : null}</div>{overview.liveToday.length === 0 ? <p className="py-6 text-sm font-medium text-zinc-500">Tidak ada sesi LIVE hari ini.</p> : <ul className="divide-y divide-zinc-100">{overview.liveToday.slice(0, 4).map((live) => <li key={live.id} className="flex items-center gap-3 py-3"><span className="w-12 text-xs font-semibold tabular-nums text-zinc-400">{idTime.format(live.startTime)}</span><span className="min-w-0 flex-1 truncate text-sm font-semibold text-zinc-900">{live.creator.displayName}</span><span className="text-xs font-medium text-zinc-500">{live.room ?? "Sesi LIVE"}</span></li>)}</ul>}</section>
+          <section className="rounded-3xl bg-white p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]" aria-labelledby="alerts-title"><div className="mb-4 flex items-center gap-2"><BellRing className="h-4 w-4 text-zinc-400" /><h2 id="alerts-title" className="font-semibold tracking-tight text-zinc-900">Peringatan operasional</h2>{alerts.length > 0 ? <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">{alerts.length}</span> : null}</div>{alerts.length === 0 ? <p className="py-6 text-sm font-medium text-zinc-500">Semua indikator operasional dalam kondisi baik.</p> : <ul className="divide-y divide-zinc-100">{alerts.slice(0, 4).map((alert) => <li key={alert.id}><Link href={alert.href} className="flex items-center gap-3 py-3 text-sm font-medium text-zinc-700 hover:text-[#007AFF]"><span className={cn("h-2 w-2 shrink-0 rounded-full", alert.severity === "critical" ? "bg-rose-500" : alert.severity === "warning" ? "bg-amber-500" : "bg-emerald-500")} /> <span className="min-w-0 flex-1 truncate">{alert.message}</span><ArrowRight className="h-4 w-4 shrink-0 text-zinc-300" /></Link></li>)}</ul>}</section>
+        </div>
+
+        <section className="mt-10 rounded-3xl bg-white p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]" aria-labelledby="activity-title"><div className="mb-3 flex items-center justify-between"><h2 id="activity-title" className="font-semibold tracking-tight text-zinc-900">Aktivitas terbaru</h2><span className="text-xs font-medium text-zinc-400">Live feed</span></div>{overview.recentActivity.length === 0 ? <p className="py-6 text-sm font-medium text-zinc-500">Belum ada aktivitas tercatat.</p> : <ul className="divide-y divide-zinc-100">{overview.recentActivity.slice(0, 5).map((activity) => { const href = activityHref[activity.entityType]?.(activity.entityId); return <li key={activity.id} className="flex items-center gap-3 py-3"><Avatar name={activity.actor?.name ?? "Sistem"} className="h-8 w-8" /><span className="min-w-0 flex-1 truncate text-sm text-zinc-600"><span className="font-semibold text-zinc-900">{activity.actor?.name ?? "Sistem"}</span> {activity.action.toLowerCase()}</span><span className="shrink-0 text-xs font-medium text-zinc-400">{timeAgo(activity.createdAt, timezone)}</span>{href ? <Link href={href} aria-label="Lihat aktivitas" className="text-zinc-300 hover:text-[#007AFF]"><ArrowRight className="h-4 w-4" /></Link> : null}</li>; })}</ul>}</section>
+      </div>
     </div>
   );
 }

@@ -1,8 +1,15 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { getSessionUser } from "@/lib/auth";
 import { LoginForm } from "@/components/login-form";
 
-export const metadata = { title: "Masuk — Agency OS" };
+export const metadata: Metadata = {
+  title: "Login",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function LoginPage() {
   const user = await getSessionUser();

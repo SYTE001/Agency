@@ -1,193 +1,84 @@
-# Agency OS — TikTok Agency Management
+# Agency OS
 
-Sistem operasi internal berbasis web untuk agensi TikTok Shop / Creator / LIVE Commerce:
-mengelola creator, brand, campaign, konten, jadwal LIVE, task, hingga keuangan
-(komisi, payout creator, settlement brand) dalam satu aplikasi multi-tenant.
+[![CI](https://github.com/OWNER/REPOSITORY/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPOSITORY/actions/workflows/ci.yml) [![Node](https://img.shields.io/badge/node-20.19%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 
-## Stack aktual
+**[Live Demo](https://agency.example.com)** · [Architecture Deep Dive](docs/CASE_STUDY.md) · [Case Study](docs/CASE_STUDY.md) · [Testing Strategy](docs/TESTING.md)
 
-Berdasarkan `package.json` repository ini:
+Agency OS is a multi-tenant operations workspace for TikTok Shop agencies managing creators, brands, campaigns, content, LIVE schedules, tasks, commissions, payouts, and settlements. It turns scattered operational work into a permission-aware system of record: tenant-scoped queries and server-side RBAC protect data, while the dashboard surfaces the work that needs attention.
 
-| Komponen | Versi |
-|---|---|
-| Next.js (App Router, Server Actions) | 16.3.1 |
-| React | 19.2.8 |
-| TypeScript | ^5 |
-| Tailwind CSS | ^4 (`@tailwindcss/postcss`) |
-| Prisma ORM (generator `prisma-client`) | ^7.9.1 |
-| Database | **Dual-provider**: PostgreSQL via `pg` + `@prisma/adapter-pg` (production) · SQLite via `better-sqlite3` (local dev & test) |
-| Validasi | Zod ^4.4.3 |
-| Session/auth | `jose` (JWT HS256 dalam cookie httpOnly) |
-| Charts | recharts |
-| Test runner | `node:test` via `tsx` |
+## Key engineering highlights
 
-## Persiapan pertama kali
+- Next.js App Router with Server Components and Server Actions for a small client surface and clear mutation boundaries.
+- Prisma service layer with dual-provider PostgreSQL production and isolated SQLite development/test workflows.
+- Tenant isolation enforced by `agencyId` in service queries and mutations, with cross-tenant behavior covered by integration tests.
+- Server-side RBAC matrix for owner, admin, account manager, creator manager, campaign manager, live manager, finance, and viewer roles.
+- Deterministic integer-safe financial formulas for creator commission, agency revenue, payout, and settlement reconciliation.
+- JWT sessions in `httpOnly` cookies, with role and agency membership reloaded from the database per request.
+- URL-driven list filters and pagination where workflows need shareable state and browser history support.
+- Responsive dashboard with keyboard-visible focus states, skip links, semantic headings, and accessible project detail overlays.
+- Formatting, linting, typecheck, unit/service tests, production build, and Playwright smoke checks enforced in GitHub Actions.
+- Local asset policy: UI imagery is resolved from repository-local `public/` files, with external asset licensing documented before adoption.
 
-Prasyarat: Node.js 20+ dan npm.
+## Tech stack
+
+| Area | Choice |
+| --- | --- |
+| Application | Next.js 16 App Router, React 19, TypeScript |
+| UI | Tailwind CSS 4, Lucide, Recharts |
+| Data | Prisma 7, PostgreSQL, SQLite, `pg`, `better-sqlite3` |
+| Validation and auth | Zod, `jose` JWT sessions, server-side RBAC |
+| Quality | ESLint, Biome, Vitest, Node `node:test`, Playwright |
+| Delivery | GitHub Actions, Dependabot, Husky, lint-staged |
+
+## Local development
+
+Prerequisite: Node.js 20.19.0 or newer. The pinned version is available in `.nvmrc` and `.node-version`.
 
 ```bash
-npm install          # postinstall: generate client PostgreSQL + SQLite
-
-# buat file env (opsional — ada fallback, lihat bagian Environment Variables)
-# DATABASE_URL="file:./prisma/dev.db"
-# AUTH_SECRET="<minimal 32 karakter, wajib di production>"
-
-npx prisma migrate deploy   # terapkan migration SQLite ke prisma/dev.db (local dev)
-
-# bootstrap akses: buat agency + satu akun Owner (tanpa data bisnis apa pun)
+npm ci
+npx prisma migrate deploy
 OWNER_EMAIL="owner@agency.test" OWNER_PASSWORD="minimal-12-karakter" npx prisma db seed
-
-npm run dev                 # http://localhost:3000
+npm run dev
 ```
 
-Seed TIDAK mengisi data contoh — database baru selalu kosong dan setiap modul
-menampilkan empty state masing-masing; semua data bisnis (brand, creator,
-produk, campaign, dst.) dibuat lewat UI aplikasi. Seed hanya memastikan agency
-dan satu akun Owner ada sehingga Anda bisa login:
+Open `http://localhost:3000`. The seed creates an agency and Owner account only; business records are intentionally created through the application.
 
-- idempoten — aman dijalankan berulang; owner yang sudah ada tidak pernah
-  ditimpa password-nya;
-- kredensial hanya lewat environment variable (`OWNER_EMAIL`, `OWNER_PASSWORD`,
-  opsional `AGENCY_NAME`/`AGENCY_SLUG`/`OWNER_NAME`), tidak pernah di-commit;
-- `OWNER_PASSWORD` minimal 12 karakter.
-
-## Bootstrap akun Owner produksi
-
-Untuk database PostgreSQL produksi, gunakan script bootstrap khusus produksi
-(menolak target selain `postgres://`, jadi tidak pernah menyentuh SQLite lokal):
+## Verification
 
 ```bash
-OWNER_PASSWORD='password-aman-anda' npx tsx scripts/bootstrap-owner.mts
+npm run format:check
+npm run lint
+npm run typecheck
+npm run test:unit
+npm test
+npm run test:e2e
+npm run build
 ```
 
-Perilaku script:
+See [docs/TESTING.md](docs/TESTING.md) for risk-based coverage and test boundaries. The repository does not contain cart, checkout, payment gateway, or order-confirmation domains; those scenarios are not represented as fabricated tests.
 
-- menolak `DATABASE_URL` yang bukan `postgres(ql)://`;
-- memastikan agency `Kreatif Nusantara` (slug `kreatif-nusantara`) ada — dibuat
-  hanya jika belum ada, tidak pernah menimpa;
-- membuat `owner@kreatifnusantara.id` (role `owner`) hanya jika email belum ada —
-  idempoten, tidak pernah menimpa password akun yang sudah ada;
-- meng-hash password dengan implementasi scrypt aplikasi (`lib/password.ts`)
-  dan tidak pernah mencetak password ke output.
+## Architecture
 
-> Jangan menaruh password produksi di source code, file env yang ter-commit,
-> atau Git — lewatkan hanya via environment variable saat eksekusi.
-
-## Environment variables
-
-| Variabel | Wajib | Keterangan |
-|---|---|---|
-| `DATABASE_URL` | Tidak (dev) | Connection string Prisma. Skema URL memilih provider: `file:./prisma/dev.db` → SQLite (dev), `postgres://…` → PostgreSQL (production). Tanpa env apa pun: SQLite |
-| `DB_PROVIDER` | Tidak | Override eksplisit `sqlite` atau `postgresql` bila skema URL ambigu |
-| `AUTH_SECRET` | **Ya (production)** | Kunci penanda-tanganan JWT sesi (HS256), minimal 32 karakter. Di production aplikasi menolak berjalan tanpanya; di dev dipakai kunci lokal sementara |
-| `OWNER_EMAIL` / `OWNER_PASSWORD` | Tidak (dev) | Kredensial bootstrap satu kali (`npx prisma db seed`, `scripts/bootstrap-owner.mts`) — hanya dibutuhkan saat eksekusi, tidak disimpan/di-commit |
-| `AGENCY_NAME` / `AGENCY_SLUG` / `OWNER_NAME` | Tidak | Override nama agensi/slug/nama owner saat `prisma db seed`; default: Kreatif Nusantara / kreatif-nusantara / Agency Owner |
-
-## Development, build, test
-
-```bash
-npm run dev      # server development (http://localhost:3000)
-npm run lint     # ESLint
-npm run test     # seluruh test (node:test via tsx)
-npm run build    # build production
-npm run start    # jalankan hasil build
+```text
+app/                 Routes, layouts, server actions, metadata
+components/          Reusable UI and domain components
+lib/services/        The only Prisma query boundary
+lib/auth.ts          JWT session and database-backed membership
+lib/authorization.ts RBAC helpers and permission matrix
+lib/finance.ts       Integer-safe commission formulas
+prisma/              PostgreSQL and SQLite schemas/migrations
+scripts/             Bootstrap and test safety utilities
+docs/                Case study, testing, production readiness
 ```
 
-`npm run test` menjalankan:
+## Assets and licensing
 
-- `lib/finance.test.ts` — kalkulasi komisi/payout/revenue (deterministik, tanpa DB).
-- `lib/integration.test.ts` — test DB-backed (tenant isolation, RBAC, uniqueness
-  per tenant, CRUD kritis). Test ini memakai **database sekali pakai** di direktori
-  temp (bukan `prisma/dev.db`); jalankan `prisma migrate deploy` otomatis saat setup.
-  Untuk menjalankan suite yang sama terhadap PostgreSQL, set `DATABASE_URL` ke database
-  yang sudah di-migrate sebelum `npm run test`.
+The application uses repository-local assets under `public/`; it does not claim to fetch product imagery from Unsplash at runtime. The image resolver policy is intentionally simple: components reference stable public paths, and future external assets must include source, license, and attribution details in [docs/CASE_STUDY.md](docs/CASE_STUDY.md). The social preview placeholder specification is documented in [OG_IMAGE.md](OG_IMAGE.md); production branding should provide `public/og.png` at 1200x630 pixels.
 
-## Arsitektur
+## Contributing and security
 
-```
-app/
-  layout.tsx, globals.css        # root app
-  login/                         # halaman login
-  (app)/                         # grup route terautentikasi
-    page.tsx                     # dashboard/overview
-    creators/ brands/ products/  # master data
-    campaigns/ content/ live/    # operasional (live: schedule/new/[id])
-    tasks/ search/ reports/      # kolaborasi & pelaporan
-    finance/                     # + commissions/ payouts/ settlements
-    settings/                    # agency, roles, integrations
-  actions/                       # server actions (mutasi form)
-components/                      # UI components (shadcn-style primitives)
-lib/
-  auth.ts                        # sesi JWT (jose), cookie httpOnly
-  authorization.ts, constants.ts # RBAC: matriks role → permission
-  finance.ts                     # formula komisi (Rupiah bulat, integer-safe)
-  format.ts                      # formatter IDR/angka
-  dbProvider.ts                  # pemilihan provider (sqlite vs postgresql)
-  prismaClient.ts                # createPrismaClient + schema-drift guard
-  prisma.ts                      # singleton PrismaClient (provider-agnostic)
-  services/                      # satu-satunya layer query DB
-  *.test.ts                      # test (node:test)
-prisma/
-  schema.prisma                  # skema multi-tenant PostgreSQL (production)
-  schema.sqlite.prisma           # twin skema SQLite (local dev & test)
-  migrations/                    # riwayat migration SQLite
-  migrations-pg/                 # riwayat migration PostgreSQL (baseline)
-  seed.ts                        # bootstrap sistem: agency + akun Owner saja (tanpa data bisnis)
-generated/prisma-pg/             # client PostgreSQL hasil generate (jangan diedit)
-generated/prisma-sqlite/         # client SQLite hasil generate (jangan diedit)
-docs/
-  production-readiness.md        # audit + status migration PostgreSQL/Supabase
-PLAN.md                          # spesifikasi produk lengkap (bahasa Indonesia)
-Fix.md                           # brief audit/hardening awal
-Revisi.md                        # spesifikasi production hardening (revision list)
-```
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for setup, branches, and Conventional Commits. Read [SECURITY.md](SECURITY.md) before reporting a vulnerability. Dependabot checks npm and GitHub Actions dependencies weekly.
 
-Prinsip arsitektur:
+## License
 
-1. **Server Components + Server Actions** — mutasi lewat form action di `app/actions/`,
-   validasi Zod di server. Tidak ada client yang menulis langsung ke database.
-2. **Service layer tunggal** — semua query Prisma hanya ada di `lib/services/*`;
-   halaman UI tidak query langsung.
-3. **Multi-tenancy by `agencyId`** — setiap business record memiliki kolom `agencyId`.
-   `agencyId` selalu diambil dari sesi server (JWT diverifikasi ulang dari database),
-   tidak pernah dari payload client. Semua query list/detail/mutasi memfilter
-   `id + agencyId`.
-4. **RBAC di server** — matriks permission di `lib/constants.ts`
-   (`ROLE_PERMISSIONS`), dicek via `can(role, resource, action)` di setiap server
-   action. Role: `owner`, `admin`, `account_manager`, `creator_manager`,
-   `campaign_manager`, `live_manager`, `finance`, `viewer`.
-5. **Keuangan presisi** — seluruh field moneter bertipe `Decimal` di schema;
-   kalkulasi komisi memakai Rupiah bulat (integer-safe) di `lib/finance.ts`
-   sesuai formula PLAN §12:
-   - `creatorCommission = GMV × creatorRate%`
-   - `agencyRevenue = creatorCommission × agencyShareRate%` (dari komisi, bukan GMV)
-   - `creatorPayout = creatorCommission − agencyRevenue`
-
-## Keamanan & multi-tenancy
-
-- Session: JWT HS256 (jose) dalam cookie httpOnly; role & `agencyId` di-load ulang
-  dari database per request (perubahan role langsung berlaku).
-- `AUTH_SECRET` wajib diisi di production (aplikasi menolak start tanpa ini).
-- Cross-tenant access ditolak di semua service (dibuktikan oleh
-  `lib/integration.test.ts`): detail/update/delete membutuhkan `id + agencyId`;
-  mutasi finance menolak creator/brand milik tenant lain.
-- Unique constraints tenant-scoped: `Creator.username` dan `Product.sku` unik
-  per agency (`@@unique([agencyId, ...])`), bukan global.
-- Status/role divalidasi dengan type guard terhadap `lib/constants.ts`
-  (sumber kebenaran tunggal) di setiap server action.
-
-## Catatan production
-
-- **Dual-provider sudah diimplementasikan**: production memakai PostgreSQL
-  (Supabase/Vercel) lewat `@prisma/adapter-pg`; local dev & test tetap memakai
-  SQLite (`better-sqlite3`). Provider dipilih dari `DATABASE_URL`/`DB_PROVIDER`
-  — tidak ada kode yang di-hardcode per environment. Import DB di app hanya
-  lewat `@/lib/prisma`. Lihat `docs/production-readiness.md` §13 untuk detail
-  implementasi dan env production yang wajib diset.
-- Integrasi TikTok (halaman `settings/integrations`, modul sync) adalah modul
-  internal dengan simulasi sync — bukan koneksi API TikTok resmi. Simulasi
-  (mock sync) hanya jalan bila diaktifkan eksplisit via `MOCK_SYNC_ENABLED=true`
-  di development/demo; production selalu menolaknya, dan sync tidak pernah
-  mengubah `actualGmv` campaign atau data bisnis lain.
-- Laporan (client/internal) dihasilkan dari data yang sudah ada dan dapat
-  diekspor sebagai CSV (pemisah `;` sesuai locale id-ID untuk Excel).
+MIT. See [LICENSE](LICENSE).

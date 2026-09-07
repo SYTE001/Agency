@@ -1,21 +1,25 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "model": "tokenrouter/z-ai/glm-5.3-free",
   "provider": {
-    "vyce": {
+    "tokenrouter": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Vyce AI",
+      "name": "TokenRouter",
       "options": {
-        "baseURL": "https://vyceai.com/v1"
+        "baseURL": "https://api.tokenrouter.com/v1",
+        "apiKey": "sk-jrqAv6K9IDtptX6w17NqY9zlpqgPgneuqcvZQqkPiG2tOnui"
       },
       "models": {
-        "claude-sonnet-4-6": {
-          "name": "Claude Sonnet 4.6"
-        },
-        "gpt-5.6-luna": {
-          "name": "GPT 5.6 Luna"
-        },
-        "grok-4.6": {
-          "name": "Grok 4.6"
+        "z-ai/glm-5.3-free": {
+          "name": "GLM 5.3 Free",
+          "limit": {
+            "context": 128000,
+            "output": 8192
+          },
+          "cost": {
+            "input": 0,
+            "output": 0
+          }
         }
       }
     }

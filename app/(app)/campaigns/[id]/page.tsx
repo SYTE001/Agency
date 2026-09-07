@@ -9,6 +9,7 @@ import {
   HandCoins,
   Megaphone,
   Package,
+  Pencil,
   Radio,
   StickyNote,
   TrendingUp,
@@ -97,6 +98,15 @@ export default async function CampaignDetailPage(props: PageProps<"/campaigns/[i
             <p className="mt-1 max-w-xl text-sm text-muted-foreground">{campaign.notes}</p>
           ) : null}
         </div>
+        {canWrite ? (
+          <Link
+            href={`/campaigns/${campaign.id}/edit`}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border bg-card px-4 text-sm font-medium transition-colors hover:bg-accent"
+          >
+            <Pencil className="h-4 w-4" />
+            Ubah
+          </Link>
+        ) : null}
       </div>
 
       {/* KPI row */}

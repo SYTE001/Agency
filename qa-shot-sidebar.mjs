@@ -1,5 +1,5 @@
 // Temp check: grouped sidebar rendering (desktop / collapsed / mobile drawer)
-import { chromium } from "playwright";
+import { chromium } from "playwright-core";
 import { mkdirSync } from "node:fs";
 
 const BASE = "http://localhost:3000";
@@ -13,7 +13,7 @@ page.setDefaultTimeout(60000);
 
 await page.goto(`${BASE}/login`);
 await page.fill('input[type="email"]', "owner@agency.test");
-await page.fill('input[type="password"]', "dev-bootstrap-2026");
+await page.fill('input[type="password"]', "localdev-owner-pass-1");
 await page.click('form button[type="submit"]');
 await page.waitForURL((u) => !u.pathname.includes("login"));
 await page.waitForLoadState("domcontentloaded");

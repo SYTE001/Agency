@@ -63,8 +63,10 @@ export async function createBrandAction(
     };
   }
 
+  let newId: string;
   try {
     const brand = await createBrand(user.agencyId, parsed.data);
+    newId = brand.id;
     await logActivity({
       agencyId: user.agencyId,
       entityType: "Brand",
@@ -78,7 +80,7 @@ export async function createBrandAction(
   }
 
   revalidatePath("/brands");
-  redirect("/brands");
+  redirect(`/brands/${newId}`);
 }
 
 export async function updateBrandAction(

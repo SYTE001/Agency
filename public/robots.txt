@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /overview
+Disallow: /settings
+Disallow: /finance
+Sitemap: https://example.com/sitemap.xml

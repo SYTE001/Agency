@@ -15,32 +15,32 @@ export function Hero({ user }: { user: SessionUser | null }) {
           <div className="lg:col-span-6 xl:col-span-6 flex flex-col justify-center">
             {/* Fine Eyebrow Line Marker */}
             <div className="inline-flex items-center gap-3">
-              <div className="h-[1px] w-6 bg-[#9e9c94] dark:bg-[#52504a]" />
-              <div className="flex h-6 w-6 items-center justify-center rounded-full border border-[#111111] dark:border-[#f5f4f0] text-[#111111] dark:text-[#f5f4f0]">
+              <div className="h-[1px] w-6 bg-border" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-full border border-foreground text-foreground">
                 <ArrowRight className="h-3 w-3" />
               </div>
-              <span className="text-xs font-medium text-[#111111] dark:text-[#f5f4f0] tracking-wide">
-                Agency Commerce Operations OS
+              <span className="text-xs font-medium text-foreground tracking-wide">
+                TikTok Shop Agency Management
               </span>
             </div>
 
             {/* Massive Geometric Dominant Headline */}
-            <h1 className="mt-5 sm:mt-6 text-5xl font-extrabold tracking-[-0.04em] text-[#111111] dark:text-[#f5f4f0] sm:text-6xl md:text-7xl lg:text-[4.6rem] xl:text-[5.2rem] leading-[0.96]">
-              Creator<br />
-              Commerce<br />
-              Platform
+            <h1 className="mt-5 sm:mt-6 text-5xl font-extrabold tracking-[-0.04em] text-foreground sm:text-6xl md:text-7xl lg:text-[4.6rem] xl:text-[5.2rem] leading-[0.96]">
+              Run Your<br />
+              TikTok Shop<br />
+              Agency
             </h1>
 
             {/* Understated Supporting Copy */}
-            <p className="mt-5 max-w-lg text-base leading-relaxed text-[#5a5852] dark:text-[#9e9c94] sm:text-lg">
-              Centralize creator rosters, brand briefs, LIVE studio schedules, and automated commission payouts in one operational system.
+            <p className="mt-5 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
+              TikTok Shop agency management for creator rosters, brand briefs, campaign execution, LIVE studio schedules, and commission payouts in one operational system.
             </p>
 
             {/* Single Login Action Button */}
             <div className="mt-7 flex items-center">
               <Link
                 href={ctaHref}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#111111] px-8 text-sm font-semibold text-white transition-all hover:bg-neutral-800 active:scale-95 dark:bg-[#f5f4f0] dark:text-[#111111] dark:hover:bg-white shadow-xs"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-8 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-95 shadow-xs"
               >
                 <span>{user ? "Open Dashboard" : "Log in to Workspace"}</span>
                 <ArrowRight className="h-4 w-4" />
@@ -54,17 +54,17 @@ export function Hero({ user }: { user: SessionUser | null }) {
               
               {/* Background Warm Silhouette Card */}
               <div 
-                className="absolute right-0 sm:right-4 top-10 -z-0 h-[360px] sm:h-[420px] w-[260px] sm:w-[320px] rounded-[36px] bg-gradient-to-b from-[#e4dfd7] to-[#cdc6bb] dark:from-[#2a2926] dark:to-[#1c1b18] opacity-85" 
+                className="absolute right-0 sm:right-4 top-10 -z-0 h-[360px] sm:h-[420px] w-[260px] sm:w-[320px] rounded-[36px] bg-muted opacity-85" 
                 aria-hidden="true" 
               />
 
               {/* Main Visual Anchor Card: Creator Studio Portrait */}
-              <div className="relative z-10 mx-auto lg:mr-8 w-[260px] sm:w-[320px] lg:w-[340px] aspect-[4/5] rounded-[32px] overflow-hidden border border-[#dedad0] dark:border-[#33322e] bg-[#eae5dc] dark:bg-[#201f1c] shadow-md flex items-end justify-center">
+              <div className="relative z-10 mx-auto lg:mr-8 w-[260px] sm:w-[320px] lg:w-[340px] aspect-[4/5] rounded-[32px] overflow-hidden border border-border bg-card shadow-md flex items-end justify-center">
                 {/* Visual Image */}
-                <div className="relative h-full w-full overflow-hidden bg-[#1c1b18]">
+                <div className="relative h-full w-full overflow-hidden bg-card">
                   <Image
                     src="/images/image1.jpeg"
-                    alt="Agency Creator Commerce"
+                    alt="Creator operating from a LIVE commerce studio"
                     fill
                     priority
                     sizes="(max-width: 768px) 320px, 340px"
@@ -76,10 +76,10 @@ export function Hero({ user }: { user: SessionUser | null }) {
               </div>
 
               {/* OVERLAY 1: Top-Left Metallic Floating Card */}
-              <div className="absolute -left-1 sm:-left-6 top-6 z-20 w-40 sm:w-48 rounded-2xl bg-[#d7d1c6]/95 dark:bg-[#2d2c28]/95 backdrop-blur-xs p-3 sm:p-4 border border-[#c4be8f]/30 dark:border-white/10 shadow-xs">
+              <div className="absolute -left-1 sm:-left-6 top-6 z-20 w-40 sm:w-48 rounded-2xl bg-card/95 backdrop-blur-xs p-3 sm:p-4 border border-border shadow-xs">
                 {/* Geometric Mini Pixel Matrix Icon */}
                 <div className="flex items-center gap-1 mb-2">
-                  <div className="grid grid-cols-4 gap-0.5 text-[#111111] dark:text-[#f5f4f0]">
+                  <div className="grid grid-cols-4 gap-0.5 text-foreground">
                     <div className="w-1.5 h-1.5 bg-current" />
                     <div className="w-1.5 h-1.5 bg-transparent" />
                     <div className="w-1.5 h-1.5 bg-current" />
@@ -90,14 +90,14 @@ export function Hero({ user }: { user: SessionUser | null }) {
                     <div className="w-1.5 h-1.5 bg-transparent" />
                   </div>
                 </div>
-                <p className="text-[11px] sm:text-xs font-semibold leading-tight text-[#1c1b18] dark:text-[#f0efe9]">
-                  Take your campaigns &amp; ops under control
+                <p className="text-[11px] sm:text-xs font-semibold leading-tight text-card-foreground">
+                  Campaigns, creators, LIVE rooms, and finance stay connected
                 </p>
               </div>
 
               {/* OVERLAY 2: Swiss Radial Starburst Graphic */}
               <div 
-                className="absolute -left-1 sm:-left-4 top-44 sm:top-48 z-10 w-14 h-14 sm:w-20 sm:h-20 text-[#111111] dark:text-[#f5f4f0] opacity-90 select-none pointer-events-none"
+                className="absolute -left-1 sm:-left-4 top-44 sm:top-48 z-10 w-14 h-14 sm:w-20 sm:h-20 text-foreground opacity-70 select-none pointer-events-none"
                 aria-hidden="true"
               >
                 <svg viewBox="0 0 100 100" className="w-full h-full animate-spin-slow">
@@ -122,7 +122,7 @@ export function Hero({ user }: { user: SessionUser | null }) {
 
               {/* OVERLAY 3: Coral Circular Accent Marker Badge */}
               <div 
-                className="absolute left-16 sm:left-24 -top-3 sm:-top-4 z-30 flex h-13 w-13 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-[#ff5a1f] text-white shadow-lg transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                className="absolute left-16 sm:left-24 -top-3 sm:-top-4 z-30 flex h-13 w-13 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-lg transition-transform hover:scale-105 active:scale-95 cursor-pointer"
                 title="Agency OS Fast Pipeline"
               >
                 <ArrowDownRight className="h-6 w-6 sm:h-7 sm:w-7 stroke-[2.5]" />
@@ -130,16 +130,16 @@ export function Hero({ user }: { user: SessionUser | null }) {
 
               {/* OVERLAY 4: Top-Right Metric Block */}
               <div className="absolute right-0 sm:right-2 top-0 z-20 text-right">
-                <div className="text-2xl sm:text-4xl font-extrabold tracking-tight text-[#111111] dark:text-[#f5f4f0]">
-                  70k+
+                <div className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+                  LIVE
                 </div>
-                <div className="text-[10px] sm:text-[11px] font-medium tracking-wide uppercase text-[#706e66] dark:text-[#9e9c94]">
-                  Live Streams
+                <div className="text-[10px] sm:text-[11px] font-medium tracking-wide uppercase text-muted-foreground">
+                  Studio Ops
                 </div>
                 {/* Hairline Bracket Drop */}
                 <div className="mt-2 flex flex-col items-end">
-                  <div className="w-6 sm:w-8 h-[1px] bg-[#c8c4ba] dark:bg-[#3d3b36]" />
-                  <div className="w-[1px] h-6 sm:h-8 bg-[#c8c4ba] dark:bg-[#3d3b36]" />
+                  <div className="w-6 sm:w-8 h-[1px] bg-border" />
+                  <div className="w-[1px] h-6 sm:h-8 bg-border" />
                 </div>
               </div>
 
@@ -148,11 +148,11 @@ export function Hero({ user }: { user: SessionUser | null }) {
                 className="absolute -left-1 sm:-left-2 top-64 sm:top-68 z-10 hidden sm:flex flex-col items-center"
                 aria-hidden="true"
               >
-                <div className="w-[1px] h-12 sm:h-14 bg-[#c8c4ba] dark:bg-[#3d3b36]" />
-                <div className="flex h-5 w-5 items-center justify-center rounded-full border border-[#c8c4ba] dark:border-[#3d3b36] bg-[#f7f6f0] dark:bg-[#141412] text-[#55534e] dark:text-[#9e9c94]">
+                <div className="w-[1px] h-12 sm:h-14 bg-border" />
+                <div className="flex h-5 w-5 items-center justify-center rounded-full border border-border bg-background text-muted-foreground">
                   <ArrowDown className="h-2.5 w-2.5" />
                 </div>
-                <div className="w-[1px] h-10 sm:h-12 bg-[#c8c4ba] dark:bg-[#3d3b36]" />
+                <div className="w-[1px] h-10 sm:h-12 bg-border" />
               </div>
 
             </div>
@@ -160,32 +160,32 @@ export function Hero({ user }: { user: SessionUser | null }) {
         </div>
 
         {/* LOWER HERO / PROOF STRIP */}
-        <div className="mt-14 sm:mt-20 border-t border-[#e2ded6] dark:border-[#282724] pt-10 sm:pt-12">
+        <div className="mt-14 sm:mt-20 border-t border-border pt-10 sm:pt-12">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-8 items-stretch">
             
-            {/* Left Metric Strip (1.4 million +) */}
+            {/* Left capability strip */}
             <div className="lg:col-span-4 flex flex-col justify-between">
-              <div className="rounded-2xl bg-[#cfc8bc] dark:bg-[#2b2a26] p-5 sm:p-6 text-[#141412] dark:text-[#f5f4ef]">
+              <div className="rounded-2xl bg-muted p-5 sm:p-6 text-foreground">
                 <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                  1.4 million +
+                  One Workspace
                 </div>
-                <p className="mt-1.5 text-xs font-medium text-[#4f4d47] dark:text-[#a19f97]">
-                  Monthly GMV tracked across campaigns
+                <p className="mt-1.5 text-xs font-medium text-muted-foreground">
+                  Creator management, campaign management, LIVE operations, and commission workflows
                 </p>
               </div>
 
               {/* Connected Lower Waveform Strip */}
-              <div className="mt-2.5 flex items-center justify-between rounded-xl bg-white dark:bg-[#1c1b18] px-4 py-3 border border-[#e4e0d7] dark:border-[#33322e]">
+              <div className="mt-2.5 flex items-center justify-between rounded-xl bg-card px-4 py-3 border border-border">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#ff5a1f]" />
+                  <Sparkles className="h-4 w-4 text-brand" />
                   <div className="flex gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#111111] dark:bg-[#f5f4f0]" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#111111] dark:bg-[#f5f4f0]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
                   </div>
                 </div>
 
                 {/* Sine Harmonic Waveform Line */}
-                <div className="w-28 sm:w-32 h-5 text-[#111111] dark:text-[#f5f4f0]">
+                <div className="w-28 sm:w-32 h-5 text-foreground">
                   <svg viewBox="0 0 100 20" className="w-full h-full" fill="none">
                     <path
                       d="M0 10 Q 12.5 2, 25 10 T 50 10 T 75 10 T 100 10"
@@ -199,31 +199,31 @@ export function Hero({ user }: { user: SessionUser | null }) {
             </div>
 
             {/* Center Capability Block: LIVE Commerce Scheduling */}
-            <div className="lg:col-span-4 flex flex-col justify-start border-t lg:border-t-0 lg:border-l border-[#e2ded6] dark:border-[#282724] pt-6 lg:pt-0 lg:pl-8">
+            <div className="lg:col-span-4 flex flex-col justify-start border-t lg:border-t-0 lg:border-l border-border pt-6 lg:pt-0 lg:pl-8">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#cfc9bf] dark:border-[#383733] bg-transparent text-[#111111] dark:text-[#f5f4f0]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-transparent text-foreground">
                   <Radio className="h-4 w-4" />
                 </div>
-                <h2 className="text-base font-bold text-[#111111] dark:text-[#f5f4f0]">
+                <p className="text-base font-bold text-foreground">
                   LIVE Studio Scheduling
-                </h2>
+                </p>
               </div>
-              <p className="mt-3 max-w-sm text-xs sm:text-sm leading-relaxed text-[#5a5852] dark:text-[#9e9c94]">
+              <p className="mt-3 max-w-sm text-xs sm:text-sm leading-relaxed text-muted-foreground">
                 Coordinate physical rooms, stream host shifts, and real-time TikTok LIVE GMV fulfillment across all creator shifts.
               </p>
             </div>
 
             {/* Right Capability Block: Automated Settlements */}
-            <div className="lg:col-span-4 flex flex-col justify-start border-t lg:border-t-0 lg:border-l border-[#e2ded6] dark:border-[#282724] pt-6 lg:pt-0 lg:pl-8">
+            <div className="lg:col-span-4 flex flex-col justify-start border-t lg:border-t-0 lg:border-l border-border pt-6 lg:pt-0 lg:pl-8">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#cfc9bf] dark:border-[#383733] bg-transparent text-[#111111] dark:text-[#f5f4f0]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-transparent text-foreground">
                   <SlidersHorizontal className="h-4 w-4" />
                 </div>
-                <h2 className="text-base font-bold text-[#111111] dark:text-[#f5f4f0]">
+                <p className="text-base font-bold text-foreground">
                   Automated Settlements
-                </h2>
+                </p>
               </div>
-              <p className="mt-3 max-w-sm text-xs sm:text-sm leading-relaxed text-[#5a5852] dark:text-[#9e9c94]">
+              <p className="mt-3 max-w-sm text-xs sm:text-sm leading-relaxed text-muted-foreground">
                 Automate creator commission splits, multi-tier formulas, batch payout approval queues, and client brand reconciliations.
               </p>
             </div>

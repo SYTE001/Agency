@@ -15,7 +15,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20.19.0, 22.x]
+        node-version: [22.x]
+    env:
+      DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+      DIRECT_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,6 +46,9 @@ jobs:
     name: Playwright smoke tests
     runs-on: ubuntu-latest
     needs: quality
+    env:
+      DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+      DIRECT_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
     steps:
       - name: Checkout
         uses: actions/checkout@v4

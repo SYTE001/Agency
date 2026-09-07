@@ -10,6 +10,7 @@ import {
   addCampaignCreator,
   createCampaign,
   removeCampaignCreator,
+  updateCampaign,
 } from "@/lib/services/campaigns";
 import { addNote, entityBelongsToAgency, logActivity } from "@/lib/services/activity";
 
@@ -76,8 +77,10 @@ export async function createCampaignAction(
     };
   }
 
+  let newId: string;
   try {
     const campaign = await createCampaign(user.agencyId, parsed.data);
+    newId = campaign.id;
     await logActivity({
       agencyId: user.agencyId,
       entityType: "Campaign",
@@ -91,7 +94,84 @@ export async function createCampaignAction(
   }
 
   revalidatePath("/campaigns");
-  redirect("/campaigns");
+  redirect(`/campaigns/${newId}`);
+}
+
+const campaignUpdateSchema = z
+  .object({
+    campaignId: z.string().min(1, "Campaign tidak valid"),
+    name: z.string().trim().min(3, "Nama campaign minimal 3 karakter").max(100),
+    brandId: z.string().min(1, "Brand wajib dipilih"),
+    ownerId: z.string().transform((v) => v || null),
+    startDate: dateStr,
+    endDate: dateStr,
+    budget: z.coerce.number().min(0).default(0),
+    creatorTarget: z.coerce.number().int().min(0).default(0),
+    contentTarget: z.coerce.number().int().min(0).default(0),
+    liveTarget: z.coerce.number().int().min(0).default(0),
+    gmvTarget: z.coerce.number().min(0).default(0),
+    commissionRate: z.coerce.number().min(0).max(100).default(0),
+    status: z.string().default("Draft").refine(isCampaignStatus, "Status tidak valid"),
+    notes: z.string().max(1000).transform((v) => v || null),
+  })
+  .refine((d) => d.endDate === null || d.startDate === null || d.endDate >= d.startDate, {
+    message: "Tanggal selesai harus setelah tanggal mulai",
+    path: ["endDate"],
+  });
+
+export async function updateCampaignAction(
+  _prev: CampaignFormState,
+  formData: FormData,
+): Promise<CampaignFormState> {
+  const user = await requireUser();
+  if (!can(user.role, "campaign", "write")) {
+    return { error: "Anda tidak memiliki izin untuk mengubah campaign." };
+  }
+
+  const campaignId = String(formData.get("campaignId") ?? "");
+  const parsed = campaignUpdateSchema.safeParse({
+    campaignId,
+    name: formData.get("name"),
+    brandId: formData.get("brandId"),
+    ownerId: formData.get("ownerId") ?? "",
+    startDate: formData.get("startDate") ?? "",
+    endDate: formData.get("endDate") ?? "",
+    budget: formData.get("budget") || "0",
+    creatorTarget: formData.get("creatorTarget") || "0",
+    contentTarget: formData.get("contentTarget") || "0",
+    liveTarget: formData.get("liveTarget") || "0",
+    gmvTarget: formData.get("gmvTarget") || "0",
+    commissionRate: formData.get("commissionRate") || "0",
+    status: formData.get("status") || "Draft",
+    notes: formData.get("notes") ?? "",
+  });
+
+  if (!parsed.success) {
+    return {
+      error: "Periksa kembali data yang diisi.",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+
+  try {
+    const { campaignId: id, ...data } = parsed.data;
+    await updateCampaign(user.agencyId, id, data);
+    await logActivity({
+      agencyId: user.agencyId,
+      entityType: "Campaign",
+      entityId: id,
+      actorId: user.id,
+      action: "Campaign diubah",
+      details: data.name,
+    });
+  } catch (e) {
+    if (e instanceof Error && e.message) return { error: e.message };
+    return { error: "Gagal menyimpan campaign. Coba lagi." };
+  }
+
+  revalidatePath(`/campaigns/${campaignId}`);
+  revalidatePath("/campaigns");
+  redirect(`/campaigns/${campaignId}`);
 }
 
 // ---------------------------------------------------------------------------

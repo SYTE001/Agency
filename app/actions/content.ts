@@ -55,8 +55,10 @@ export async function createContentAction(
     };
   }
 
+  let newId: string;
   try {
     const item = await createContentItem(user.agencyId, parsed.data);
+    newId = item.id;
     await logActivity({
       agencyId: user.agencyId,
       entityType: "Content",
@@ -70,7 +72,7 @@ export async function createContentAction(
   }
 
   revalidatePath("/content");
-  redirect("/content");
+  redirect(`/content/${newId}`);
 }
 
 // ---------------------------------------------------------------------------

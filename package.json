@@ -8,7 +8,14 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate --schema prisma/schema.prisma && prisma generate --schema prisma/schema.sqlite.prisma",
-    "test": "node --import ./scripts/test-guard.mjs node_modules/tsx/dist/cli.mjs --test lib/**/*.test.ts"
+    "test": "node --import ./scripts/test-guard.mjs node_modules/tsx/dist/cli.mjs --test lib/**/*.test.ts",
+    "format": "biome format --write biome.json vitest.config.ts playwright.config.ts lib/domain.vtest.ts e2e/smoke.spec.ts",
+    "format:check": "biome format biome.json vitest.config.ts playwright.config.ts lib/domain.vtest.ts e2e/smoke.spec.ts",
+    "lint:fix": "eslint --fix",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "prepare": "husky"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
@@ -26,8 +33,12 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.2.4",
+    "@playwright/test": "^1.51.1",
     "@prisma/adapter-better-sqlite3": "^7.9.1",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^20.19.43",
     "@types/pg": "^8.21.0",
     "@types/react": "^19",
@@ -35,9 +46,19 @@
     "better-sqlite3": "^13.0.3",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
+    "husky": "^9.1.7",
+    "jsdom": "^26.1.0",
+    "lint-staged": "^16.4.0",
     "prisma": "^7.9.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json}": "biome check --write"
   }
 }

@@ -18,7 +18,7 @@ export default async function NewLivePage() {
       take: 100,
     }),
     prisma.campaign.findMany({
-      where: { agencyId: user.agencyId, status: { in: ["Recruiting", "Active", "ContentReview"] } },
+      where: { agencyId: user.agencyId, status: { notIn: ["Completed", "Reporting"] } },
       select: { id: true, name: true },
       orderBy: { createdAt: "desc" },
       take: 100,

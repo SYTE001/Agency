@@ -68,8 +68,10 @@ export async function createCreatorAction(
     };
   }
 
+  let newId: string;
   try {
     const creator = await createCreator(user.agencyId, parsed.data);
+    newId = creator.id;
     await logActivity({
       agencyId: user.agencyId,
       entityType: "Creator",
@@ -83,7 +85,7 @@ export async function createCreatorAction(
   }
 
   revalidatePath("/creators");
-  redirect("/creators");
+  redirect(`/creators/${newId}`);
 }
 
 export async function updateCreatorAction(

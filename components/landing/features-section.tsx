@@ -57,17 +57,17 @@ export function FeaturesSection() {
   ];
 
   return (
-    <section id="capabilities" className="border-t border-[#e2ded6] dark:border-[#2f2e2a] py-20 sm:py-28 lg:py-32">
+    <section id="capabilities" className="border-t border-border py-20 sm:py-28 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
         <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#706e66] dark:text-[#9e9c94]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#ff5a1f]" />
+          <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
             <span>Platform Capabilities</span>
           </div>
-          <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#111111] dark:text-[#f5f4f0] sm:text-4xl lg:text-5xl">
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Engineered for high-velocity agency execution.
           </h2>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-[#5a5852] dark:text-[#9e9c94]">
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
             Four core modules connected to the same underlying database, eliminating fragmented spreadsheets and disjointed handoffs.
           </p>
         </div>
@@ -77,34 +77,34 @@ export function FeaturesSection() {
           {pillars.map((pillar) => (
             <div
               key={pillar.title}
-              className="flex flex-col justify-between border-t border-[#e2ded6] dark:border-[#2f2e2a] pt-8"
+              className="flex flex-col justify-between border-t border-border pt-8"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-sm font-bold text-[#111111] dark:text-[#f5f4f0]">
+                  <span className="font-mono text-sm font-bold text-foreground">
                     {pillar.num}
                   </span>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#706e66] dark:text-[#9e9c94]">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     {pillar.tag}
                   </span>
                 </div>
 
-                <h3 className="mt-5 text-xl font-bold tracking-tight text-[#111111] dark:text-[#f5f4f0] sm:text-2xl">
+                <h3 className="mt-5 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
                   {pillar.title}
                 </h3>
-                <p className="mt-3 text-sm leading-relaxed text-[#5a5852] dark:text-[#9e9c94]">
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                   {pillar.description}
                 </p>
               </div>
 
-              <div className="mt-8 border-t border-[#eae6de] dark:border-[#262522] pt-4">
+              <div className="mt-8 border-t border-border pt-4">
                 <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                   {pillar.specs.map((spec) => (
                     <li
                       key={spec}
-                      className="flex items-start gap-2 text-xs text-[#5a5852] dark:text-[#9e9c94]"
+                      className="flex items-start gap-2 text-xs text-muted-foreground"
                     >
-                      <CheckCircle2 className="h-3.5 w-3.5 text-[#ff5a1f] shrink-0 mt-0.5" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-brand shrink-0 mt-0.5" />
                       <span>{spec}</span>
                     </li>
                   ))}

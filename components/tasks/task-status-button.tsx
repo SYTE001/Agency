@@ -27,6 +27,7 @@ export function TaskStatusButton({
       <input type="hidden" name="status" value={status} />
       <button
         type="submit"
+        value={status}
         disabled={pending}
         className={
           variant === "success"

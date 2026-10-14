@@ -51,13 +51,14 @@ export default async function ContentDetailPage(props: PageProps<"/content/[id]"
   const user = await requireUser();
   const { id } = await props.params;
 
-  const detail = await getContentDetail(user.agencyId, id);
+  const [detail, notes] = await Promise.all([
+    getContentDetail(user.agencyId, id),
+    getNotes("Content", id, user.agencyId),
+  ]);
   if (!detail) notFound();
 
   const { item, activity, tasks } = detail;
   const canWrite = can(user.role, "content", "write");
-
-  const notes = await getNotes("Content", item.id, user.agencyId);
 
   const moves = NEXT_STATUSES[item.status] ?? [];
   const isOverdue =

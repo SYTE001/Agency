@@ -8,32 +8,34 @@ import { can } from "@/lib/authorization";
 import { isTaskPriority, isTaskStatus } from "@/lib/constants";
 import { createTask, updateTask } from "@/lib/services/tasks";
 import { entityBelongsToAgency, logActivity } from "@/lib/services/activity";
+import { getAgencyTimezone } from "@/lib/services/common";
+import { parseDateTimeLocalInTz } from "@/lib/timezone";
 
 const RELATED_TYPES = ["Creator", "Brand", "Campaign", "Content", "LiveSession"] as const;
 
-const dateStr = z
-  .string()
-  .transform((v) => (v ? new Date(`${v}T00:00:00`) : null))
-  .refine((d) => d === null || !Number.isNaN(d.getTime()), "Tanggal tidak valid");
-
-const taskSchema = z.object({
-  title: z.string().trim().min(3, "Judul task minimal 3 karakter").max(140),
-  ownerId: z.string().transform((v) => v || null),
-  priority: z.string().default("Medium").refine(isTaskPriority, "Prioritas tidak valid"),
-  dueDate: dateStr,
-  notes: z.string().max(1000).transform((v) => v || null),
-  related: z.string().transform((v) => {
-    if (!v) return { relatedType: null, relatedId: null };
-    const idx = v.indexOf(":");
-    if (idx <= 0) return { relatedType: null, relatedId: null };
-    const relatedType = v.slice(0, idx);
-    const relatedId = v.slice(idx + 1);
-    if (!(RELATED_TYPES as readonly string[]).includes(relatedType)) {
-      return { relatedType: null, relatedId: null };
-    }
-    return { relatedType, relatedId };
-  }),
-});
+function makeTaskSchema(tz: string) {
+  return z.object({
+    title: z.string().trim().min(3, "Judul task minimal 3 karakter").max(140),
+    ownerId: z.string().transform((v) => v || null),
+    priority: z.string().default("Medium").refine(isTaskPriority, "Prioritas tidak valid"),
+    dueDate: z
+      .string()
+      .transform((v) => (v ? parseDateTimeLocalInTz(tz, v) : null))
+      .refine((d) => d === null || !Number.isNaN(d.getTime()), "Tanggal tidak valid"),
+    notes: z.string().max(1000).transform((v) => v || null),
+    related: z.string().transform((v) => {
+      if (!v) return { relatedType: null, relatedId: null };
+      const idx = v.indexOf(":");
+      if (idx <= 0) return { relatedType: null, relatedId: null };
+      const relatedType = v.slice(0, idx);
+      const relatedId = v.slice(idx + 1);
+      if (!(RELATED_TYPES as readonly string[]).includes(relatedType)) {
+        return { relatedType: null, relatedId: null };
+      }
+      return { relatedType, relatedId };
+    }),
+  });
+}
 
 export type TaskFormState = {
   error?: string;
@@ -49,7 +51,8 @@ export async function createTaskAction(
     return { error: "Anda tidak memiliki izin untuk menambah task." };
   }
 
-  const parsed = taskSchema.safeParse({
+  const tz = await getAgencyTimezone(user.agencyId);
+  const parsed = makeTaskSchema(tz).safeParse({
     title: formData.get("title") ?? "",
     ownerId: formData.get("ownerId") ?? "",
     priority: formData.get("priority") || "Medium",
@@ -71,15 +74,20 @@ export async function createTaskAction(
     if (!ok) return { error: "Entitas terkait tidak ditemukan di agensi ini." };
   }
 
-  const task = await createTask(user.agencyId, user.id, { ...rest, ...related });
-  await logActivity({
-    agencyId: user.agencyId,
-    entityType: "Task",
-    entityId: task.id,
-    actorId: user.id,
-    action: "Task dibuat",
-    details: task.title,
-  });
+  try {
+    const task = await createTask(user.agencyId, user.id, { ...rest, ...related });
+    await logActivity({
+      agencyId: user.agencyId,
+      entityType: "Task",
+      entityId: task.id,
+      actorId: user.id,
+      action: "Task dibuat",
+      details: task.title,
+    });
+  } catch (e) {
+    console.error("createTaskAction failed", e);
+    return { error: "Gagal membuat task. Silakan coba lagi." };
+  }
 
   revalidatePath("/tasks");
   redirect("/tasks");
@@ -102,8 +110,8 @@ export async function updateTaskStatusAction(taskId: string, formData: FormData)
       action: "Status task diubah",
       details: `→ ${status}`,
     });
-  } catch {
-    // Task sudah berubah — abaikan
+  } catch (e) {
+    console.error("updateTaskStatusAction failed", e);
   }
 
   revalidatePath("/tasks");

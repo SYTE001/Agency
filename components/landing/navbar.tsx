@@ -1,173 +1,94 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { X, ArrowRight, LayoutDashboard, LogIn } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { SessionUser } from "@/lib/auth";
+import { useLoginTransition } from "@/components/login-transition-provider";
+
+const navLinks = [
+  { href: "#workspace", label: "Workspace" },
+  { href: "#capabilities", label: "Capabilities" },
+  { href: "#workflow", label: "Workflow" },
+  { href: "#security", label: "Security" },
+];
 
 export function Navbar({ user }: { user: SessionUser | null }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const headRef = useRef<HTMLElement>(null);
+  const { startTransitionToLogin } = useLoginTransition();
 
-  // Lock body scroll and handle Escape key on mobile drawer
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === "Escape") setMobileOpen(false);
-      };
-      window.addEventListener("keydown", handleKeyDown);
-      return () => {
-        document.body.style.overflow = "";
-        window.removeEventListener("keydown", handleKeyDown);
-      };
-    }
-  }, [mobileOpen]);
-
-  const navLinks = [
-    { href: "#platform", label: "Platform" },
-    { href: "#capabilities", label: "Features" },
-    { href: "#workflow", label: "How it works" },
-    { href: "#security", label: "Security" },
-  ];
-
+  // Session-aware CTA: signed-in users jump straight into the app.
   const ctaHref = user ? "/overview" : "/login";
+  const ctaLabel = user ? "Dashboard" : "Masuk";
+
+  // Frosted/shrunk header state once the page starts scrolling.
+  useEffect(() => {
+    const onScroll = () => headRef.current?.classList.toggle("is-scrolled", window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Lock body scroll and allow Escape to dismiss the mobile drawer.
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   return (
-    <header className="relative w-full border-b border-border bg-background transition-colors z-40">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 sm:h-20 sm:px-8 lg:px-12">
-        {/* Brand Logo & Wordmark */}
-        <Link
-          href="/"
-          className="group flex items-center gap-2.5 rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
-          aria-label="Agency OS Home"
-        >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform group-hover:scale-105">
-            {/* Minimal editorial crescent mark */}
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 1 12 2z" fill="currentColor" stroke="none" />
-              <circle cx="17" cy="7" r="2" className="fill-brand" stroke="none" />
-            </svg>
-          </div>
-          <span className="text-base font-bold tracking-tight text-foreground">
-            Agency<span className="font-light opacity-80">OS</span>
-          </span>
+    <header className="site-head" id="siteHead" ref={headRef}>
+      <div className="container head-inner">
+        <Link className="brand" href="#top" aria-label="TikTok Shop HQ">
+          <svg className="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <rect x="3" y="5" width="26" height="7" rx="2.6" fill="#1463FF" />
+            <rect x="3" y="14.2" width="19" height="6.4" rx="2.6" fill="#21DDFF" />
+            <rect x="3" y="22.6" width="12" height="6" rx="2.6" fill="#7214FF" opacity=".9" />
+          </svg>
+          TikTok Shop HQ<b className="dot-blue">.</b>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav
-          className="hidden items-center gap-8 md:flex lg:gap-10"
-          aria-label="Main Navigation"
-        >
+        <nav className={cn("main-nav", open && "is-open")} id="mainNav" aria-label="Primary">
           {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs whitespace-nowrap"
-            >
+            <a key={link.href} href={link.href} onClick={() => setOpen(false)}>
               {link.label}
             </a>
           ))}
+          <Link
+            className="btn btn--primary btn--sm"
+            href={ctaHref}
+            onClick={(e) => {
+              setOpen(false);
+              if (!user) {
+                e.preventDefault();
+                startTransitionToLogin(e.currentTarget);
+              }
+            }}
+          >
+            {ctaLabel}
+          </Link>
         </nav>
 
-        {/* Right Action: Pill CTA + Menu Toggle */}
-        <div className="flex items-center gap-3">
-          <ThemeToggle className="text-muted-foreground hover:text-foreground" />
-
-          {/* Desktop Solid Pill Button */}
-          <div className="hidden sm:flex items-center gap-2">
-            <Link
-              href={ctaHref}
-              className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-95 shadow-xs"
-            >
-              {user ? "Open Dashboard" : "Log in to Workspace"}
-            </Link>
-          </div>
-
-          {/* Minimalist Hamburger Button */}
-          <button
-            type="button"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
-            aria-expanded={mobileOpen}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent md:hidden"
-          >
-            {mobileOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <div className="flex h-3.5 w-4 flex-col justify-between">
-                <span className="h-0.5 w-full bg-current rounded-full" />
-                <span className="h-0.5 w-full bg-current rounded-full" />
-                <span className="h-0.5 w-3/4 bg-current rounded-full" />
-              </div>
-            )}
-          </button>
-        </div>
+        <button
+          type="button"
+          className={cn("burger", open && "is-open")}
+          aria-label="Toggle menu"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
       </div>
-
-      {/* Mobile Modal Drawer with Full Opaque Backdrop */}
-      {mobileOpen && (
-        <>
-          <div 
-            className="fixed inset-0 top-16 sm:top-20 z-40 bg-black/40 backdrop-blur-xs md:hidden" 
-            onClick={() => setMobileOpen(false)}
-            aria-hidden="true"
-          />
-          <div
-            className="fixed inset-x-0 top-16 sm:top-20 z-50 flex flex-col border-b border-border bg-background px-6 py-6 shadow-2xl md:hidden animate-in fade-in slide-in-from-top-2 duration-200"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Mobile Navigation Drawer"
-          >
-            <nav className="flex flex-col space-y-3">
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="text-base font-semibold text-muted-foreground transition-colors hover:text-foreground py-2 border-b border-border"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </nav>
-
-            <div className="mt-6 flex flex-col gap-3">
-              <Link
-                href={ctaHref}
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "w-full justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90 font-semibold",
-                )}
-              >
-                {user ? (
-                  <>
-                    <LayoutDashboard className="h-4 w-4 mr-2" />
-                    <span>Go to Dashboard</span>
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="h-4 w-4 mr-2" />
-                    <span>Log in to Workspace</span>
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </>
-                )}
-              </Link>
-            </div>
-          </div>
-        </>
-      )}
     </header>
   );
 }

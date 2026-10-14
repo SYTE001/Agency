@@ -112,7 +112,7 @@ export async function updateAgencyUser(
 
   try {
     return await prisma.user.update({
-      where: { id: userId },
+      where: { id: userId, agencyId },
       data: {
         ...(data.name !== undefined ? { name: data.name.trim() } : {}),
         ...(data.title !== undefined ? { title: (data.title ?? "").trim() || null } : {}),

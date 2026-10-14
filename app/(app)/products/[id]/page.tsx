@@ -30,12 +30,14 @@ export default async function ProductDetailPage(props: PageProps<"/products/[id]
   const user = await requireUser();
   const { id } = await props.params;
 
-  const detail = await getProductDetail(user.agencyId, id);
+  const [detail, activity] = await Promise.all([
+    getProductDetail(user.agencyId, id),
+    getActivity("Product", id, user.agencyId, 15),
+  ]);
   if (!detail) notFound();
 
   const { product, metrics, campaigns, recentContent, totals } = detail;
   const canWrite = can(user.role, "product", "write");
-  const activity = await getActivity("Product", product.id, user.agencyId, 15);
 
   const stats = [
     { label: "Harga", value: formatIDR(product.price) },

@@ -163,7 +163,7 @@ export async function updateContentStatus(
   const isRevision = status === "Revision";
   return prisma.$transaction([
     prisma.contentItem.update({
-      where: { id: contentId },
+      where: { id: contentId, agencyId },
       data: {
         status,
         revisionCount: isRevision ? item.revisionCount + 1 : item.revisionCount,
@@ -198,5 +198,5 @@ export async function updateContentItem(
 ) {
   const item = await prisma.contentItem.findFirst({ where: { id: contentId, agencyId }, select: { id: true } });
   if (!item) throw new Error("Konten tidak ditemukan");
-  return prisma.contentItem.update({ where: { id: contentId }, data });
+  return prisma.contentItem.update({ where: { id: contentId, agencyId }, data });
 }

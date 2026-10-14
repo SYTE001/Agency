@@ -242,7 +242,7 @@ export async function updateLiveSession(
   if (data.status && !isLiveStatus(data.status)) throw new Error("Status tidak valid");
   const session = await prisma.liveSession.findFirst({ where: { id: sessionId, agencyId }, select: { id: true } });
   if (!session) throw new Error("Sesi LIVE tidak ditemukan");
-  return prisma.liveSession.update({ where: { id: sessionId }, data });
+  return prisma.liveSession.update({ where: { id: sessionId, agencyId }, data });
 }
 
 /** Record final LIVE results in one shot (PLAN §31 step 9-10). */
@@ -255,7 +255,7 @@ export async function recordLiveResults(
   if (!session) throw new Error("Sesi LIVE tidak ditemukan");
   const conversionRate = results.viewers > 0 ? (results.orders / results.viewers) * 100 : 0;
   return prisma.liveSession.update({
-    where: { id: sessionId },
+    where: { id: sessionId, agencyId },
     data: {
       actualGmv: results.actualGmv,
       viewers: results.viewers,

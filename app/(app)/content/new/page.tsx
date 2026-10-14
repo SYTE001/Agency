@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
@@ -8,28 +8,32 @@ import { ContentForm } from "@/components/content/content-form";
 
 export default async function NewContentPage() {
   const user = await requireUser();
-  if (!can(user.role, "content", "write")) notFound();
+  if (!can(user.role, "content", "write")) redirect("/content");
 
   const [campaigns, creators, products, users] = await Promise.all([
     prisma.campaign.findMany({
       where: { agencyId: user.agencyId },
       select: { id: true, name: true },
       orderBy: { createdAt: "desc" },
+      take: 200,
     }),
     prisma.creator.findMany({
       where: { agencyId: user.agencyId, status: "Active" },
       select: { id: true, displayName: true, username: true },
       orderBy: { displayName: "asc" },
+      take: 200,
     }),
     prisma.product.findMany({
       where: { agencyId: user.agencyId, status: "Active" },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+      take: 200,
     }),
     prisma.user.findMany({
       where: { agencyId: user.agencyId },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+      take: 200,
     }),
   ]);
 

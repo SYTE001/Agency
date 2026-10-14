@@ -8,21 +8,23 @@ import { can } from "@/lib/authorization";
 import { isContentStatus } from "@/lib/constants";
 import { createContentItem, updateContentStatus } from "@/lib/services/content";
 import { addNote, entityBelongsToAgency, logActivity } from "@/lib/services/activity";
+import { getAgencyTimezone } from "@/lib/services/common";
+import { parseDateTimeLocalInTz } from "@/lib/timezone";
 
-const dateStr = z
-  .string()
-  .transform((v) => (v ? new Date(`${v}T00:00:00`) : null))
-  .refine((d) => d === null || !Number.isNaN(d.getTime()), "Tanggal tidak valid");
-
-const contentSchema = z.object({
-  title: z.string().trim().min(3, "Judul konten minimal 3 karakter").max(120),
-  campaignId: z.string().min(1, "Campaign wajib dipilih"),
-  creatorId: z.string().min(1, "Creator wajib dipilih"),
-  productId: z.string().transform((v) => v || null),
-  reviewerId: z.string().transform((v) => v || null),
-  dueDate: dateStr,
-  brief: z.string().max(1000).transform((v) => v || null),
-});
+function makeContentSchema(tz: string) {
+  return z.object({
+    title: z.string().trim().min(3, "Judul konten minimal 3 karakter").max(120),
+    campaignId: z.string().min(1, "Campaign wajib dipilih"),
+    creatorId: z.string().min(1, "Creator wajib dipilih"),
+    productId: z.string().transform((v) => v || null),
+    reviewerId: z.string().transform((v) => v || null),
+    dueDate: z
+      .string()
+      .transform((v) => (v ? parseDateTimeLocalInTz(tz, v) : null))
+      .refine((d) => d === null || !Number.isNaN(d.getTime()), "Tanggal tidak valid"),
+    brief: z.string().max(1000).transform((v) => v || null),
+  });
+}
 
 export type ContentFormState = {
   error?: string;
@@ -38,7 +40,8 @@ export async function createContentAction(
     return { error: "Anda tidak memiliki izin untuk menambah konten." };
   }
 
-  const parsed = contentSchema.safeParse({
+  const tz = await getAgencyTimezone(user.agencyId);
+  const parsed = makeContentSchema(tz).safeParse({
     title: formData.get("title") ?? "",
     campaignId: formData.get("campaignId") ?? "",
     creatorId: formData.get("creatorId") ?? "",
@@ -55,6 +58,18 @@ export async function createContentAction(
     };
   }
 
+  const checks: [string | null, "Campaign" | "Creator" | "Product" | "User"][] = [
+    [parsed.data.campaignId, "Campaign"],
+    [parsed.data.creatorId, "Creator"],
+    [parsed.data.productId, "Product"],
+    [parsed.data.reviewerId, "User"],
+  ];
+  for (const [id, type] of checks) {
+    if (!id) continue;
+    const ok = await entityBelongsToAgency(type, id, user.agencyId);
+    if (!ok) return { error: `${type} terpilih tidak ditemukan di agensi ini.` };
+  }
+
   let newId: string;
   try {
     const item = await createContentItem(user.agencyId, parsed.data);
@@ -67,7 +82,8 @@ export async function createContentAction(
       action: "Konten dibuat",
       details: item.title,
     });
-  } catch {
+  } catch (e) {
+    console.error("createContentAction failed", e);
     return { error: "Campaign atau creator tidak ditemukan." };
   }
 
@@ -97,8 +113,8 @@ export async function moveContentAction(contentId: string, formData: FormData): 
       action: "Status konten diubah",
       details: `→ ${status}`,
     });
-  } catch {
-    // Data sudah berubah — abaikan
+  } catch (e) {
+    console.error("moveContentAction failed", e);
   }
 
   revalidatePath("/content");

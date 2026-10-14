@@ -43,19 +43,21 @@ export default async function CampaignDetailPage(props: PageProps<"/campaigns/[i
   const user = await requireUser();
   const { id } = await props.params;
 
-  const detail = await getCampaignDetail(user.agencyId, id);
+  const [detail, notes] = await Promise.all([
+    getCampaignDetail(user.agencyId, id),
+    getNotes("Campaign", id, user.agencyId),
+  ]);
   if (!detail) notFound();
 
   const { campaign, creators, products, content, lives, commissions, tasks, activity, contentStatusCounts, finance } = detail;
   const canWrite = can(user.role, "campaign", "write");
-
-  const notes = await getNotes("Campaign", campaign.id, user.agencyId);
 
   const linkedIds = new Set(creators.map((l) => l.creatorId));
   const availableCreators = await prisma.creator.findMany({
     where: { agencyId: user.agencyId, id: { notIn: [...linkedIds] } },
     select: { id: true, displayName: true, username: true },
     orderBy: { displayName: "asc" },
+    take: 200,
   });
 
   const contentGmv = content.reduce((sum, item) => sum + item.gmvGenerated.toNumber(), 0);

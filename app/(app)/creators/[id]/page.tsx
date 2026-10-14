@@ -31,14 +31,14 @@ export default async function CreatorDetailPage(props: PageProps<"/creators/[id]
   const user = await requireUser();
   const { id } = await props.params;
 
-  const detail = await getCreatorDetail(user.agencyId, id);
+  const [detail, activity, notes] = await Promise.all([
+    getCreatorDetail(user.agencyId, id),
+    getActivity("Creator", id, user.agencyId, 15),
+    getNotes("Creator", id, user.agencyId),
+  ]);
   if (!detail) notFound();
 
   const { creator, metrics, campaigns, content, lives, commissions, tasks, totals } = detail;
-  const [activity, notes] = await Promise.all([
-    getActivity("Creator", creator.id, user.agencyId, 15),
-    getNotes("Creator", creator.id, user.agencyId),
-  ]);
 
   const stats = [
     { label: "GMV 30 Hari", value: formatIDR(totals.gmv30), delta: formatDelta(totals.gmvGrowth), up: totals.gmvGrowth > 0 },

@@ -279,9 +279,14 @@ export type InternalReport = Awaited<ReturnType<typeof getInternalReport>>;
 // reads UTF-8 correctly. Currency stays a plain number for re-import.
 // ---------------------------------------------------------------------------
 
+const DANGEROUS_CSV_PREFIXES = ["=", "+", "-", "@", "\t", "\r"];
+
 function csvEscape(v: string | number): string {
-  const s = String(v);
-  if (s.includes(";") || s.includes('"') || s.includes("\n")) {
+  let s = String(v);
+  if (s.length > 0 && DANGEROUS_CSV_PREFIXES.some((p) => s.startsWith(p))) {
+    s = `'${s}`;
+  }
+  if (s.includes(";") || s.includes('"') || s.includes("\n") || s.includes("\r")) {
     return `"${s.replace(/"/g, '""')}"`;
   }
   return s;

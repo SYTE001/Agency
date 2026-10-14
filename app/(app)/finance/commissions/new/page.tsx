@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
@@ -8,7 +8,7 @@ import { CommissionForm } from "@/components/finance/commission-form";
 
 export default async function NewCommissionPage() {
   const user = await requireUser();
-  if (!can(user.role, "finance", "write")) notFound();
+  if (!can(user.role, "finance", "write")) redirect("/finance/commissions");
 
   const [creators, campaigns] = await Promise.all([
     prisma.creator.findMany({

@@ -48,23 +48,22 @@ export default async function LiveDetailPage(props: PageProps<"/live/[id]">) {
   const user = await requireUser();
   const { id } = await props.params;
 
-  const detail = await getLiveDetail(user.agencyId, id);
-  if (!detail) notFound();
-
-  const { session, metrics, activity } = detail;
-  const canWrite = can(user.role, "live", "write");
-
   // Rendered timestamps (start/end, metric snapshots, relative note/activity
   // times) follow the tenant's business timezone, not the server's.
-  const [notes, tasks, tz] = await Promise.all([
-    getNotes("LiveSession", session.id, user.agencyId),
+  const [detail, notes, tasks, tz] = await Promise.all([
+    getLiveDetail(user.agencyId, id),
+    getNotes("LiveSession", id, user.agencyId),
     prisma.task.findMany({
-      where: { agencyId: user.agencyId, relatedType: "LiveSession", relatedId: session.id },
+      where: { agencyId: user.agencyId, relatedType: "LiveSession", relatedId: id },
       orderBy: { dueDate: "asc" },
       take: 10,
     }),
     getAgencyTimezone(user.agencyId),
   ]);
+  if (!detail) notFound();
+
+  const { session, metrics, activity } = detail;
+  const canWrite = can(user.role, "live", "write");
 
   const targetGmv = session.targetGmv.toNumber();
   const actualGmv = session.actualGmv.toNumber();

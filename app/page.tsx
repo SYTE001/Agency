@@ -2,12 +2,16 @@ import type { Metadata } from "next";
 import { getSessionUser } from "@/lib/auth";
 import { Navbar } from "@/components/landing/navbar";
 import { Hero } from "@/components/landing/hero";
-import { FeaturesSection } from "@/components/landing/features-section";
-import { HowItWorks } from "@/components/landing/how-it-works";
+import { Marquee } from "@/components/landing/marquee";
+import { WorkspaceSection } from "@/components/landing/workspace-section";
+import { CapabilitiesSection } from "@/components/landing/capabilities-section";
+import { WorkflowSection } from "@/components/landing/workflow-section";
 import { SecuritySection } from "@/components/landing/security-section";
 import { CtaSection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
+import { LandingEffects } from "@/components/landing/landing-effects";
 import { getSiteUrl, siteDescription, siteName } from "@/lib/site";
+import "./landing.css";
 
 export const metadata: Metadata = {
   title: "TikTok Shop Agency Management",
@@ -54,9 +58,14 @@ export default async function LandingPage() {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-brand selection:text-brand-foreground transition-colors">
+    // .ttshq scopes the redesign's design system so it cannot leak into the app shell.
+    <div className="ttshq">
+      <noscript>
+        <style>{".ttshq .reveal{opacity:1;transform:none}"}</style>
+      </noscript>
+
       <a
-        href="#main-content"
+        href="#top"
         className="sr-only focus:not-sr-only focus:absolute focus:left-6 focus:top-4 focus:z-50 focus:border focus:border-border focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:text-foreground focus:shadow-md"
       >
         Skip to content
@@ -67,12 +76,15 @@ export default async function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
+      <LandingEffects />
       <Navbar user={user} />
 
-      <main id="main-content" className="flex-1">
+      <main id="top">
         <Hero user={user} />
-        <FeaturesSection />
-        <HowItWorks />
+        <Marquee />
+        <WorkspaceSection user={user} />
+        <CapabilitiesSection />
+        <WorkflowSection />
         <SecuritySection />
         <CtaSection user={user} />
       </main>

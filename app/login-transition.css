@@ -1,0 +1,255 @@
+/* ============================================================
+   PAGE TRANSITION: HOMEPAGE (/) -> LOGIN (/login)
+   Apple/Linear-style minimal motion design
+   Palette: #10367D (Brand Blue), GPU-accelerated translate3d/scale
+   ============================================================ */
+
+/* Button scale interaction when clicked */
+.btn-masuk-pressed {
+  transform: scale(0.95) !important;
+  opacity: 0.9 !important;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), opacity 0.12s ease !important;
+}
+
+/* Subtle fade out of homepage background content while surface expands */
+body.login-nav-in-flight #siteHead,
+body.login-nav-in-flight main:not(.login-shell) {
+  opacity: 0.45;
+  transition: opacity 0.22s ease-out;
+  pointer-events: none;
+}
+
+/* Transition container */
+.login-transition-root {
+  position: fixed;
+  inset: 0;
+  z-index: 999998;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* 1. Expanding circular surface originating at clicked button */
+.login-transition-disc {
+  position: fixed;
+  left: var(--origin-x, 50vw);
+  top: var(--origin-y, 50vh);
+  width: var(--disc-size, 200vmax);
+  height: var(--disc-size, 200vmax);
+  border-radius: 50%;
+  background: var(--brand, #10367d);
+  transform: translate3d(-50%, -50%, 0) scale(0.01);
+  will-change: transform;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.login-transition--expanding .login-transition-disc {
+  opacity: 1;
+  transform: translate3d(-50%, -50%, 0) scale(1);
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.login-transition--navigating .login-transition-disc {
+  opacity: 1;
+  transform: translate3d(-50%, -50%, 0) scale(1);
+}
+
+/* 2. Reveal curtains on destination /login */
+.login-transition-curtain-left,
+.login-transition-curtain-right {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  background: var(--brand, #10367d);
+  will-change: transform, opacity;
+  pointer-events: none;
+  display: none;
+}
+
+/* Desktop: split screen 50% left, 50% right */
+.login-transition-curtain-left {
+  left: 0;
+  width: 50vw;
+  z-index: 999999;
+}
+
+.login-transition-curtain-right {
+  right: 0;
+  width: 50vw;
+  z-index: 999999;
+}
+
+/* In revealing phase, display split curtains */
+.login-transition--revealing .login-transition-disc {
+  display: none;
+}
+
+.login-transition--revealing .login-transition-curtain-left {
+  display: block;
+  opacity: 1;
+  animation: curtainLeftFade 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.login-transition--revealing .login-transition-curtain-right {
+  display: block;
+  transform: translate3d(0, 0, 0);
+  animation: curtainRightSlide 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes curtainLeftFade {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes curtainRightSlide {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+/* Mobile: single curtain sliding up */
+@media (max-width: 1080px) {
+  .login-transition-curtain-left {
+    display: none !important;
+  }
+  .login-transition-curtain-right {
+    left: 0;
+    width: 100vw;
+  }
+  .login-transition--revealing .login-transition-curtain-right {
+    transform: translate3d(0, 0, 0);
+    animation: curtainMobileSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+}
+
+@keyframes curtainMobileSlideUp {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, -100%, 0);
+  }
+}
+
+/* ============================================================
+   STAGGERED LOGIN ENTRANCE WHEN NAVIGATING VIA TRANSITION
+   ============================================================ */
+.login-shell.login-shell--from-transition .brand-panel {
+  opacity: 1 !important;
+  animation: loginBrandReveal 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Suppress internal cold-start stagger in brand panel when coming from transition */
+.login-shell.login-shell--from-transition .brand-panel .mark,
+.login-shell.login-shell--from-transition .slogan-kicker,
+.login-shell.login-shell--from-transition .slogan .line,
+.login-shell.login-shell--from-transition .proof,
+.login-shell.login-shell--from-transition .brand-foot,
+.login-shell.login-shell--from-transition .motifs {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.login-shell.login-shell--from-transition .form-panel {
+  opacity: 1 !important;
+  animation: loginFormReveal 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.login-shell.login-shell--from-transition .form-head {
+  animation: loginElementStagger 0.3s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+}
+
+.login-shell.login-shell--from-transition .card {
+  animation: loginElementStagger 0.32s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.login-shell.login-shell--from-transition .form-foot,
+.login-shell.login-shell--from-transition .legal {
+  animation: loginElementStagger 0.34s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+@keyframes loginBrandReveal {
+  from {
+    opacity: 0.85;
+    transform: translate3d(-12px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes loginFormReveal {
+  from {
+    opacity: 0;
+    transform: translate3d(20px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes loginElementStagger {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (max-width: 1080px) {
+  .login-shell.login-shell--from-transition .form-panel {
+    animation: loginFormRevealMobile 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes loginFormRevealMobile {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Accessibility: respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .btn-masuk-pressed,
+  .login-transition-root,
+  .login-transition-disc,
+  .login-transition-curtain-left,
+  .login-transition-curtain-right {
+    display: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  body.login-nav-in-flight #siteHead,
+  body.login-nav-in-flight main:not(.login-shell) {
+    opacity: 1 !important;
+    transition: none !important;
+  }
+  .login-shell.login-shell--from-transition .brand-panel,
+  .login-shell.login-shell--from-transition .form-panel,
+  .login-shell.login-shell--from-transition .form-head,
+  .login-shell.login-shell--from-transition .card,
+  .login-shell.login-shell--from-transition .form-foot,
+  .login-shell.login-shell--from-transition .legal {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}

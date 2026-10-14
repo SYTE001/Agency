@@ -281,7 +281,7 @@ export async function updateBrand(
 
   try {
     return await prisma.brand.update({
-      where: { id: brandId },
+      where: { id: brandId, agencyId },
       data: {
         ...(name !== undefined ? { name } : {}),
         ...(data.industry !== undefined ? { industry: (data.industry ?? "").trim() || null } : {}),

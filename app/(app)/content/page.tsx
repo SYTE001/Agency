@@ -49,11 +49,13 @@ export default async function ContentPage(props: PageProps<"/content">) {
       where: { agencyId: user.agencyId },
       select: { id: true, name: true },
       orderBy: { createdAt: "desc" },
+      take: 200,
     }),
     prisma.creator.findMany({
       where: { agencyId: user.agencyId },
       select: { id: true, displayName: true },
       orderBy: { displayName: "asc" },
+      take: 200,
     }),
   ]);
   const canWrite = can(user.role, "content", "write");

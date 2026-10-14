@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
@@ -8,18 +8,20 @@ import { CampaignForm } from "@/components/campaigns/campaign-form";
 
 export default async function NewCampaignPage() {
   const user = await requireUser();
-  if (!can(user.role, "campaign", "write")) notFound();
+  if (!can(user.role, "campaign", "write")) redirect("/campaigns");
 
   const [brands, users] = await Promise.all([
     prisma.brand.findMany({
       where: { agencyId: user.agencyId, status: "Active" },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+      take: 200,
     }),
     prisma.user.findMany({
       where: { agencyId: user.agencyId },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+      take: 200,
     }),
   ]);
 

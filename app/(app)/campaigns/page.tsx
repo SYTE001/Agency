@@ -58,11 +58,13 @@ export default async function CampaignsPage(props: PageProps<"/campaigns">) {
       where: { agencyId: user.agencyId },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+      take: 200,
     }),
     prisma.user.findMany({
       where: { agencyId: user.agencyId },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+      take: 200,
     }),
   ]);
   const canWrite = can(user.role, "campaign", "write");

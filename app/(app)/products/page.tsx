@@ -51,12 +51,14 @@ export default async function ProductsPage(props: PageProps<"/products">) {
       where: { agencyId: user.agencyId },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+      take: 200,
     }),
     prisma.product.findMany({
       where: { agencyId: user.agencyId, category: { not: null } },
       select: { category: true },
       distinct: ["category"],
       orderBy: { category: "asc" },
+      take: 200,
     }),
   ]);
   const canWrite = can(user.role, "product", "write");

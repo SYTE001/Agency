@@ -15,6 +15,7 @@ export default async function NewProductPage() {
     where: { agencyId: user.agencyId },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
+    take: 200,
   });
 
   return (

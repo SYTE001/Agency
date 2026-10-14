@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Manrope, Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import "./login-transition.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LoginTransitionProvider } from "@/components/login-transition-provider";
 import { getSiteUrl, siteDescription, siteName } from "@/lib/site";
 
 const fontSans = Manrope({
@@ -61,7 +63,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${fontSans.variable} ${fontDisplay.variable} ${fontMono.variable}`}
     >
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <LoginTransitionProvider>{children}</LoginTransitionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

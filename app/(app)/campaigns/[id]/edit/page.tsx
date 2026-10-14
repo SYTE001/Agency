@@ -4,6 +4,8 @@ import { ChevronLeft } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
+import { getAgencyTimezone } from "@/lib/services/common";
+import { dateKeyInTz } from "@/lib/timezone";
 import { PageHeader } from "@/components/page-header";
 import { CampaignForm } from "@/components/campaigns/campaign-form";
 
@@ -33,20 +35,23 @@ export default async function EditCampaignPage(props: PageProps<"/campaigns/[id]
   });
   if (!campaign) notFound();
 
-  const [brands, users] = await Promise.all([
+  const [brands, users, tz] = await Promise.all([
     prisma.brand.findMany({
       where: { agencyId: user.agencyId, status: "Active" },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+      take: 200,
     }),
     prisma.user.findMany({
       where: { agencyId: user.agencyId },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+      take: 200,
     }),
+    getAgencyTimezone(user.agencyId),
   ]);
 
-  const toDateInput = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
+  const toDateInput = (d: Date | null) => (d ? dateKeyInTz(tz, d) : null);
 
   return (
     <div className="space-y-4 p-6">

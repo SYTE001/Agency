@@ -8,28 +8,29 @@ import { can } from "@/lib/authorization";
 import { isLiveStatus } from "@/lib/constants";
 import { createLiveSession, recordLiveResults, updateLiveSession } from "@/lib/services/live";
 import { addNote, entityBelongsToAgency, logActivity } from "@/lib/services/activity";
+import { getAgencyTimezone } from "@/lib/services/common";
+import { parseDateTimeLocalInTz } from "@/lib/timezone";
 
-// "2026-08-17T14:30" from <input type="datetime-local">
-const dateTimeStr = z.coerce
-  .date()
-  .refine((d) => !Number.isNaN(d.getTime()), "Waktu tidak valid");
-const optionalDateTime = z
-  .string()
-  .transform((v) => (v ? new Date(v) : null))
-  .refine((d) => d === null || !Number.isNaN(d.getTime()), "Waktu tidak valid");
-
-const liveSchema = z.object({
-  creatorId: z.string().min(1, "Creator wajib dipilih"),
-  campaignId: z.string().transform((v) => v || null),
-  brandId: z.string().transform((v) => v || null),
-  productId: z.string().transform((v) => v || null),
-  operatorId: z.string().transform((v) => v || null),
-  room: z.string().max(80).transform((v) => v.trim() || null),
-  startTime: dateTimeStr,
-  endTime: optionalDateTime,
-  targetGmv: z.coerce.number().min(0, "Target GMV tidak boleh negatif").default(0),
-  notes: z.string().max(1000).transform((v) => v || null),
-});
+function makeLiveSchema(tz: string) {
+  return z.object({
+    creatorId: z.string().min(1, "Creator wajib dipilih"),
+    campaignId: z.string().transform((v) => v || null),
+    brandId: z.string().transform((v) => v || null),
+    productId: z.string().transform((v) => v || null),
+    operatorId: z.string().transform((v) => v || null),
+    room: z.string().max(80).transform((v) => v.trim() || null),
+    startTime: z
+      .string()
+      .transform((v) => parseDateTimeLocalInTz(tz, v))
+      .refine((d): d is Date => d !== null, "Waktu tidak valid"),
+    endTime: z
+      .string()
+      .transform((v) => (v ? parseDateTimeLocalInTz(tz, v) : null))
+      .refine((d) => d === null || (d instanceof Date && !Number.isNaN(d.getTime())), "Waktu tidak valid"),
+    targetGmv: z.coerce.number().min(0, "Target GMV tidak boleh negatif").default(0),
+    notes: z.string().max(1000).transform((v) => v || null),
+  });
+}
 
 export type LiveFormState = {
   error?: string;
@@ -45,7 +46,8 @@ export async function createLiveAction(
     return { error: "Anda tidak memiliki izin untuk menjadwalkan LIVE." };
   }
 
-  const parsed = liveSchema.safeParse({
+  const tz = await getAgencyTimezone(user.agencyId);
+  const parsed = makeLiveSchema(tz).safeParse({
     creatorId: formData.get("creatorId") ?? "",
     campaignId: formData.get("campaignId") ?? "",
     brandId: formData.get("brandId") ?? "",
@@ -111,8 +113,8 @@ export async function moveLiveStatusAction(sessionId: string, formData: FormData
       action: "Status LIVE diubah",
       details: `→ ${status}`,
     });
-  } catch {
-    // Sesi sudah berubah — abaikan
+  } catch (e) {
+    console.error("moveLiveStatusAction failed", e);
   }
 
   revalidatePath("/live");

@@ -2,9 +2,11 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSessionUser } from "@/lib/auth";
 import { LoginForm } from "@/components/login-form";
+import "./login.css";
 
 export const metadata: Metadata = {
-  title: "Login",
+  title: "Masuk · Agency OS",
+  description: "Agency OS — Agency Operating System. Masuk untuk melanjutkan ke workspace Anda.",
   robots: {
     index: false,
     follow: false,
@@ -15,23 +17,5 @@ export default async function LoginPage() {
   const user = await getSessionUser();
   if (user) redirect("/overview");
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-subtle px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-lg font-bold text-brand-foreground">
-            AO
-          </div>
-          <h1 className="text-xl font-semibold tracking-tight">Agency OS</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Agency Operating System — masuk untuk melanjutkan.
-          </p>
-        </div>
-
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <LoginForm />
-        </div>
-      </div>
-    </div>
-  );
+  return <LoginForm />;
 }

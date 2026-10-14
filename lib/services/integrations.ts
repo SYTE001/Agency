@@ -127,7 +127,7 @@ export async function importCreatorsCsv(
       externalId,
     };
     if (existing) {
-      await prisma.creator.update({ where: { id: existing.id }, data: payload });
+      await prisma.creator.update({ where: { id: existing.id, agencyId }, data: payload });
       updated++;
     } else {
       await prisma.creator.create({ data: { agencyId, ...payload } });
@@ -189,7 +189,7 @@ export async function importProductsCsv(
       externalId,
     };
     if (existing) {
-      await prisma.product.update({ where: { id: existing.id }, data: payload });
+      await prisma.product.update({ where: { id: existing.id, agencyId }, data: payload });
       updated++;
     } else {
       await prisma.product.create({ data: { agencyId, ...payload } });
@@ -291,7 +291,7 @@ export async function runMockSync(agencyId: string): Promise<SyncOutcome> {
   const log = (level: "info" | "warn" | "error", message: string) => logs.push({ level, message });
 
   try {
-    await prisma.integration.update({ where: { id: integration.id }, data: { status: "Connected" } });
+    await prisma.integration.update({ where: { id: integration.id, agencyId }, data: { status: "Connected" } });
     log("info", `Terhubung ke provider ${PROVIDER} (mode mock)`);
 
     const creators = await prisma.creator.findMany({

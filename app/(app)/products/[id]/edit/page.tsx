@@ -31,6 +31,7 @@ export default async function EditProductPage(props: PageProps<"/products/[id]/e
       where: { agencyId: user.agencyId },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+      take: 200,
     }),
   ]);
   if (!product) notFound();

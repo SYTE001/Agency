@@ -17,11 +17,12 @@ export default async function ReviewQueuePage() {
   const user = await requireUser();
   const canWrite = can(user.role, "content", "write");
 
-  const queue: ContentRow[] = [];
-  for (const status of REVIEW_STATUSES) {
-    const board = await getContentBoard(user.agencyId, { status });
-    queue.push(...(board.byStatus.get(status) ?? []));
-  }
+  const boards = await Promise.all(
+    REVIEW_STATUSES.map((status) => getContentBoard(user.agencyId, { status }))
+  );
+  const queue: ContentRow[] = boards.flatMap(
+    (board, index) => board.byStatus.get(REVIEW_STATUSES[index]) ?? []
+  );
   queue.sort((a, b) => (a.dueDate?.getTime() ?? Infinity) - (b.dueDate?.getTime() ?? Infinity));
 
   return (

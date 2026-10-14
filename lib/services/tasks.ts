@@ -122,7 +122,7 @@ export async function updateTask(
   const reopened = data.status && data.status !== "Done" && task.status === "Done";
 
   return prisma.task.update({
-    where: { id: taskId },
+    where: { id: taskId, agencyId },
     data: {
       ...data,
       completedById: willComplete ? actorId : reopened ? null : undefined,

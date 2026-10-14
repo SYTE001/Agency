@@ -1,0 +1,1429 @@
+/* ============================================================
+   DESIGN TOKENS & SHELL
+   Flat palette: #10367D · #EBEBEB · #FFFFFF
+   Tanpa gradient, tanpa glow, tanpa blur dekoratif.
+   ============================================================ */
+.login-shell {
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Brand panel — konstan di kedua tema */
+  --brand:        #10367d;
+  --brand-fg:     #ffffff;
+  --brand-fg-2:   rgba(255,255,255,.76);
+  --brand-fg-3:   rgba(255,255,255,.54);
+  --brand-line:   rgba(255,255,255,.20);
+  --brand-line-2: rgba(255,255,255,.32);
+
+  --err:  #c0332b;
+  --warn: #9a6400;
+
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 16px;
+
+  --ease: cubic-bezier(.22,.61,.36,1);
+
+  /* Tema terang (default) */
+  --bg:          #ebebeb;
+  --surface:     #ffffff;
+  --surface-2:   #f2f2f2;
+  --surface-3:   #e8e8e8;
+  --line:        rgba(16,54,125,.14);
+  --line-2:      rgba(16,54,125,.28);
+  --text:        #0d2350;
+  --text-2:      #4c5c7d;
+  --muted:       #6f7d99;
+  --faint:       #949cb0;
+
+  --accent:      #10367d;
+  --accent-hi:   #17459b;
+
+  --btn-bg:      #10367d;
+  --btn-fg:      #ffffff;
+  --btn-hover:   #17459b;
+  --btn-active:  #0b2a63;
+
+  --focus:       rgba(16,54,125,.16);
+  --card-shadow: 0 1px 2px rgba(16,54,125,.07);
+  --err-soft:    rgba(192,51,43,.10);
+
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---- Tema gelap: navy yang diturunkan dari #10367D ---- */
+html[data-theme="dark"] .login-shell,
+html.dark .login-shell {
+  --bg:          #0a1730;
+  --surface:     #102448;
+  --surface-2:   #14294f;
+  --surface-3:   #1a325c;
+  --line:        rgba(190,210,255,.16);
+  --line-2:      rgba(190,210,255,.32);
+  --text:        #ebebeb;
+  --text-2:      #b3c1dd;
+  --muted:       #8d9dbe;
+  --faint:       #6e80a3;
+
+  --accent:      #6b98e6;
+  --accent-hi:   #8fb4f5;
+  --accent-lo:   #4f7fd4;
+
+  --btn-bg:      #2f5fc0;
+  --btn-fg:      #ffffff;
+  --btn-hover:   #3a6ed0;
+  --btn-active:  #26509f;
+
+  --focus:       rgba(120,160,235,.24);
+  --card-shadow: 0 1px 2px rgba(0,0,0,.30);
+  --err:         #ff8a80;
+  --warn:        #e3b341;
+  --err-soft:    rgba(255,138,128,.12);
+}
+
+.login-shell *, .login-shell *::before, .login-shell *::after {
+  box-sizing: border-box;
+}
+
+.login-shell a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.login-shell button {
+  font: inherit;
+  color: inherit;
+}
+
+.login-shell svg {
+  display: block;
+}
+
+.login-shell ::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+.login-shell :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   PANEL KIRI · NAVY SOLID
+   ============================================================ */
+.login-shell .brand-panel {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 56px;
+  padding: 48px 56px 40px;
+  background: var(--brand);
+  color: var(--brand-fg);
+}
+
+.login-shell .brand-panel > .mark,
+.login-shell .brand-panel > .hero,
+.login-shell .brand-panel > .brand-foot {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Motif latar: baris "tile" bergaya OS surface ---- */
+.login-shell .motifs {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.login-shell .motif-row {
+  position: absolute;
+  left: 56px;
+  right: 56px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.login-shell .motif-row.top {
+  top: 182px;
+}
+
+.login-shell .motif-row.bottom {
+  bottom: 170px;
+}
+
+.login-shell .tile {
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(207,224,255,.115);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: rgba(207,224,255,.20);
+}
+
+.login-shell .tile svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.login-shell .tile svg .solid {
+  fill: currentColor;
+  stroke: none;
+}
+
+.login-shell .m-frame {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  right: -104px;
+  top: -104px;
+  border: 1px solid rgba(207,224,255,.12);
+  border-radius: 50px;
+}
+
+.login-shell .m-rings {
+  position: absolute;
+  width: 168px;
+  height: 168px;
+  right: -54px;
+  bottom: -34px;
+  color: rgba(207,224,255,.10);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+/* ============================================================
+   ANIMASI — transform & opacity
+   ============================================================ */
+@keyframes tileFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-7px); }
+}
+
+@keyframes stickerFloatA {
+  0%, 100% { transform: translateY(-2px) rotate(-8deg); }
+  50%      { transform: translateY(2px) rotate(-5deg); }
+}
+
+@keyframes stickerFloatB {
+  0%, 100% { transform: translateY(2px) rotate(7deg); }
+  50%      { transform: translateY(-2px) rotate(4deg); }
+}
+
+@keyframes ringBreathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.07); }
+}
+
+@keyframes frameDrift {
+  0%, 100% { transform: translate(0,0); }
+  50%      { transform: translate(-8px, 8px); }
+}
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes barIn {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes layerIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Stagger entrance */
+.login-shell .brand-panel .mark {
+  animation: riseIn .7s var(--ease) both;
+}
+
+.login-shell .slogan-kicker {
+  transform-origin: left center;
+  animation: barIn .55s var(--ease) .12s both;
+}
+
+.login-shell .slogan .line:nth-child(1) {
+  animation: riseIn .7s var(--ease) .18s both;
+}
+
+.login-shell .slogan .line:nth-child(2) {
+  animation: riseIn .7s var(--ease) .30s both;
+}
+
+.login-shell .proof {
+  animation: riseIn .7s var(--ease) .44s both;
+}
+
+.login-shell .brand-foot {
+  animation: riseIn .6s var(--ease) .56s both;
+}
+
+.login-shell .motifs {
+  animation: layerIn 1.1s var(--ease) .25s both;
+}
+
+.login-shell .tile {
+  animation: tileFloat 6.4s var(--ease) infinite;
+}
+
+.login-shell .tile:nth-child(2n) {
+  animation-duration: 7.6s;
+  animation-delay: -1.4s;
+}
+
+.login-shell .tile:nth-child(3n) {
+  animation-duration: 5.6s;
+  animation-delay: -2.7s;
+}
+
+.login-shell .tile:nth-child(4n) {
+  animation-delay: -3.5s;
+}
+
+.login-shell .tile:nth-child(5n) {
+  animation-delay: -0.9s;
+}
+
+.login-shell .motif-row.bottom .tile {
+  animation-duration: 7.1s;
+}
+
+.login-shell .slogan .emoji {
+  animation: stickerFloatA 5s var(--ease) infinite;
+}
+
+.login-shell .slogan .emoji.tilt-r {
+  animation-name: stickerFloatB;
+  animation-duration: 4.4s;
+  animation-delay: -1.3s;
+}
+
+.login-shell .m-rings {
+  transform-origin: center;
+  animation: ringBreathe 13s var(--ease) infinite;
+}
+
+.login-shell .m-frame {
+  animation: frameDrift 17s var(--ease) infinite;
+}
+
+/* ============================================================
+   BRAND PANEL TYPOGRAPHY & ELEMENTS
+   ============================================================ */
+.login-shell .mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-shell .mark-badge {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 14.5px;
+  letter-spacing: .4px;
+  background: #ffffff;
+  color: var(--brand);
+}
+
+.login-shell .mark-name {
+  font-size: 15.5px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+  color: var(--brand-fg);
+}
+
+.login-shell .mark-sub {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--brand-fg-3);
+}
+
+.login-shell .hero {
+  max-width: 620px;
+}
+
+.login-shell .slogan-kicker {
+  display: block;
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--brand-fg);
+  margin-bottom: 24px;
+}
+
+.login-shell .slogan {
+  margin: 0;
+  font-size: clamp(30px, 3.4vw, 48px);
+  line-height: 1.3;
+  letter-spacing: -.034em;
+  font-weight: 750;
+  color: var(--brand-fg);
+}
+
+.login-shell .slogan .line {
+  display: block;
+}
+
+.login-shell .slogan .nb {
+  white-space: nowrap;
+}
+
+.login-shell .slogan .hl {
+  display: inline-block;
+  background: #ffffff;
+  color: var(--brand);
+  line-height: 1;
+  padding: .1em .16em .14em;
+  border-radius: 8px;
+  vertical-align: -.08em;
+  letter-spacing: -.028em;
+}
+
+.login-shell .slogan .dim {
+  color: rgba(255,255,255,.68);
+  font-weight: 500;
+  letter-spacing: -.03em;
+}
+
+.login-shell .slogan .emoji {
+  width: .94em;
+  height: .94em;
+  display: inline-block;
+  vertical-align: -.12em;
+  margin: 0 .07em;
+  transform: rotate(-8deg);
+}
+
+.login-shell .slogan .emoji.tilt-r {
+  transform: rotate(7deg);
+}
+
+.login-shell .proof {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 40px;
+  padding-top: 28px;
+  border-top: 1px solid var(--brand-line);
+  max-width: 460px;
+}
+
+.login-shell .avatars {
+  display: flex;
+}
+
+.login-shell .avatars span {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: .02em;
+  margin-left: -9px;
+  border: 2px solid var(--brand);
+}
+
+.login-shell .avatars span:first-child {
+  margin-left: 0;
+}
+
+.login-shell .avatars span:nth-child(1) { background: #ffffff; color: var(--brand); }
+.login-shell .avatars span:nth-child(2) { background: #4f7fd4; color: #fff; }
+.login-shell .avatars span:nth-child(3) { background: #1c4a9c; color: #fff; }
+.login-shell .avatars span:nth-child(4) {
+  background: transparent;
+  color: var(--brand-fg-2);
+  border-color: var(--brand-line-2);
+}
+
+.login-shell .proof-text {
+  font-size: 12.5px;
+  color: var(--brand-fg-3);
+  line-height: 1.45;
+}
+
+.login-shell .proof-text b {
+  color: var(--brand-fg);
+  font-weight: 600;
+}
+
+.login-shell .brand-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 22px;
+  border-top: 1px solid var(--brand-line);
+  font-size: 12.5px;
+  color: var(--brand-fg-3);
+}
+
+.login-shell .brand-foot a,
+.login-shell .brand-foot button {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--brand-fg-3);
+  transition: color .16s var(--ease);
+}
+
+.login-shell .brand-foot a:hover,
+.login-shell .brand-foot button:hover {
+  color: var(--brand-fg);
+}
+
+/* ============================================================
+   PANEL KANAN · OFF-WHITE / NAVY SURFACE
+   ============================================================ */
+.login-shell .form-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  background: var(--bg);
+}
+
+.login-shell .theme-toggle {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background .16s var(--ease), border-color .16s var(--ease), color .16s var(--ease);
+}
+
+.login-shell .theme-toggle:hover {
+  background: var(--surface);
+  border-color: var(--line-2);
+  color: var(--text);
+}
+
+.login-shell .theme-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+html[data-theme="dark"] .login-shell .theme-toggle .i-sun,
+html.dark .login-shell .theme-toggle .i-sun {
+  display: block;
+}
+html[data-theme="dark"] .login-shell .theme-toggle .i-moon,
+html.dark .login-shell .theme-toggle .i-moon {
+  display: none;
+}
+html[data-theme="light"] .login-shell .theme-toggle .i-sun,
+html:not(.dark) .login-shell .theme-toggle .i-sun {
+  display: none;
+}
+html[data-theme="light"] .login-shell .theme-toggle .i-moon,
+html:not(.dark) .login-shell .theme-toggle .i-moon {
+  display: block;
+}
+
+.login-shell .form-wrap {
+  width: 100%;
+  max-width: 420px;
+}
+
+.login-shell .form-brand {
+  display: none;
+}
+
+.login-shell .form-head {
+  margin-bottom: 24px;
+}
+
+.login-shell .form-head h2 {
+  margin: 0 0 8px;
+  font-size: 25px;
+  font-weight: 650;
+  letter-spacing: -.024em;
+  color: var(--text);
+}
+
+.login-shell .form-head p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.login-shell .form-head strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.login-shell .card {
+  padding: 26px;
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--card-shadow);
+}
+
+/* Fields */
+.login-shell .field {
+  margin-bottom: 16px;
+}
+
+.login-shell .field:last-of-type {
+  margin-bottom: 0;
+}
+
+.login-shell .field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 560;
+  letter-spacing: -.005em;
+  color: var(--text-2);
+  margin-bottom: 7px;
+}
+
+.login-shell .control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  transition: border-color .16s var(--ease), background .16s var(--ease), box-shadow .16s var(--ease);
+}
+
+.login-shell .control:hover {
+  border-color: var(--line-2);
+}
+
+.login-shell .control:focus-within {
+  background: var(--surface);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+.login-shell .control .lead {
+  position: absolute;
+  left: 13px;
+  width: 17px;
+  height: 17px;
+  color: var(--faint);
+  pointer-events: none;
+  transition: color .16s var(--ease);
+}
+
+.login-shell .control:focus-within .lead {
+  color: var(--accent);
+}
+
+.login-shell .control input {
+  width: 100%;
+  padding: 12px 14px 12px 40px;
+  font: inherit;
+  font-size: 14.5px;
+  letter-spacing: -.005em;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-md);
+  outline: none;
+}
+
+.login-shell .control input::placeholder {
+  color: var(--faint);
+}
+
+.login-shell .control input:-webkit-autofill {
+  -webkit-text-fill-color: var(--text);
+  -webkit-box-shadow: 0 0 0 100px var(--surface-2) inset;
+}
+
+.login-shell .control.has-suffix input {
+  padding-right: 44px;
+}
+
+.login-shell .ghost-btn {
+  position: absolute;
+  right: 6px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 0;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  transition: background .16s var(--ease), color .16s var(--ease);
+}
+
+.login-shell .ghost-btn:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.login-shell .ghost-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.login-shell .hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  margin: 7px 2px 0;
+  color: var(--muted);
+}
+
+.login-shell .hint svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+
+.login-shell .hint.warn {
+  color: var(--warn);
+}
+
+.login-shell .hint.err {
+  color: var(--err);
+}
+
+.login-shell .control.invalid {
+  border-color: var(--err);
+  box-shadow: 0 0 0 3px var(--err-soft);
+}
+
+.login-shell .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 18px 0 20px;
+}
+
+.login-shell .check {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.login-shell .check input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.login-shell .check .box {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border-radius: 5px;
+  border: 1.5px solid var(--line-2);
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  transition: background .14s var(--ease), border-color .14s var(--ease);
+}
+
+.login-shell .check .box svg {
+  width: 11px;
+  height: 11px;
+  opacity: 0;
+  transition: opacity .14s var(--ease);
+}
+
+.login-shell .check input:checked + .box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.login-shell .check input:checked + .box svg {
+  opacity: 1;
+}
+
+.login-shell .check input:focus-visible + .box {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.login-shell .check span:last-child {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.login-shell .link,
+.login-shell button.link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--accent);
+  border-radius: 4px;
+  transition: color .16s var(--ease);
+}
+
+.login-shell .link:hover,
+.login-shell button.link:hover {
+  color: var(--accent-hi);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Tombol utama */
+.login-shell .btn-primary {
+  width: 100%;
+  height: 47px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 0;
+  border-radius: var(--r-md);
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -.005em;
+  color: var(--btn-fg);
+  background: var(--btn-bg);
+  cursor: pointer;
+  transition: background .16s var(--ease);
+}
+
+.login-shell .btn-primary:hover:not(:disabled) {
+  background: var(--btn-hover);
+}
+
+.login-shell .btn-primary:active:not(:disabled) {
+  background: var(--btn-active);
+}
+
+.login-shell .btn-primary .arrow {
+  opacity: .85;
+  transition: transform .16s var(--ease);
+}
+
+.login-shell .btn-primary:hover:not(:disabled) .arrow {
+  transform: translateX(2px);
+}
+
+.login-shell .btn-primary .spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.40);
+  border-top-color: #fff;
+  animation: spin .7s linear infinite;
+}
+
+.login-shell .btn-primary:disabled {
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+.login-shell .btn-primary .i-check {
+  display: none;
+  width: 17px;
+  height: 17px;
+}
+
+.login-shell .btn-primary.done {
+  background: #ebebeb;
+  color: var(--brand);
+  pointer-events: none;
+}
+
+.login-shell .btn-primary.done .spinner {
+  display: none;
+}
+
+.login-shell .btn-primary.done .i-check {
+  display: block;
+}
+
+.login-shell .divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 16px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.login-shell .divider::before,
+.login-shell .divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.login-shell .sso {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.login-shell .btn-sso {
+  height: 43px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  font-weight: 560;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: background .16s var(--ease), border-color .16s var(--ease);
+}
+
+.login-shell .btn-sso:hover {
+  background: var(--surface-2);
+  border-color: var(--line-2);
+}
+
+.login-shell .btn-sso svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.login-shell .secure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--faint);
+}
+
+.login-shell .secure svg {
+  width: 13px;
+  height: 13px;
+}
+
+.login-shell .form-foot {
+  margin-top: 22px;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.login-shell .legal {
+  margin: 18px auto 0;
+  max-width: 340px;
+  text-align: center;
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--faint);
+}
+
+.login-shell .legal a,
+.login-shell .legal button {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font: inherit;
+}
+
+.login-shell .legal a:hover,
+.login-shell .legal button:hover {
+  color: var(--text-2);
+}
+
+/* ============================================================
+   MODAL DIALOG / POPUP COMING SOON
+   ============================================================ */
+.login-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(10, 23, 48, 0.68);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: layerIn .2s var(--ease) both;
+}
+
+.login-modal {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-xl);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  padding: 26px 28px 24px;
+  color: var(--text);
+  animation: riseIn .25s var(--ease) both;
+}
+
+.login-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.login-modal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  background: var(--surface-2);
+  color: var(--accent);
+  border: 1px solid var(--line);
+}
+
+.login-shell .login-modal-close,
+.login-modal-close {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all .14s var(--ease);
+}
+
+.login-shell .login-modal-close:hover,
+.login-modal-close:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.login-modal-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+}
+
+.login-modal h3 {
+  margin: 0 0 8px;
+  font-size: 18.5px;
+  font-weight: 650;
+  letter-spacing: -.02em;
+  color: var(--text);
+}
+
+.login-modal p {
+  margin: 0 0 20px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.login-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.login-shell .login-modal-btn,
+.login-modal-btn {
+  height: 40px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #ffffff !important;
+  background: var(--btn-bg, #10367d);
+  border: 0;
+  cursor: pointer;
+  transition: background .15s var(--ease), opacity .15s var(--ease);
+}
+
+.login-shell .login-modal-btn:hover,
+.login-modal-btn:hover {
+  background: var(--btn-hover, #17459b);
+  color: #ffffff !important;
+}
+
+.login-shell .login-modal-btn:active,
+.login-modal-btn:active {
+  background: var(--btn-active, #0b2a63);
+  color: #ffffff !important;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1080px) {
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+  .login-shell .brand-panel {
+    display: none;
+  }
+  .login-shell .form-panel {
+    justify-content: flex-start;
+    padding: 34px 22px 44px;
+    min-height: 100dvh;
+  }
+  .login-shell .form-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    justify-content: center;
+    margin-bottom: 26px;
+  }
+  .login-shell .form-brand .mark-badge {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+    border-radius: 10px;
+    background: var(--brand);
+    color: #fff;
+  }
+  .login-shell .form-brand .mark-name {
+    color: var(--text);
+  }
+  .login-shell .form-brand .mark-sub {
+    color: var(--muted);
+  }
+  .login-shell .theme-toggle {
+    top: 16px;
+    right: 16px;
+  }
+}
+
+@media (max-width: 520px) {
+  .login-shell .card {
+    padding: 20px;
+    border-radius: var(--r-lg);
+  }
+  .login-shell .form-head h2 {
+    font-size: 22px;
+  }
+  .login-shell .sso {
+    grid-template-columns: 1fr;
+  }
+  .login-shell .form-panel {
+    padding: 22px 14px 36px;
+  }
+}
+
+/* ============================================================
+   SPLASH SCREEN DENGAN ANIMASI SLIDE-IN
+   ============================================================ */
+/* Mencegah scrollbar & celah putih di sisi layar saat splash screen aktif */
+html.splash-active,
+body.splash-active {
+  overflow: hidden !important;
+  height: 100% !important;
+  width: 100% !important;
+  background: #10367d !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+html[data-theme="dark"].splash-active,
+html.dark.splash-active,
+html.dark body.splash-active,
+html[data-theme="dark"] body.splash-active {
+  background: #0a1730 !important;
+}
+
+/* Scrollbar halus bertema untuk halaman login */
+html:has(.login-shell) {
+  scrollbar-color: var(--line-2) transparent;
+}
+html:has(.login-shell)::-webkit-scrollbar {
+  width: 8px;
+}
+html:has(.login-shell)::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+html:has(.login-shell)::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: 4px;
+}
+
+@keyframes splashSlideIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 32px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes splashBarRunner {
+  0% {
+    transform: translate3d(-100%, 0, 0);
+  }
+  50% {
+    transform: translate3d(35%, 0, 0);
+  }
+  100% {
+    transform: translate3d(180%, 0, 0);
+  }
+}
+
+@keyframes panelSlideInLeft {
+  from {
+    opacity: 0;
+    transform: translate3d(-36px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes panelSlideInRight {
+  from {
+    opacity: 0;
+    transform: translate3d(36px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Panel login tersembunyi halus di belakang tirai splash, lalu meluncur masuk secara sinkron saat tirai terangkat */
+.login-shell .brand-panel,
+.login-shell .form-panel {
+  opacity: 1;
+}
+
+.login-shell:has(.login-splash:not(.login-splash--exit)) .brand-panel,
+.login-shell:has(.login-splash:not(.login-splash--exit)) .form-panel {
+  opacity: 0;
+}
+
+.login-shell.login-shell--revealed .brand-panel {
+  opacity: 1;
+  animation: panelSlideInLeft 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.login-shell.login-shell--revealed .form-panel {
+  opacity: 1;
+  animation: panelSlideInRight 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (max-width: 1080px) {
+  .login-shell.login-shell--revealed .form-panel {
+    animation: riseIn 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+.login-splash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand, #10367d);
+  color: var(--brand-fg, #ffffff);
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="dark"] .login-splash,
+html.dark .login-splash {
+  background: #0a1730;
+}
+
+/* Transisi slide-up keluar solid tanpa transparansi bleed */
+.login-splash.login-splash--exit {
+  transform: translate3d(0, -100%, 0);
+  pointer-events: none;
+}
+
+.login-splash-motifs {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+.login-splash-card {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+
+.login-splash-badge {
+  width: 58px;
+  height: 58px;
+  border-radius: 15px;
+  background: #ffffff;
+  color: var(--brand, #10367d);
+  display: grid;
+  place-items: center;
+  font-weight: 750;
+  font-size: 21px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
+  animation: splashSlideIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+}
+
+.login-splash-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.024em;
+  color: #ffffff;
+  animation: splashSlideIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.14s both;
+}
+
+.login-splash-sub {
+  margin: -8px 0 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brand-fg-2, rgba(255, 255, 255, 0.76));
+  animation: splashSlideIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.22s both;
+}
+
+.login-splash-track {
+  width: 140px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+  margin-top: 6px;
+  animation: splashSlideIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+}
+
+.login-splash-bar {
+  width: 50%;
+  height: 100%;
+  background: #ffffff;
+  border-radius: 3px;
+  animation: splashBarRunner 1.25s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.login-splash-hint {
+  position: absolute;
+  bottom: 32px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--brand-fg-3, rgba(255, 255, 255, 0.54));
+  text-transform: uppercase;
+  animation: layerIn 0.8s var(--ease) 0.45s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-splash {
+    display: none !important;
+  }
+  .login-shell .brand-panel,
+  .login-shell .form-panel {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+  }
+  .login-shell *,
+  .login-shell *::before,
+  .login-shell *::after {
+    animation-duration: .001ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}

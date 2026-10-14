@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
@@ -8,7 +8,7 @@ import { SettlementForm } from "@/components/finance/settlement-form";
 
 export default async function NewSettlementPage() {
   const user = await requireUser();
-  if (!can(user.role, "finance", "write")) notFound();
+  if (!can(user.role, "finance", "write")) redirect("/finance/settlements");
 
   const [brands, campaigns] = await Promise.all([
     prisma.brand.findMany({

@@ -38,16 +38,15 @@ export default async function BrandDetailPage(props: PageProps<"/brands/[id]">) 
   const user = await requireUser();
   const { id } = await props.params;
 
-  const detail = await getBrandDetail(user.agencyId, id);
+  const [detail, activity, notes] = await Promise.all([
+    getBrandDetail(user.agencyId, id),
+    getActivity("Brand", id, user.agencyId, 15),
+    getNotes("Brand", id, user.agencyId),
+  ]);
   if (!detail) notFound();
 
   const { brand, campaigns, products, settlements, tasks, totals } = detail;
   const canWrite = can(user.role, "brand", "write");
-
-  const [activity, notes] = await Promise.all([
-    getActivity("Brand", brand.id, user.agencyId, 15),
-    getNotes("Brand", brand.id, user.agencyId),
-  ]);
 
   const stats = [
     { label: "Total GMV", value: formatCompactIDR(totals.gmv) },

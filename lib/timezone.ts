@@ -194,3 +194,45 @@ export function monthStartInTz(timeZone: string, ref: Date = new Date()): Date {
   const { year, month } = calendarDateInTz(tz, ref);
   return dayStartForDateInTz(tz, year, month, 1);
 }
+
+/**
+ * Parse a datetime-local ("YYYY-MM-DDTHH:mm" / "YYYY-MM-DDTHH:mm:ss") or date
+ * ("YYYY-MM-DD") string in the tenant's IANA timezone.
+ * Returns a UTC Date object representing that local instant, or null if invalid.
+ */
+export function parseDateTimeLocalInTz(
+  timeZone: string,
+  value: string | null | undefined,
+): Date | null {
+  if (!value) return null;
+  const str = value.trim();
+  if (!str) return null;
+
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?$/.exec(str);
+  if (!m) {
+    const fallback = new Date(str);
+    return Number.isNaN(fallback.getTime()) ? null : fallback;
+  }
+
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  const hour = m[4] !== undefined ? Number(m[4]) : 0;
+  const minute = m[5] !== undefined ? Number(m[5]) : 0;
+  const second = m[6] !== undefined ? Number(m[6]) : 0;
+
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) return null;
+
+  const probe = new Date(Date.UTC(year, month - 1, day));
+  if (probe.getUTCMonth() !== month - 1 || probe.getUTCDate() !== day) return null;
+
+  const tz = normalizeTimezone(timeZone);
+  const localAsUTC = Date.UTC(year, month - 1, day, hour, minute, second, 0);
+  let utcMs = localAsUTC;
+  for (let i = 0; i < 2; i++) {
+    utcMs = localAsUTC - tzOffsetMinutes(tz, new Date(utcMs)) * 60_000;
+  }
+  return new Date(utcMs);
+}
+

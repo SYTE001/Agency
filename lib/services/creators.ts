@@ -398,7 +398,7 @@ export async function updateCreator(
 
   try {
     return await prisma.creator.update({
-      where: { id: creatorId },
+      where: { id: creatorId, agencyId },
       data: {
         ...(displayName !== undefined ? { displayName } : {}),
         ...(category !== undefined ? { category } : {}),

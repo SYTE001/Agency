@@ -13,7 +13,9 @@ import {
   markSettlementPaid,
 } from "@/lib/services/finance";
 import { calculateCommission } from "@/lib/finance";
-import { logActivity } from "@/lib/services/activity";
+import { entityBelongsToAgency, logActivity } from "@/lib/services/activity";
+import { getAgencyTimezone } from "@/lib/services/common";
+import { parseDateTimeLocalInTz } from "@/lib/timezone";
 
 const FINANCE_PATHS = ["/finance", "/finance/commissions", "/finance/payouts", "/finance/settlements"];
 
@@ -84,9 +86,21 @@ export async function createCommissionAction(
     return { preview: amounts };
   }
 
+  const okCreator = await entityBelongsToAgency("Creator", data.creatorId, user.agencyId);
+  if (!okCreator) {
+    return { error: "Creator tidak ditemukan di agensi ini.", preview: amounts };
+  }
+  if (data.campaignId) {
+    const okCampaign = await entityBelongsToAgency("Campaign", data.campaignId, user.agencyId);
+    if (!okCampaign) {
+      return { error: "Campaign tidak ditemukan di agensi ini.", preview: amounts };
+    }
+  }
+
   try {
     await createCommission(user.agencyId, data);
-  } catch {
+  } catch (e) {
+    console.error("createCommissionAction failed", e);
     return { error: "Creator atau campaign tidak ditemukan di agensi ini.", preview: amounts };
   }
   await logActivity({
@@ -139,9 +153,21 @@ export async function createPayoutAction(
     };
   }
 
+  const okCreator = await entityBelongsToAgency("Creator", parsed.data.creatorId, user.agencyId);
+  if (!okCreator) {
+    return { error: "Creator tidak ditemukan di agensi ini." };
+  }
+  if (parsed.data.campaignId) {
+    const okCampaign = await entityBelongsToAgency("Campaign", parsed.data.campaignId, user.agencyId);
+    if (!okCampaign) {
+      return { error: "Campaign tidak ditemukan di agensi ini." };
+    }
+  }
+
   try {
     await createPayout(user.agencyId, parsed.data);
-  } catch {
+  } catch (e) {
+    console.error("createPayoutAction failed", e);
     return { error: "Creator tidak ditemukan di agensi ini." };
   }
   await logActivity({
@@ -171,8 +197,8 @@ export async function markPayoutPaidAction(payoutId: string, formData: FormData)
       actorId: user.id,
       action: "Payout dibayar",
     });
-  } catch {
-    // Sudah berubah — abaikan
+  } catch (e) {
+    console.error("markPayoutPaidAction failed", e);
   }
   revalidateFinance();
   void formData;
@@ -182,17 +208,17 @@ export async function markPayoutPaidAction(payoutId: string, formData: FormData)
 // Settlement
 // ---------------------------------------------------------------------------
 
-const dateStr = z
-  .string()
-  .transform((v) => (v ? new Date(`${v}T00:00:00`) : null))
-  .refine((d) => d === null || !Number.isNaN(d.getTime()), "Tanggal tidak valid");
-
-const settlementSchema = z.object({
-  brandId: z.string().min(1, "Brand wajib dipilih"),
-  campaignId: z.string().transform((v) => v || null),
-  amount: z.coerce.number().gt(0, "Nominal settlement harus lebih dari 0"),
-  dueDate: dateStr,
-});
+function makeSettlementSchema(tz: string) {
+  return z.object({
+    brandId: z.string().min(1, "Brand wajib dipilih"),
+    campaignId: z.string().transform((v) => v || null),
+    amount: z.coerce.number().gt(0, "Nominal settlement harus lebih dari 0"),
+    dueDate: z
+      .string()
+      .transform((v) => (v ? parseDateTimeLocalInTz(tz, v) : null))
+      .refine((d) => d === null || !Number.isNaN(d.getTime()), "Tanggal tidak valid"),
+  });
+}
 
 export type SettlementFormState = {
   error?: string;
@@ -208,7 +234,8 @@ export async function createSettlementAction(
     return { error: "Anda tidak memiliki izin untuk mencatat settlement." };
   }
 
-  const parsed = settlementSchema.safeParse({
+  const tz = await getAgencyTimezone(user.agencyId);
+  const parsed = makeSettlementSchema(tz).safeParse({
     brandId: formData.get("brandId") ?? "",
     campaignId: formData.get("campaignId") ?? "",
     amount: formData.get("amount") ?? 0,
@@ -222,9 +249,21 @@ export async function createSettlementAction(
     };
   }
 
+  const okBrand = await entityBelongsToAgency("Brand", parsed.data.brandId, user.agencyId);
+  if (!okBrand) {
+    return { error: "Brand tidak ditemukan di agensi ini." };
+  }
+  if (parsed.data.campaignId) {
+    const okCampaign = await entityBelongsToAgency("Campaign", parsed.data.campaignId, user.agencyId);
+    if (!okCampaign) {
+      return { error: "Campaign tidak ditemukan di agensi ini." };
+    }
+  }
+
   try {
     await createSettlement(user.agencyId, parsed.data);
-  } catch {
+  } catch (e) {
+    console.error("createSettlementAction failed", e);
     return { error: "Brand tidak ditemukan di agensi ini." };
   }
   await logActivity({
@@ -254,8 +293,8 @@ export async function markSettlementPaidAction(settlementId: string, formData: F
       actorId: user.id,
       action: "Settlement dibayar",
     });
-  } catch {
-    // Sudah berubah — abaikan
+  } catch (e) {
+    console.error("markSettlementPaidAction failed", e);
   }
   revalidateFinance();
   void formData;

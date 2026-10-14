@@ -1,46 +1,54 @@
 import Link from "next/link";
-import { ArrowRight, LayoutDashboard, LogIn } from "lucide-react";
 import type { SessionUser } from "@/lib/auth";
+
+const papers = [
+  { className: "paper--ls", src: "/landing/paper-ls.jpg", parallax: "0.35" },
+  { className: "paper--lb", src: "/landing/paper-lb.jpg", parallax: "0.2" },
+  { className: "paper--rs", src: "/landing/paper-rs.jpg", parallax: "0.3" },
+  { className: "paper--rb", src: "/landing/paper-rb.jpg", parallax: "0.16" },
+];
 
 export function CtaSection({ user }: { user: SessionUser | null }) {
   const ctaHref = user ? "/overview" : "/login";
+  const ctaLabel = user ? "Buka Dashboard" : "Masuk ke Workspace";
 
   return (
-    <section className="border-t border-border py-20 sm:py-28 lg:py-36">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-3xl text-center">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-            <span>Ready for Deployment</span>
-          </div>
-
-          <h2 className="mt-4 text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-            Your agency workspace is ready.
-          </h2>
-          <p className="mt-5 max-w-xl mx-auto text-base sm:text-lg leading-relaxed text-muted-foreground">
-            Manage creator rosters, execute brand campaigns, schedule LIVE studio rooms, and automate commissions in one central operating system.
-          </p>
-
-          <div className="mt-10 flex items-center justify-center">
-            <Link
-              href={ctaHref}
-              className="inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-primary px-8 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-95 shadow-xs"
-            >
-              {user ? (
-                <>
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span>Open Dashboard</span>
-                </>
-              ) : (
-                <>
-                  <LogIn className="h-4 w-4" />
-                  <span>Log in to Workspace</span>
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </>
-              )}
-            </Link>
-          </div>
+    <section className="cta-band" id="deploy">
+      <div className="noise" aria-hidden="true" />
+      {papers.map((paper) => (
+        <div
+          key={paper.className}
+          className={`paper ${paper.className}`}
+          data-parallax={paper.parallax}
+          aria-hidden="true"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- decorative parallax card */}
+          <img className="paper-img" src={paper.src} alt="" />
         </div>
+      ))}
+
+      <div className="container center">
+        <h2 className="reveal">
+          Your agency workspace
+          <br />
+          is <em style={{ color: "#FFE56E", fontStyle: "normal" }}>ready</em>.
+        </h2>
+        <p className="sec-sub sec-sub--light reveal">
+          Manage creator rosters, execute brand campaigns, schedule LIVE studio rooms, and automate
+          commissions in one central operating system.
+        </p>
+        <Link className="btn btn--light reveal" href={ctaHref}>
+          {ctaLabel}
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M5 12h14m-6-6 6 6-6 6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </Link>
       </div>
     </section>
   );

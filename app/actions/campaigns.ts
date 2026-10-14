@@ -13,32 +13,39 @@ import {
   updateCampaign,
 } from "@/lib/services/campaigns";
 import { addNote, entityBelongsToAgency, logActivity } from "@/lib/services/activity";
+import { getAgencyTimezone } from "@/lib/services/common";
+import { parseDateTimeLocalInTz } from "@/lib/timezone";
 
-const dateStr = z
-  .string()
-  .transform((v) => (v ? new Date(`${v}T00:00:00`) : null))
-  .refine((d) => d === null || !Number.isNaN(d.getTime()), "Tanggal tidak valid");
+function makeDateSchema(tz: string) {
+  return z
+    .string()
+    .transform((v) => (v ? parseDateTimeLocalInTz(tz, v) : null))
+    .refine((d) => d === null || !Number.isNaN(d.getTime()), "Tanggal tidak valid");
+}
 
-const campaignSchema = z
-  .object({
-    name: z.string().trim().min(3, "Nama campaign minimal 3 karakter").max(100),
-    brandId: z.string().min(1, "Brand wajib dipilih"),
-    ownerId: z.string().transform((v) => v || null),
-    startDate: dateStr,
-    endDate: dateStr,
-    budget: z.coerce.number().min(0).default(0),
-    creatorTarget: z.coerce.number().int().min(0).default(0),
-    contentTarget: z.coerce.number().int().min(0).default(0),
-    liveTarget: z.coerce.number().int().min(0).default(0),
-    gmvTarget: z.coerce.number().min(0).default(0),
-    commissionRate: z.coerce.number().min(0).max(100).default(0),
-    status: z.string().default("Draft").refine(isCampaignStatus, "Status tidak valid"),
-    notes: z.string().max(1000).transform((v) => v || null),
-  })
-  .refine((d) => d.endDate === null || d.startDate === null || d.endDate >= d.startDate, {
-    message: "Tanggal selesai harus setelah tanggal mulai",
-    path: ["endDate"],
-  });
+function makeCampaignSchema(tz: string) {
+  const dateStr = makeDateSchema(tz);
+  return z
+    .object({
+      name: z.string().trim().min(3, "Nama campaign minimal 3 karakter").max(100),
+      brandId: z.string().min(1, "Brand wajib dipilih"),
+      ownerId: z.string().transform((v) => v || null),
+      startDate: dateStr,
+      endDate: dateStr,
+      budget: z.coerce.number().min(0).default(0),
+      creatorTarget: z.coerce.number().int().min(0).default(0),
+      contentTarget: z.coerce.number().int().min(0).default(0),
+      liveTarget: z.coerce.number().int().min(0).default(0),
+      gmvTarget: z.coerce.number().min(0).default(0),
+      commissionRate: z.coerce.number().min(0).max(100).default(0),
+      status: z.string().default("Draft").refine(isCampaignStatus, "Status tidak valid"),
+      notes: z.string().max(1000).transform((v) => v || null),
+    })
+    .refine((d) => d.endDate === null || d.startDate === null || d.endDate >= d.startDate, {
+      message: "Tanggal selesai harus setelah tanggal mulai",
+      path: ["endDate"],
+    });
+}
 
 export type CampaignFormState = {
   error?: string;
@@ -54,7 +61,8 @@ export async function createCampaignAction(
     return { error: "Anda tidak memiliki izin untuk menambah campaign." };
   }
 
-  const parsed = campaignSchema.safeParse({
+  const tz = await getAgencyTimezone(user.agencyId);
+  const parsed = makeCampaignSchema(tz).safeParse({
     name: formData.get("name"),
     brandId: formData.get("brandId") ?? "",
     ownerId: formData.get("ownerId") ?? "",
@@ -89,7 +97,8 @@ export async function createCampaignAction(
       action: "Campaign dibuat",
       details: campaign.name,
     });
-  } catch {
+  } catch (e) {
+    console.error("createCampaignAction failed", e);
     return { error: "Brand tidak ditemukan. Pilih brand yang valid." };
   }
 
@@ -97,27 +106,30 @@ export async function createCampaignAction(
   redirect(`/campaigns/${newId}`);
 }
 
-const campaignUpdateSchema = z
-  .object({
-    campaignId: z.string().min(1, "Campaign tidak valid"),
-    name: z.string().trim().min(3, "Nama campaign minimal 3 karakter").max(100),
-    brandId: z.string().min(1, "Brand wajib dipilih"),
-    ownerId: z.string().transform((v) => v || null),
-    startDate: dateStr,
-    endDate: dateStr,
-    budget: z.coerce.number().min(0).default(0),
-    creatorTarget: z.coerce.number().int().min(0).default(0),
-    contentTarget: z.coerce.number().int().min(0).default(0),
-    liveTarget: z.coerce.number().int().min(0).default(0),
-    gmvTarget: z.coerce.number().min(0).default(0),
-    commissionRate: z.coerce.number().min(0).max(100).default(0),
-    status: z.string().default("Draft").refine(isCampaignStatus, "Status tidak valid"),
-    notes: z.string().max(1000).transform((v) => v || null),
-  })
-  .refine((d) => d.endDate === null || d.startDate === null || d.endDate >= d.startDate, {
-    message: "Tanggal selesai harus setelah tanggal mulai",
-    path: ["endDate"],
-  });
+function makeCampaignUpdateSchema(tz: string) {
+  const dateStr = makeDateSchema(tz);
+  return z
+    .object({
+      campaignId: z.string().min(1, "Campaign tidak valid"),
+      name: z.string().trim().min(3, "Nama campaign minimal 3 karakter").max(100),
+      brandId: z.string().min(1, "Brand wajib dipilih"),
+      ownerId: z.string().transform((v) => v || null),
+      startDate: dateStr,
+      endDate: dateStr,
+      budget: z.coerce.number().min(0).default(0),
+      creatorTarget: z.coerce.number().int().min(0).default(0),
+      contentTarget: z.coerce.number().int().min(0).default(0),
+      liveTarget: z.coerce.number().int().min(0).default(0),
+      gmvTarget: z.coerce.number().min(0).default(0),
+      commissionRate: z.coerce.number().min(0).max(100).default(0),
+      status: z.string().default("Draft").refine(isCampaignStatus, "Status tidak valid"),
+      notes: z.string().max(1000).transform((v) => v || null),
+    })
+    .refine((d) => d.endDate === null || d.startDate === null || d.endDate >= d.startDate, {
+      message: "Tanggal selesai harus setelah tanggal mulai",
+      path: ["endDate"],
+    });
+}
 
 export async function updateCampaignAction(
   _prev: CampaignFormState,
@@ -129,7 +141,8 @@ export async function updateCampaignAction(
   }
 
   const campaignId = String(formData.get("campaignId") ?? "");
-  const parsed = campaignUpdateSchema.safeParse({
+  const tz = await getAgencyTimezone(user.agencyId);
+  const parsed = makeCampaignUpdateSchema(tz).safeParse({
     campaignId,
     name: formData.get("name"),
     brandId: formData.get("brandId"),
@@ -165,6 +178,7 @@ export async function updateCampaignAction(
       details: data.name,
     });
   } catch (e) {
+    console.error("updateCampaignAction failed", e);
     if (e instanceof Error && e.message) return { error: e.message };
     return { error: "Gagal menyimpan campaign. Coba lagi." };
   }
@@ -222,7 +236,8 @@ export async function addCampaignCreatorAction(
       actorId: user.id,
       action: "Creator ditambahkan ke campaign",
     });
-  } catch {
+  } catch (e) {
+    console.error("addCampaignCreatorAction failed", e);
     return { error: "Creator atau campaign tidak ditemukan." };
   }
 
@@ -249,8 +264,8 @@ export async function removeCampaignCreatorAction(
       actorId: user.id,
       action: "Creator dikeluarkan dari campaign",
     });
-  } catch {
-    // Data sudah tidak ada — abaikan
+  } catch (e) {
+    console.error("removeCampaignCreatorAction failed", e);
   }
 
   revalidatePath(`/campaigns/${campaignId}`);

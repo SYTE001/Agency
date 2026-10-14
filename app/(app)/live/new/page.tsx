@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
@@ -8,7 +8,7 @@ import { LiveForm } from "@/components/live/live-form";
 
 export default async function NewLivePage() {
   const user = await requireUser();
-  if (!can(user.role, "live", "write")) notFound();
+  if (!can(user.role, "live", "write")) redirect("/live");
 
   const [creators, campaigns, brands, products, users] = await Promise.all([
     prisma.creator.findMany({

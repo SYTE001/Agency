@@ -259,7 +259,7 @@ export async function updateProduct(
 
   try {
     return await prisma.product.update({
-      where: { id: productId },
+      where: { id: productId, agencyId },
       data: {
         ...(name !== undefined ? { name } : {}),
         ...(brandId !== undefined ? { brandId } : {}),

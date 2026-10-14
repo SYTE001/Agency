@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authorization";
@@ -8,7 +8,7 @@ import { TaskForm, type RelatedOption } from "@/components/tasks/task-form";
 
 export default async function NewTaskPage() {
   const user = await requireUser();
-  if (!can(user.role, "task", "write")) notFound();
+  if (!can(user.role, "task", "write")) redirect("/tasks");
 
   const [users, creators, brands, campaigns, contents, lives] = await Promise.all([
     prisma.user.findMany({

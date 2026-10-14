@@ -237,7 +237,7 @@ export async function markPayoutPaid(agencyId: string, payoutId: string) {
   const payout = await prisma.creatorPayout.findFirst({ where: { id: payoutId, agencyId }, select: { id: true } });
   if (!payout) throw new Error("Payout tidak ditemukan");
   return prisma.creatorPayout.update({
-    where: { id: payoutId },
+    where: { id: payoutId, agencyId },
     data: { status: "Paid", paidAt: new Date() },
   });
 }
@@ -307,13 +307,18 @@ export async function markSettlementPaid(agencyId: string, settlementId: string)
   });
   if (!settlement) throw new Error("Settlement tidak ditemukan");
   return prisma.settlement.update({
-    where: { id: settlementId },
+    where: { id: settlementId, agencyId },
     data: { status: "Paid", paidAt: new Date() },
   });
 }
 
 /** Flag past-due pending settlements as Overdue (deterministic, no AI). */
 export async function refreshOverdueSettlements(agencyId: string) {
+  const hasOverdue = await prisma.settlement.findFirst({
+    where: { agencyId, status: "Pending", dueDate: { lt: new Date() } },
+    select: { id: true },
+  });
+  if (!hasOverdue) return { count: 0 };
   return prisma.settlement.updateMany({
     where: { agencyId, status: "Pending", dueDate: { lt: new Date() } },
     data: { status: "Overdue" },

@@ -29,6 +29,8 @@ jobs:
         run: npm run format:check
       - name: Lint
         run: npm run lint
+      - name: Generate Next.js route types
+        run: npx next typegen
       - name: Typecheck
         run: npm run typecheck
       - name: Unit tests

@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { globalSearch } from "@/lib/services/search";
 
@@ -6,7 +5,12 @@ import { globalSearch } from "@/lib/services/search";
 // so this always reflects the current database state.
 export async function GET(req: Request) {
   const user = await getSessionUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   const q = new URL(req.url).searchParams.get("q") ?? "";
   if (q.trim().length < 2) {

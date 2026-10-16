@@ -89,7 +89,7 @@ export default async function LandingPage() {
         <CtaSection user={user} />
       </main>
 
-      <Footer />
+      <Footer user={user} />
     </div>
   );
 }

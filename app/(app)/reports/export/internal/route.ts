@@ -6,7 +6,11 @@ import type { Period } from "@/lib/services/reports";
 
 export async function GET(req: Request) {
   const user = await getSessionUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    const url = new URL(req.url);
+    const destination = `${url.pathname}${url.search}`;
+    redirect(`/login?next=${encodeURIComponent(destination)}`);
+  }
   if (!can(user.role, "report", "read")) {
     return new Response("Forbidden", { status: 403 });
   }

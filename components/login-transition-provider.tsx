@@ -13,7 +13,7 @@ import { usePathname, useRouter } from "next/navigation";
 export type TransitionPhase = "idle" | "expanding" | "navigating" | "revealing";
 
 interface LoginTransitionContextValue {
-  startTransitionToLogin: (buttonEl?: HTMLElement | null) => void;
+  startTransitionToLogin: (buttonEl?: HTMLElement | null, targetUrl?: string) => void;
   isTransitioning: boolean;
   isFromTransition: boolean;
   phase: TransitionPhase;
@@ -65,8 +65,10 @@ export function LoginTransitionProvider({
   const router = useRouter();
 
   // Derive isFromTransition without setting state in effects:
-  // True as long as user is on /login and transition target was /login
-  const isFromTransition = pathname === "/login" && transitionTarget === "/login";
+  // True as long as user is on /login and transition target was /login or /login?
+  const isFromTransition =
+    pathname === "/login" &&
+    (transitionTarget === "/login" || (transitionTarget?.startsWith("/login?") ?? false));
 
   const isTransitioningRef = useRef(false);
   const activeButtonRef = useRef<HTMLElement | null>(null);
@@ -93,7 +95,7 @@ export function LoginTransitionProvider({
   }, [cleanupClasses]);
 
   const startTransitionToLogin = useCallback(
-    (buttonEl?: HTMLElement | null) => {
+    (buttonEl?: HTMLElement | null, targetUrl = "/login") => {
       // Guard against duplicate triggers or navigation while already transitioning or already on /login
       if (isTransitioningRef.current) return;
       if (pathname === "/login") return;
@@ -105,12 +107,12 @@ export function LoginTransitionProvider({
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
       if (prefersReduced) {
-        router.push("/login");
+        router.push(targetUrl);
         return;
       }
 
       isTransitioningRef.current = true;
-      setTransitionTarget("/login");
+      setTransitionTarget(targetUrl);
 
       if (typeof window !== "undefined") {
         try {
@@ -135,10 +137,10 @@ export function LoginTransitionProvider({
       }
       setPhase("expanding");
 
-      // Navigate to /login at 180ms
+      // Navigate to login destination at 180ms
       navigationTimerRef.current = setTimeout(() => {
         setPhase("navigating");
-        router.push("/login");
+        router.push(targetUrl);
       }, 180);
 
       // Safety timeout: forcefully recover if navigation is interrupted or hangs
@@ -211,9 +213,9 @@ export function LoginTransitionProvider({
       const href = anchor.getAttribute("href");
       if (!href) return;
 
-      if (href === "/login" || href.endsWith("/login")) {
+      if (href === "/login" || href.startsWith("/login?") || href.endsWith("/login")) {
         e.preventDefault();
-        startTransitionToLogin(anchor);
+        startTransitionToLogin(anchor, href);
       }
     };
 

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSessionUser } from "@/lib/auth";
 import { LoginForm } from "@/components/login-form";
+import { getSafeRedirectUrl } from "@/lib/redirect";
 import "./login.css";
 
 export const metadata: Metadata = {
@@ -13,9 +14,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function LoginPage() {
-  const user = await getSessionUser();
-  if (user) redirect("/overview");
+export default async function LoginPage(props: {
+  searchParams?: Promise<{ next?: string | string[] }>;
+}) {
+  const searchParams = props.searchParams ? await props.searchParams : {};
+  const rawNext = Array.isArray(searchParams.next) ? searchParams.next[0] : searchParams.next;
+  const safeNext = getSafeRedirectUrl(rawNext, "/overview");
 
-  return <LoginForm />;
+  const user = await getSessionUser();
+  if (user) {
+    redirect(safeNext);
+  }
+
+  return <LoginForm next={rawNext ? safeNext : undefined} />;
 }

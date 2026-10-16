@@ -10,7 +10,7 @@ const initialState: LoginState = {};
 
 type ModalType = "google" | "microsoft" | "forgot" | "invite" | "help" | "privacy" | null;
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string } = {}) {
   const [state, formAction, isPending] = useActionState(login, initialState);
   const { toggle } = useTheme();
   const { isFromTransition } = useLoginTransition();
@@ -344,6 +344,7 @@ export function LoginForm() {
           </div>
 
           <form action={formAction} onSubmit={handleFormSubmit} className="card" noValidate>
+            <input type="hidden" name="next" value={next || ""} />
             {/* Email Field */}
             <div className="field">
               <label htmlFor="email">Email kantor</label>

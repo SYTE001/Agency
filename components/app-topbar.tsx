@@ -1,9 +1,7 @@
-import { LogOut } from "lucide-react";
-import { logout } from "@/app/actions/auth";
+import { LogoutButton } from "@/components/logout-button";
 import { Avatar } from "@/components/ui/avatar";
 import { CommandPalette } from "@/components/command-palette";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
 import { ROLE_LABELS } from "@/lib/constants";
 import type { SessionUser } from "@/lib/auth";
 
@@ -35,11 +33,7 @@ export function AppTopbar({
             <div className="text-sm font-medium">{user.name}</div>
             <div className="text-xs text-muted-foreground">{ROLE_LABELS[user.role]}</div>
           </div>
-          <form action={logout}>
-            <Button variant="ghost" size="icon" type="submit" aria-label="Keluar">
-              <LogOut />
-            </Button>
-          </form>
+          <LogoutButton />
         </div>
       </div>
     </header>

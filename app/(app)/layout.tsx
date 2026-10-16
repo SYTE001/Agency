@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   robots: {
     index: false,

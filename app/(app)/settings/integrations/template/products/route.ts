@@ -6,7 +6,9 @@ const BOM = "﻿";
 
 export async function GET() {
   const user = await getSessionUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    redirect("/login?next=%2Fsettings%2Fintegrations%2Ftemplate%2Fproducts");
+  }
   if (!can(user.role, "integration", "read")) {
     return new Response("Forbidden", { status: 403 });
   }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { SessionUser } from "@/lib/auth";
 
 const footNav = [
   { href: "#workspace", label: "Workspace" },
@@ -7,8 +8,10 @@ const footNav = [
   { href: "#security", label: "Security" },
 ];
 
-export function Footer() {
+export function Footer({ user }: { user?: SessionUser | null } = {}) {
   const year = new Date().getFullYear();
+  const ctaHref = user ? "/overview" : "/login";
+  const ctaLabel = user ? "Dashboard" : "Login";
 
   return (
     <footer className="site-foot">
@@ -28,7 +31,7 @@ export function Footer() {
                 {link.label}
               </a>
             ))}
-            <Link href="/login">Login</Link>
+            <Link href={ctaHref}>{ctaLabel}</Link>
           </nav>
         </div>
         <div className="foot-bottom">

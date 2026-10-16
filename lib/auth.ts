@@ -1,9 +1,10 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import prisma from "@/lib/prisma";
 import { isRole, type Role } from "@/lib/constants";
+import { getSafeRedirectUrl } from "@/lib/redirect";
 
 export { hashPassword, verifyPassword } from "@/lib/password";
 
@@ -134,9 +135,26 @@ export const getSessionUser = cache(async function getSessionUser(): Promise<Ses
   return resolveSessionUser(token);
 });
 
-/** Require a signed-in user; redirect to /login otherwise. */
+/** Require a signed-in user; redirect to /login (with safe ?next= destination) otherwise. */
 export async function requireUser(): Promise<SessionUser> {
   const user = await getSessionUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    let nextQuery = "";
+    try {
+      const headerList = await headers();
+      const pathname = headerList.get("x-pathname");
+      const search = headerList.get("x-search") || "";
+      if (pathname) {
+        const full = `${pathname}${search}`;
+        const safe = getSafeRedirectUrl(full, "");
+        if (safe && safe !== "/overview" && safe !== "/") {
+          nextQuery = `?next=${encodeURIComponent(safe)}`;
+        }
+      }
+    } catch {
+      // In tests or outside Next request context, headers() might throw
+    }
+    redirect(`/login${nextQuery}`);
+  }
   return user;
 }

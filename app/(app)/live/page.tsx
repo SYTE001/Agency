@@ -11,7 +11,7 @@ import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCompactIDR, formatDateTime, formatNumber, formatPercent, formatTime } from "@/lib/format";
@@ -75,8 +75,8 @@ export default async function LivePage(props: PageProps<"/live">) {
         </div>
       </PageHeader>
 
-      {/* LIVE dashboard (PLAN §11) */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+
         {kpis.map((k) => (
           <Card key={k.label}>
             <CardContent className="flex items-center gap-3 p-4">
@@ -215,10 +215,10 @@ export default async function LivePage(props: PageProps<"/live">) {
               <option key={c.id} value={c.id}>{c.displayName}</option>
             ))}
           </Select>
-          <Button type="submit" variant="secondary">Terapkan</Button>
+          <Button type="submit">Terapkan</Button>
           <Link
             href="/live"
-            className="inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+            className={buttonVariants({ variant: "secondary" })}
           >
             Reset
           </Link>

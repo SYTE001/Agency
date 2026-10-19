@@ -9,6 +9,7 @@
 body:has(.ttshq){overflow-x:clip}
 
 .ttshq{
+  --brand:#4f46e5; --brand-foreground:#ffffff; --ring:#6366f1;
   --ink:#0E0B3D; --ink-2:#171531; --night:#030122;
   --muted:#6C6F93; --faint:#B3B8D0; --line:#E4E7F2;
   --bg:#FFFFFF; --bg-soft:#F7F9FC; --bg-softer:#F3F5FB;

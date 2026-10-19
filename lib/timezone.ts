@@ -1,16 +1,9 @@
-// Timezone-aware day-boundary helpers.
-//
-// The database stores everything in UTC. Business-day filtering (reports, LIVE
-// schedules, dashboard "today" windows) must therefore interpret a calendar day
-// in the tenant's timezone — Agency.timezone (default Asia/Jakarta) — and convert
-// the resulting local midnight boundaries back to UTC instants for the query.
-//
-// These helpers are dependency-free (Intl.DateTimeFormat only) and return UTC
-// Date objects suitable for Prisma `gte`/`lte` comparisons.
-
 export const DEFAULT_TIMEZONE = "Asia/Jakarta";
 
-/** Normalize an IANA timezone id, falling back to the default on anything invalid. */
+type YMD = { year: number; month: number; day: number };
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
 export function normalizeTimezone(timeZone: string | null | undefined): string {
   if (!timeZone) return DEFAULT_TIMEZONE;
   try {
@@ -21,9 +14,6 @@ export function normalizeTimezone(timeZone: string | null | undefined): string {
   }
 }
 
-type YMD = { year: number; month: number; day: number };
-
-/** The calendar date (Y/M/D) of `ref` as seen in `timeZone`. */
 function calendarDateInTz(timeZone: string, ref: Date): YMD {
   const dtf = new Intl.DateTimeFormat("en-US", {
     timeZone,
@@ -40,7 +30,6 @@ function calendarDateInTz(timeZone: string, ref: Date): YMD {
   };
 }
 
-/** Minutes the timezone is ahead of UTC at the given instant. */
 function tzOffsetMinutes(timeZone: string, date: Date): number {
   const dtf = new Intl.DateTimeFormat("en-US", {
     timeZone,
@@ -65,46 +54,39 @@ function tzOffsetMinutes(timeZone: string, date: Date): number {
   return Math.round((asUTC - date.getTime()) / 60_000);
 }
 
-/** UTC instant of 00:00:00 on calendar date (y, m, d) in `timeZone`. */
-function dayStartForDateInTz(timeZone: string, y: number, m: number, d: number): Date {
-  // Start from a guess of local midnight expressed as if it were UTC, then pull
-  // it back by the timezone offset. Two iterations cover any DST transition.
-  const localMidnightAsUTC = Date.UTC(y, m - 1, d, 0, 0, 0, 0);
-  let utcMs = localMidnightAsUTC;
+function localToUtc(
+  timeZone: string,
+  year: number,
+  month: number,
+  day: number,
+  hour = 0,
+  minute = 0,
+  second = 0,
+): Date {
+  const target = Date.UTC(year, month - 1, day, hour, minute, second, 0);
+  let utcMs = target;
+  // Two iterations cover any DST transition offset shift
   for (let i = 0; i < 2; i++) {
-    utcMs = localMidnightAsUTC - tzOffsetMinutes(timeZone, new Date(utcMs)) * 60_000;
+    utcMs = target - tzOffsetMinutes(timeZone, new Date(utcMs)) * 60_000;
   }
   return new Date(utcMs);
 }
 
-/**
- * UTC instant of the start (local 00:00:00) of the calendar day containing
- * `ref` in `timeZone`.
- */
 export function dayStartInTz(timeZone: string, ref: Date = new Date()): Date {
   const tz = normalizeTimezone(timeZone);
   const { year, month, day } = calendarDateInTz(tz, ref);
-  return dayStartForDateInTz(tz, year, month, day);
+  return localToUtc(tz, year, month, day);
 }
 
-/**
- * UTC instant of the end (local 23:59:59.999) of the calendar day containing
- * `ref` in `timeZone`.
- */
 export function dayEndInTz(timeZone: string, ref: Date = new Date()): Date {
   return new Date(dayStartInTz(timeZone, ref).getTime() + 86_400_000 - 1);
 }
 
-/**
- * UTC instant of local midnight `n` calendar days before the day containing
- * `ref` in `timeZone`. `n = 0` is today's local midnight; positive `n` goes back.
- */
 export function daysAgoStartInTz(timeZone: string, n: number, ref: Date = new Date()): Date {
   const tz = normalizeTimezone(timeZone);
   const { year, month, day } = calendarDateInTz(tz, ref);
-  // Date.UTC normalizes out-of-range day values (e.g. day 0 → previous month).
   const shifted = new Date(Date.UTC(year, month - 1, day - n));
-  return dayStartForDateInTz(
+  return localToUtc(
     tz,
     shifted.getUTCFullYear(),
     shifted.getUTCMonth() + 1,
@@ -112,18 +94,6 @@ export function daysAgoStartInTz(timeZone: string, n: number, ref: Date = new Da
   );
 }
 
-// ---------------------------------------------------------------------------
-// Calendar-key helpers (LIVE schedule grid & URL navigation). The grid works
-// on "YYYY-MM-DD" keys interpreted in the tenant's timezone so day placement
-// never depends on the server's runtime timezone, and stays correct across
-// DST transitions (keys are calendar dates, not 24h multiples).
-// ---------------------------------------------------------------------------
-
-function pad2(n: number): string {
-  return String(n).padStart(2, "0");
-}
-
-/** Parse a strict "YYYY-MM-DD" key; null when malformed or an impossible date (Feb 30). */
 function parseYMD(key: string): YMD | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key.trim());
   if (!m) return null;
@@ -131,75 +101,57 @@ function parseYMD(key: string): YMD | null {
   const month = Number(m[2]);
   const day = Number(m[3]);
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+
   const probe = new Date(Date.UTC(year, month - 1, day));
   if (probe.getUTCMonth() !== month - 1 || probe.getUTCDate() !== day) return null;
+
   return { year, month, day };
 }
 
-/** "YYYY-MM-DD" of the calendar day containing `ref`, as seen in `timeZone`. */
 export function dateKeyInTz(timeZone: string, ref: Date = new Date()): string {
   const tz = normalizeTimezone(timeZone);
   const { year, month, day } = calendarDateInTz(tz, ref);
   return `${year}-${pad2(month)}-${pad2(day)}`;
 }
 
-/**
- * UTC instant of local midnight (00:00) on the "YYYY-MM-DD" calendar date in
- * `timeZone`. Returns null for malformed/impossible keys so callers can fall
- * back to "today" instead of silently rolling over to another day.
- */
 export function parseDateKeyInTz(timeZone: string, key: string): Date | null {
   const ymd = parseYMD(key);
   if (!ymd) return null;
-  return dayStartForDateInTz(normalizeTimezone(timeZone), ymd.year, ymd.month, ymd.day);
+  return localToUtc(normalizeTimezone(timeZone), ymd.year, ymd.month, ymd.day);
 }
 
-/**
- * Shift a "YYYY-MM-DD" key by whole calendar days and/or months. Pure calendar
- * arithmetic (no timezone math needed): month-end clamps (Jan 31 → Feb 28) and
- * year rollovers normalize via UTC-date arithmetic. Null for invalid keys.
- */
 export function shiftDateKey(
   key: string,
   delta: { days?: number; months?: number },
 ): string | null {
   const from = parseYMD(key);
   if (!from) return null;
+
   const months = delta.months ?? 0;
   const days = delta.days ?? 0;
   const anchor = new Date(Date.UTC(from.year, from.month - 1 + months, 1));
-  // Clamp the day to the target month's length before adding days.
   const lastDay = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 0)).getUTCDate();
-  const shifted = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), Math.min(from.day, lastDay) + days));
+  const shifted = new Date(
+    Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), Math.min(from.day, lastDay) + days),
+  );
+
   return `${shifted.getUTCFullYear()}-${pad2(shifted.getUTCMonth() + 1)}-${pad2(shifted.getUTCDate())}`;
 }
 
-/**
- * UTC instant of local midnight on Monday of the week containing `ref`, weeks
- * starting Monday (id-ID business convention), in `timeZone`.
- */
 export function startOfWeekInTz(timeZone: string, ref: Date = new Date()): Date {
   const tz = normalizeTimezone(timeZone);
   const { year, month, day } = calendarDateInTz(tz, ref);
-  // Weekday of the LOCAL calendar date — weekday is a property of the date
-  // itself, so UTC arithmetic on the Y/M/D triple gives the right answer.
-  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay(); // 0=Sun…6=Sat
+  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
   const monday = new Date(Date.UTC(year, month - 1, day - ((weekday + 6) % 7)));
-  return dayStartForDateInTz(tz, monday.getUTCFullYear(), monday.getUTCMonth() + 1, monday.getUTCDate());
+  return localToUtc(tz, monday.getUTCFullYear(), monday.getUTCMonth() + 1, monday.getUTCDate());
 }
 
-/** UTC instant of local midnight on the first day of `ref`'s month in `timeZone`. */
 export function monthStartInTz(timeZone: string, ref: Date = new Date()): Date {
   const tz = normalizeTimezone(timeZone);
   const { year, month } = calendarDateInTz(tz, ref);
-  return dayStartForDateInTz(tz, year, month, 1);
+  return localToUtc(tz, year, month, 1);
 }
 
-/**
- * Parse a datetime-local ("YYYY-MM-DDTHH:mm" / "YYYY-MM-DDTHH:mm:ss") or date
- * ("YYYY-MM-DD") string in the tenant's IANA timezone.
- * Returns a UTC Date object representing that local instant, or null if invalid.
- */
 export function parseDateTimeLocalInTz(
   timeZone: string,
   value: string | null | undefined,
@@ -227,12 +179,5 @@ export function parseDateTimeLocalInTz(
   const probe = new Date(Date.UTC(year, month - 1, day));
   if (probe.getUTCMonth() !== month - 1 || probe.getUTCDate() !== day) return null;
 
-  const tz = normalizeTimezone(timeZone);
-  const localAsUTC = Date.UTC(year, month - 1, day, hour, minute, second, 0);
-  let utcMs = localAsUTC;
-  for (let i = 0; i < 2; i++) {
-    utcMs = localAsUTC - tzOffsetMinutes(tz, new Date(utcMs)) * 60_000;
-  }
-  return new Date(utcMs);
+  return localToUtc(normalizeTimezone(timeZone), year, month, day, hour, minute, second);
 }
-

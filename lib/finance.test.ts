@@ -7,16 +7,12 @@ import {
   calculateCreatorPayout,
 } from "./finance";
 
-// Financial calculations must be deterministic, use consistent rounding, and
-// match the PLAN §12 formula everywhere. These lock the exact rounding behavior.
-
 describe("calculateCreatorCommission", () => {
   it("computes GMV * rate / 100", () => {
     assert.equal(calculateCreatorCommission(1_000_000, 10), 100_000);
   });
 
   it("rounds fractional Rupiah to a whole number", () => {
-    // 999_999 * 10% = 99999.9 → 100000
     assert.equal(calculateCreatorCommission(999_999, 10), 100_000);
   });
 
@@ -26,7 +22,8 @@ describe("calculateCreatorCommission", () => {
 });
 
 describe("calculateAgencyRevenue", () => {
-  it("is computed from creator commission, NOT from GMV (PLAN §12)", () => {
+  it("is computed from creator commission, not from GMV", () => {
+
     // creatorCommission = 100_000; agency share 30% → 30_000
     assert.equal(calculateAgencyRevenue(100_000, 30), 30_000);
   });
@@ -67,10 +64,9 @@ describe("calculateCommission", () => {
   });
 });
 
-// Revisi §2 — required coverage: nominal 0, 1, 0.1, 999.99, large values,
-// commission percentages, creator payout, agency revenue, settlement balance.
-describe("monetary coverage (Revisi §2)", () => {
-  it("handles the mandated edge nominals", () => {
+describe("monetary edge cases and precision", () => {
+  it("handles edge nominals", () => {
+
     assert.equal(calculateCreatorCommission(0, 10), 0);
     assert.equal(calculateCreatorCommission(1, 10), 0); // 0.1 → rounds to 0
     assert.equal(calculateCreatorCommission(0.1, 10), 0); // 0.01 → rounds to 0

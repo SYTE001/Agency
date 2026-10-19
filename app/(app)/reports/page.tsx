@@ -73,7 +73,7 @@ export default async function ClientReportPage(props: PageProps<"/reports">) {
           <option value="30d">30 hari</option>
           <option value="90d">90 hari</option>
         </Select>
-        <Button type="submit" variant="secondary">Tampilkan</Button>
+        <Button type="submit">Tampilkan</Button>
       </form>
 
       {!campaignId ? (
@@ -194,9 +194,10 @@ export default async function ClientReportPage(props: PageProps<"/reports">) {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            GMV dan komisi mengikuti basis perhitungan komisi agensi (PLAN §12): Komisi Creator = GMV × rate%,
+            GMV dan komisi mengikuti basis perhitungan komisi agensi: Komisi Creator = GMV × rate%,
             Revenue Agensi = Komisi × share%. Angka LIVE diambil dari hasil sesi yang sudah dicatat.
           </p>
+
         </>
       )}
     </div>

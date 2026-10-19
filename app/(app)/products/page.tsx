@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -77,8 +77,9 @@ export default async function ProductsPage(props: PageProps<"/products">) {
         ) : null}
       </PageHeader>
 
-      {/* Filter bar (GET form → server-side filtering, PLAN §32) */}
+      {/* Filter bar */}
       <form className="flex flex-wrap items-center gap-2" method="get">
+
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input name="q" defaultValue={filters.q} placeholder="Cari nama produk…" className="w-56 pl-8" />
@@ -100,10 +101,10 @@ export default async function ProductsPage(props: PageProps<"/products">) {
           <option value="Active">Active</option>
           <option value="Inactive">Inactive</option>
         </Select>
-        <Button type="submit" variant="secondary">Terapkan</Button>
+        <Button type="submit">Terapkan</Button>
         <Link
           href="/products"
-          className="inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+          className={buttonVariants({ variant: "secondary" })}
         >
           Reset
         </Link>

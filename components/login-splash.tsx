@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BrandMark } from "@/components/brand-logo";
 
 interface LoginSplashProps {
   onExiting?: () => void;
@@ -74,7 +75,7 @@ export function LoginSplash({ onExiting, onComplete }: LoginSplashProps) {
 
       <div className="login-splash-card">
         <div className="login-splash-badge" aria-hidden="true">
-          AO
+          <BrandMark className="h-8 w-auto object-contain" priority />
         </div>
         <h1 className="login-splash-title">Agency OS</h1>
         <p className="login-splash-sub">Agency Operating System</p>

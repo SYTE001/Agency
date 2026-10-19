@@ -153,8 +153,9 @@ export default async function FinancePage() {
         </Card>
       </div>
 
-      {/* Rumus eksplisit — PLAN §12: never hide financial calculations */}
+      {/* Rumus eksplisit */}
       <Card>
+
         <CardContent className="p-4">
           <p className="mb-2 text-sm font-semibold">Rumus Perhitungan (Eksplisit)</p>
           <div className="grid gap-3 text-sm sm:grid-cols-3">

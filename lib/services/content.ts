@@ -16,6 +16,7 @@ export type ContentRow = {
   campaignName: string;
   creatorId: string;
   creatorName: string;
+  creatorUsername: string | null;
   productName: string | null;
   reviewerName: string | null;
 };
@@ -30,8 +31,8 @@ export type ContentFilters = {
 
 export const KANBAN_COLUMNS = CONTENT_STATUS;
 
-/** Kanban board: all open-pipeline items grouped by status (PLAN §10). */
 export async function getContentBoard(agencyId: string, filters: ContentFilters = {}) {
+
   const where: Prisma.ContentItemWhereInput = { agencyId };
   if (filters.q) where.title = containsInsensitive(filters.q);
   if (filters.campaignId) where.campaignId = filters.campaignId;
@@ -47,7 +48,7 @@ export async function getContentBoard(agencyId: string, filters: ContentFilters 
     orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
     include: {
       campaign: { select: { id: true, name: true } },
-      creator: { select: { id: true, displayName: true } },
+      creator: { select: { id: true, displayName: true, username: true } },
       product: { select: { name: true } },
       reviewer: { select: { name: true } },
     },
@@ -69,6 +70,7 @@ export async function getContentBoard(agencyId: string, filters: ContentFilters 
       campaignName: item.campaign.name,
       creatorId: item.creatorId,
       creatorName: item.creator.displayName,
+      creatorUsername: item.creator.username ? `@${item.creator.username.replace(/^@/, "")}` : null,
       productName: item.product?.name ?? null,
       reviewerName: item.reviewer?.name ?? null,
     };

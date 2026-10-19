@@ -1,16 +1,7 @@
-// Focused tests for task overdue semantics (Phase 3 P0 #2).
-//
-// Overdue is deliberately an instant comparison (dueDate < now): whether a
-// task is late must never depend on the server's runtime timezone nor on the
-// tenant's Agency.timezone config — those only govern how timestamps are
-// RENDERED. Day-boundary helpers stay out of the overdue path by design;
-// these tests pin that contract end-to-end through the service layer.
-//
-// Runs against a throwaway database (see lib/test-env.ts), never prisma/dev.db.
-
 import "@/lib/test-env";
 
 import { describe, it, before, after } from "node:test";
+
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";

@@ -45,8 +45,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality
     env:
-      DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/agency-os-test-db"
-      DIRECT_URL: "postgresql://dummy:dummy@localhost:5432/agency-os-test-db"
+      DB_PROVIDER: "sqlite"
+      DATABASE_URL: "file:./prisma/e2e-test.db"
+      DIRECT_URL: "file:./prisma/e2e-test.db"
+      OWNER_EMAIL: "owner@agency.test"
+      OWNER_PASSWORD: "localdev-owner-pass-1"
+      AUTH_SECRET: "taos-e2e-test-secret-local-only-32chars"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,6 +61,10 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Prepare E2E test database
+        run: |
+          npx prisma migrate deploy --schema prisma/schema.sqlite.prisma
+          npx prisma db seed
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
       - name: Run Playwright

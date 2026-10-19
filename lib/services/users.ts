@@ -1,17 +1,7 @@
-// User management service (Phase 3, P1 #4).
-//
-// Agency-scoped member administration on top of the existing auth stack.
-// The session already re-resolves role/agencyId from the DB row on every
-// request (lib/auth.ts), so role changes made here take effect immediately —
-// there is no separate session state to invalidate.
-//
-// passwordHash is write-only through this service: it is hashed here
-// (lib/password scrypt) and never included in any read.
 import prisma from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { isRole } from "@/lib/constants";
 
-/** Identity + role of whoever triggered the mutation (from requireUser()). */
 export type ActorContext = { id: string; role: string };
 
 const USER_LIST_FIELDS = {
@@ -24,8 +14,8 @@ const USER_LIST_FIELDS = {
   createdAt: true,
 } as const;
 
-/** All members of one agency — never exposes auth-sensitive columns. */
 export async function listAgencyUsers(agencyId: string) {
+
   return prisma.user.findMany({
     where: { agencyId },
     orderBy: [{ createdAt: "asc" }],

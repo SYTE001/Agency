@@ -70,7 +70,7 @@ export function AppSidebar({
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-col gap-0.5 p-2.5">
+    <nav className="flex flex-col gap-0.5 px-2 py-2.5">
       {NAV_GROUPS.map((group, groupIndex) => {
         const items = group.items.filter(
           (n) => !n.resource || can(role, n.resource, "read"),
@@ -78,14 +78,27 @@ export function AppSidebar({
         if (items.length === 0) return null;
 
         return (
-          <div key={group.label ?? "overview"} className={cn(groupIndex > 0 && "mt-4")}>
-            {!collapsed && group.label ? (
-              <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                {group.label}
-              </p>
+          <div key={group.label ?? "overview"} className={cn(groupIndex > 0 && "mt-3")}>
+            {group.label ? (
+              <div
+                className={cn(
+                  "overflow-hidden transition-all duration-300 ease-in-out",
+                  collapsed ? "max-h-0 opacity-0 pointer-events-none" : "max-h-6 opacity-100 pb-1",
+                )}
+              >
+                <p className="whitespace-nowrap px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  {group.label}
+                </p>
+              </div>
             ) : null}
-            {collapsed && groupIndex > 0 ? (
-              <div className="mx-3 mb-1 border-t border-border/70" aria-hidden="true" />
+            {groupIndex > 0 ? (
+              <div
+                className={cn(
+                  "mx-2 border-t border-border transition-all duration-300 ease-in-out",
+                  collapsed ? "my-1.5 opacity-100 max-h-4" : "my-0 opacity-0 max-h-0 border-transparent pointer-events-none",
+                )}
+                aria-hidden="true"
+              />
             ) : null}
             {items.map((item) => {
               const active =
@@ -100,20 +113,31 @@ export function AppSidebar({
                   onClick={onNavigate}
                   title={collapsed ? item.label : undefined}
                   className={cn(
-                    "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                    collapsed && "justify-center px-0",
+                    "group relative flex h-9 items-center rounded-md text-sm transition-[padding,background-color,color] duration-300 ease-in-out overflow-hidden",
+                    collapsed ? "px-3.5" : "px-2.5 gap-3",
                     active
                       ? "bg-accent font-semibold text-foreground"
                       : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground",
                   )}
                 >
                   {active ? (
-                    <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-brand" />
+                    <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-foreground transition-all duration-300" />
                   ) : null}
-                  <Icon
-                    className={cn("h-4 w-4 shrink-0", active && "text-brand")}
-                  />
-                  {!collapsed ? item.label : null}
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                    <Icon
+                      className={cn("h-4 w-4 shrink-0 transition-colors", active ? "text-foreground" : "text-muted-foreground")}
+                    />
+                  </span>
+                  <span
+                    className={cn(
+                      "truncate whitespace-nowrap transition-all duration-300 ease-in-out",
+                      collapsed
+                        ? "max-w-0 opacity-0 -translate-x-2 pointer-events-none"
+                        : "max-w-[160px] opacity-100 translate-x-0",
+                    )}
+                  >
+                    {item.label}
+                  </span>
                 </Link>
               );
             })}

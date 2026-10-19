@@ -1,22 +1,7 @@
-// Focused tests for user management + role assignment (Phase 3, P1 #4).
-//
-// Members were previously bootstrap/seed-only. These tests pin the new
-// service-level workflow:
-//   - creation forces the caller's agencyId and stores only hashed passwords
-//   - setting:write (held by owner/admin only) is the authorization gate
-//   - cross-tenant edits resolve as not-found before any write
-//   - admins manage regular members but never owner accounts
-//   - self-role-change and last-owner demotion are blocked
-//   - reads are agency-scoped and exclude auth-sensitive columns
-//
-// Deactivation is intentionally absent — the User model has no inactive
-// state, and inventing one is out of scope.
-//
-// Runs against a throwaway database (see lib/test-env.ts), never prisma/dev.db.
-
 import "@/lib/test-env";
 
 import { describe, it, before, after } from "node:test";
+
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -97,7 +82,8 @@ after(async () => {
   }
 });
 
-describe("user management service (Phase 3 P1 #4)", () => {
+describe("user management service", () => {
+
   let member1Id: string;
 
   it("an owner creates a member — tenant forced from context, password stored hashed", async () => {

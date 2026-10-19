@@ -10,20 +10,13 @@ export { hashPassword, verifyPassword } from "@/lib/password";
 
 export const SESSION_COOKIE = "taos-session";
 
-// Token issuer/audience: binding a session token to this app prevents tokens
-// signed for (or by) another service with a shared secret from being accepted.
 const TOKEN_ISSUER = "agency-os";
 const TOKEN_AUDIENCE = "agency-os-app";
-// Only HS256 is ever issued or accepted — pinned on both sign and verify so a
-// token with a swapped algorithm header (e.g. "none") can never pass.
 const TOKEN_ALGORITHM = "HS256";
 
 function secretKey(): Uint8Array {
   const secret = process.env.AUTH_SECRET;
   if (!secret) {
-    // Never fall back to a hardcoded key in production: a predictable signing
-    // secret lets anyone forge session tokens. Only local development may proceed
-    // without one.
     if (process.env.NODE_ENV === "production") {
       throw new Error("AUTH_SECRET wajib diisi (minimal 32 karakter) untuk produksi.");
     }
@@ -41,7 +34,6 @@ export type SessionUser = {
   role: Role;
   email: string;
   name: string;
-  /** Tenant branding — always from the Agency row, never hardcoded. */
   agencyName: string;
 };
 
@@ -71,8 +63,6 @@ export async function createSessionToken(user: {
     .sign(secretKey());
 }
 
-// Exported for tests only (lib/auth.test.ts) so the verifier's HS256/iss/aud
-// pinning can be exercised directly; app code must use getSessionUser().
 export async function verifySessionToken(token: string): Promise<TokenPayload | null> {
   try {
     const { payload } = await jwtVerify(token, secretKey(), {
@@ -86,16 +76,6 @@ export async function verifySessionToken(token: string): Promise<TokenPayload | 
   }
 }
 
-/**
- * Verify a session token and re-resolve the user from the database. Session
- * data (agencyId/role) always comes from the DB row, never from the token
- * claims — tampered or stale claims still resolve to the current row.
- * Exported so tests can exercise the full resolution path without the Next
- * cookie transport.
- *
- * Wrapped in React cache() to deduplicate DB lookups during the same request
- * (e.g. layout + page).
- */
 export const resolveSessionUser = cache(async function resolveSessionUser(
   token: string,
 ): Promise<SessionUser | null> {
@@ -108,9 +88,6 @@ export const resolveSessionUser = cache(async function resolveSessionUser(
   });
   if (!user) return null;
 
-  // Validate the role against the known union before trusting it — the column
-  // is a free String in the DB, so an unexpected value must never flow into
-  // authorization as if it were a Role.
   if (!isRole(user.role)) return null;
 
   return {
@@ -123,11 +100,6 @@ export const resolveSessionUser = cache(async function resolveSessionUser(
   };
 });
 
-/**
- * Resolve the current signed-in user from the session cookie.
- * Re-loads the user row so role/agency changes take effect immediately.
- * Wrapped in React cache() to prevent redundant cookie reads and DB queries.
- */
 export const getSessionUser = cache(async function getSessionUser(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
@@ -135,8 +107,8 @@ export const getSessionUser = cache(async function getSessionUser(): Promise<Ses
   return resolveSessionUser(token);
 });
 
-/** Require a signed-in user; redirect to /login (with safe ?next= destination) otherwise. */
 export async function requireUser(): Promise<SessionUser> {
+
   const user = await getSessionUser();
   if (!user) {
     let nextQuery = "";

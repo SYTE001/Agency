@@ -1,7 +1,12 @@
 {
-  "name": "proyek",
+  "name": "agency-os",
   "version": "0.1.0",
+  "description": "Multi-tenant TikTok Shop agency operations workspace built with Next.js App Router, Prisma, and TypeScript.",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SYTE001/Agency.git"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

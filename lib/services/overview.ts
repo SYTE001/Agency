@@ -3,12 +3,8 @@ import { getAgencyTimezone } from "@/lib/services/common";
 import { daysAgoStartInTz, dayStartInTz } from "@/lib/timezone";
 import { getOperationalAlerts } from "@/lib/services/alerts";
 
-/**
- * Overview aggregation layer (PLAN §5). Built on top of the module services —
- * all numbers are derived from the same tables the module pages read.
- * Day boundaries use the tenant's timezone (Agency.timezone); DB stays UTC.
- */
 export async function getOverview(agencyId: string) {
+
   // Start alerts computation concurrently with overview metrics
   const alertsPromise = getOperationalAlerts(agencyId);
 

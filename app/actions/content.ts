@@ -91,10 +91,6 @@ export async function createContentAction(
   redirect(`/content/${newId}`);
 }
 
-// ---------------------------------------------------------------------------
-// Status moves (PLAN §10 — Kanban pipeline)
-// ---------------------------------------------------------------------------
-
 export async function moveContentAction(contentId: string, formData: FormData): Promise<void> {
   const user = await requireUser();
   if (!can(user.role, "content", "write")) return;
@@ -120,10 +116,6 @@ export async function moveContentAction(contentId: string, formData: FormData): 
   revalidatePath("/content");
   revalidatePath(`/content/${contentId}`);
 }
-
-// ---------------------------------------------------------------------------
-// Notes (PLAN §14)
-// ---------------------------------------------------------------------------
 
 export type ContentNoteState = { error?: string; ok?: boolean };
 

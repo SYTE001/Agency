@@ -42,7 +42,7 @@ export function validateRuntimeEnv(): void {
     );
   }
 
-  if (production && !process.env.AUTH_SECRET) {
+  if (production && (!process.env.AUTH_SECRET || process.env.AUTH_SECRET.length < 32)) {
     throw new Error(
       "AUTH_SECRET wajib diisi di production (minimal 32 karakter; generate via: openssl rand -base64 48).",
     );

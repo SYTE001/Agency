@@ -1,10 +1,3 @@
-// Domain constants: roles, permissions, statuses, categories.
-// SQLite has no native enums, so these string unions are the source of truth.
-
-// ---------------------------------------------------------------------------
-// Roles & permissions (PLAN §16)
-// ---------------------------------------------------------------------------
-
 export const ROLES = [
   "owner",
   "admin",
@@ -18,7 +11,6 @@ export const ROLES = [
 
 export type Role = (typeof ROLES)[number];
 
-/** Runtime guard: validate a string from the DB/token against the role union. */
 export function isRole(value: string): value is Role {
   return (ROLES as readonly string[]).includes(value);
 }
@@ -52,10 +44,8 @@ export type Resource = (typeof RESOURCES)[number];
 export type Action = "read" | "write" | "manage";
 export type Permission = `${Resource}:${Action}` | "*";
 
-// Resource-based permission matrix. Owner/Admin hold "*" (full access).
-// The rest follow the examples in PLAN §16 (e.g. Finance: no creator management;
-// Creator Manager: no finance write).
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+
   owner: ["*"],
   admin: ["*"],
   account_manager: [
@@ -133,10 +123,6 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   ],
 };
 
-// ---------------------------------------------------------------------------
-// Creator domain (PLAN §6, §7)
-// ---------------------------------------------------------------------------
-
 export const CREATOR_CATEGORIES = [
   "Beauty",
   "Fashion",
@@ -159,10 +145,6 @@ export type CreatorHealth = (typeof CREATOR_HEALTH)[number];
 
 export const CREATOR_STATUS = ["Active", "Inactive", "Paused"] as const;
 export const PRODUCT_STATUS = ["Active", "Inactive"] as const;
-
-// ---------------------------------------------------------------------------
-// Statuses for the remaining modules
-// ---------------------------------------------------------------------------
 
 export const BRAND_STATUS = ["Active", "Paused", "Churned"] as const;
 
@@ -206,11 +188,8 @@ export const SETTLEMENT_STATUS = ["Pending", "Paid", "Overdue"] as const;
 export const PAYOUT_STATUS = ["Pending", "Paid"] as const;
 export const COMMISSION_STATUS = ["Pending", "Calculated", "Settled"] as const;
 
-// ---------------------------------------------------------------------------
-// Type guards (statuses arrive as plain strings from forms/URLs)
-// ---------------------------------------------------------------------------
-
 export type ContentStatus = (typeof CONTENT_STATUS)[number];
+
 export type LiveStatus = (typeof LIVE_STATUS)[number];
 export type TaskStatus = (typeof TASK_STATUS)[number];
 export type TaskPriority = (typeof TASK_PRIORITY)[number];

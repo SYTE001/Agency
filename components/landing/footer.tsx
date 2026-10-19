@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { SessionUser } from "@/lib/auth";
+import { BrandLogo } from "@/components/brand-logo";
 
 const footNav = [
   { href: "#workspace", label: "Workspace" },
@@ -17,13 +18,8 @@ export function Footer({ user }: { user?: SessionUser | null } = {}) {
     <footer className="site-foot">
       <div className="container">
         <div className="foot-top">
-          <Link className="foot-brand" href="#top">
-            <svg width="24" height="24" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-              <rect x="3" y="5" width="26" height="7" rx="2.6" fill="#1463FF" />
-              <rect x="3" y="14.2" width="19" height="6.4" rx="2.6" fill="#21DDFF" />
-              <rect x="3" y="22.6" width="12" height="6" rx="2.6" fill="#7214FF" opacity=".9" />
-            </svg>
-            TikTok Shop HQ<b className="dot-blue">.</b>
+          <Link className="foot-brand" href="#top" aria-label="Agency OS">
+            <BrandLogo variant="full" theme="dark" className="h-[26px] w-auto" />
           </Link>
           <nav className="foot-nav" aria-label="Footer">
             {footNav.map((link) => (
@@ -36,7 +32,7 @@ export function Footer({ user }: { user?: SessionUser | null } = {}) {
         </div>
         <div className="foot-bottom">
           <span>
-            © {year} TikTok Shop Agency Management — landing redesign, single-file edition.
+            © {year} Agency OS — TikTok Shop Agency Management.
           </span>
           <span className="foot-status">
             <span className="pulse-dot" />

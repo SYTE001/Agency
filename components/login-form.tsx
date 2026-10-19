@@ -5,6 +5,7 @@ import { login, type LoginState } from "@/app/actions/auth";
 import { useTheme } from "@/components/theme-provider";
 import { LoginSplash } from "@/components/login-splash";
 import { useLoginTransition } from "@/components/login-transition-provider";
+import { BrandMark } from "@/components/brand-logo";
 
 const initialState: LoginState = {};
 
@@ -205,7 +206,7 @@ export function LoginForm({ next }: { next?: string } = {}) {
 
         <header className="mark">
           <span className="mark-badge" aria-hidden="true">
-            AO
+            <BrandMark className="h-6 w-auto" priority />
           </span>
           <span>
             <span className="mark-name" style={{ display: "block" }}>
@@ -326,7 +327,7 @@ export function LoginForm({ next }: { next?: string } = {}) {
         <div className="form-wrap">
           <div className="form-brand">
             <span className="mark-badge" aria-hidden="true">
-              AO
+              <BrandMark className="h-6 w-auto" priority />
             </span>
             <span>
               <span className="mark-name" style={{ display: "block" }}>

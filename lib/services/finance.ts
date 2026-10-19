@@ -5,10 +5,6 @@ import type { ListResult } from "@/lib/services/common";
 import type { Prisma } from "@/lib/prisma";
 import { calculateCommission } from "@/lib/finance";
 
-// ---------------------------------------------------------------------------
-// Revenue summary
-// ---------------------------------------------------------------------------
-
 export async function getFinanceSummary(agencyId: string, days = 30, ref: Date = new Date()) {
   const payoutsPromise = prisma.creatorPayout.groupBy({
     by: ["status"],
@@ -64,10 +60,6 @@ export async function getFinanceSummary(agencyId: string, days = 30, ref: Date =
     settlementsOverdue: settlementSum("Overdue"),
   };
 }
-
-// ---------------------------------------------------------------------------
-// Commission list
-// ---------------------------------------------------------------------------
 
 export type CommissionFilters = {
   status?: string;
@@ -179,10 +171,6 @@ export async function createCommission(
   });
 }
 
-// ---------------------------------------------------------------------------
-// Payouts
-// ---------------------------------------------------------------------------
-
 export type PayoutFilters = {
   status?: string;
   creatorId?: string;
@@ -241,10 +229,6 @@ export async function markPayoutPaid(agencyId: string, payoutId: string) {
     data: { status: "Paid", paidAt: new Date() },
   });
 }
-
-// ---------------------------------------------------------------------------
-// Settlements
-// ---------------------------------------------------------------------------
 
 export type SettlementFilters = {
   status?: string;
@@ -312,7 +296,6 @@ export async function markSettlementPaid(agencyId: string, settlementId: string)
   });
 }
 
-/** Flag past-due pending settlements as Overdue (deterministic, no AI). */
 export async function refreshOverdueSettlements(agencyId: string) {
   const hasOverdue = await prisma.settlement.findFirst({
     where: { agencyId, status: "Pending", dueDate: { lt: new Date() } },

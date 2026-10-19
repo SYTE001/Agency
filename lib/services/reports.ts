@@ -2,17 +2,6 @@ import prisma from "@/lib/prisma";
 import { getAgencyTimezone } from "@/lib/services/common";
 import { daysAgoStartInTz, dayEndInTz } from "@/lib/timezone";
 
-/**
- * Reporting layer (PLAN §13 / Phase 8). Reports are generated entirely from
- * existing data — nothing here writes. Two report kinds:
- *  - client report: per-campaign performance for the brand
- *  - internal report: agency-wide operational + financial summary
- * Both support a 30/90 day period with comparison to the previous window.
- *
- * Day boundaries are interpreted in the tenant's timezone (Agency.timezone):
- * the DB stays UTC, the window is computed as local calendar days.
- */
-
 export const PERIODS = { "30d": 30, "90d": 90 } as const;
 export type Period = keyof typeof PERIODS;
 
@@ -29,10 +18,6 @@ function growth(cur: number, prev: number): number {
 }
 
 const LIVE_DONE = ["Ended", "NeedsReview", "Live"] as const;
-
-// ---------------------------------------------------------------------------
-// Client report — one campaign's performance for the brand
-// ---------------------------------------------------------------------------
 
 export async function getClientReport(agencyId: string, campaignId: string, period: Period) {
   const [campaign, timeZone] = await Promise.all([
@@ -163,10 +148,6 @@ export async function getClientReport(agencyId: string, campaignId: string, peri
 
 export type ClientReport = NonNullable<Awaited<ReturnType<typeof getClientReport>>>;
 
-// ---------------------------------------------------------------------------
-// Internal report — agency-wide operational + financial summary
-// ---------------------------------------------------------------------------
-
 export async function getInternalReport(agencyId: string, period: Period) {
   const timeZone = await getAgencyTimezone(agencyId);
   const { days, start, prevStart, end } = resolvePeriod(period, timeZone);
@@ -274,12 +255,8 @@ export async function getInternalReport(agencyId: string, period: Period) {
 
 export type InternalReport = Awaited<ReturnType<typeof getInternalReport>>;
 
-// ---------------------------------------------------------------------------
-// CSV export — semicolon-separated (id-ID Excel list separator), BOM so Excel
-// reads UTF-8 correctly. Currency stays a plain number for re-import.
-// ---------------------------------------------------------------------------
-
 const DANGEROUS_CSV_PREFIXES = ["=", "+", "-", "@", "\t", "\r"];
+
 
 function csvEscape(v: string | number): string {
   let s = String(v);

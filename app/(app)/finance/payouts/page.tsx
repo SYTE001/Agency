@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
 import { FinanceNav } from "@/components/finance/finance-nav";
 import { MarkPaidButton } from "@/components/finance/mark-paid-button";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateTime, formatIDR } from "@/lib/format";
@@ -73,8 +73,9 @@ export default async function PayoutsPage(props: PageProps<"/finance/payouts">) 
 
       <FinanceNav active="payouts" />
 
-      {/* Filter bar (GET form → server-side filtering, PLAN §32) */}
+      {/* Filter bar */}
       <form className="flex flex-wrap items-center gap-2" method="get">
+
         <Select name="status" defaultValue={filters.status ?? ""} className="w-44">
           <option value="">Semua status</option>
           {PAYOUT_STATUS.map((s) => (
@@ -87,10 +88,10 @@ export default async function PayoutsPage(props: PageProps<"/finance/payouts">) 
             <option key={c.id} value={c.id}>{c.displayName}</option>
           ))}
         </Select>
-        <Button type="submit" variant="secondary">Terapkan</Button>
+        <Button type="submit">Terapkan</Button>
         <Link
           href="/finance/payouts"
-          className="inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+          className={buttonVariants({ variant: "secondary" })}
         >
           Reset
         </Link>

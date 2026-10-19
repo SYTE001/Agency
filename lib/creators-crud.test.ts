@@ -1,22 +1,7 @@
-// Focused tests for creator master data CRUD (Phase 3, P1 #5A).
-//
-// Pins the hardened service workflow:
-//   - create forces the caller's agencyId and validates status/metrics
-//   - the manager FK must resolve inside the same agency (create AND edit)
-//   - tenant-scoped uniqueness: username unique per agency, free across agencies
-//   - edits resolve cross-tenant rows as not-found before any write
-//   - archiving is soft state (Active/Inactive/Paused) — relations survive
-//   - creator:write is limited to owner/admin/account_manager/creator_manager
-//
-// Authorization itself lives in the server actions (can(role,"creator","write"));
-// at service level these tests pin the tenancy + domain rules and the RBAC
-// matrix the actions gate with.
-//
-// Runs against a throwaway database (see lib/test-env.ts), never prisma/dev.db.
-
 import "@/lib/test-env";
 
 import { describe, it, before, after } from "node:test";
+
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -77,7 +62,8 @@ after(async () => {
   }
 });
 
-describe("creator master data CRUD (Phase 3 P1 #5A)", () => {
+describe("creator master data CRUD", () => {
+
   let creatorId: string;
 
   it("create forces the caller's agencyId and applies domain defaults", async () => {

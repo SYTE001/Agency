@@ -1,7 +1,3 @@
-// Shared data-access helpers. Every service function receives the tenant's
-// agencyId and applies it to the query — this is the server-side enforcement
-// of multi-tenant isolation (PLAN §18).
-
 import { cache } from "react";
 import prisma from "@/lib/prisma";
 import { isSqliteProvider } from "@/lib/dbProvider";
@@ -27,12 +23,6 @@ export function totalPages(total: number, pageSize: number): number {
 
 export type SortDir = "asc" | "desc";
 
-/**
- * Resolve the tenant's business timezone (Agency.timezone, default
- * Asia/Jakarta). DB columns stay UTC; only the day-boundary interpretation of
- * filters/reports uses this. Invalid stored values fall back to the default.
- * Wrapped in React cache() to eliminate duplicate lookups within the same request.
- */
 export const getAgencyTimezone = cache(async function getAgencyTimezone(
   agencyId: string,
 ): Promise<string> {
@@ -43,13 +33,7 @@ export const getAgencyTimezone = cache(async function getAgencyTimezone(
   return normalizeTimezone(agency?.timezone ?? DEFAULT_TIMEZONE);
 });
 
-/**
- * String filter for user search. Case-insensitive on PostgreSQL via
- * `mode: "insensitive"` (ILIKE). The SQLite dev/test runtime must NOT send
- * `mode` — Prisma 7 rejects unknown filter keys at request validation — but
- * its LIKE is already case-insensitive for ASCII. Provider detection mirrors
- * the runtime client selection in lib/prismaClient.ts.
- */
 export function containsInsensitive(q: string): { contains: string; mode?: "insensitive" } {
   return isSqliteProvider() ? { contains: q } : { contains: q, mode: "insensitive" };
 }
+

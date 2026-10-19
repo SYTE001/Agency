@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
 import { FinanceNav } from "@/components/finance/finance-nav";
 import { MarkPaidButton } from "@/components/finance/mark-paid-button";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDate, formatIDR } from "@/lib/format";
@@ -41,7 +41,6 @@ export default async function SettlementsPage(props: PageProps<"/finance/settlem
   if (!can(user.role, "finance", "read")) notFound();
   const searchParams = await props.searchParams;
 
-  // Deterministic overdue flag (no AI) before listing — PLAN §12.
   await refreshOverdueSettlements(user.agencyId);
 
   const statusParam = str(searchParams.status);
@@ -81,7 +80,7 @@ export default async function SettlementsPage(props: PageProps<"/finance/settlem
 
       <FinanceNav active="settlements" />
 
-      {/* Filter bar (GET form → server-side filtering, PLAN §32) */}
+      {/* Filter bar */}
       <form className="flex flex-wrap items-center gap-2" method="get">
         <Select name="status" defaultValue={filters.status ?? ""} className="w-44">
           <option value="">Semua status</option>
@@ -95,10 +94,10 @@ export default async function SettlementsPage(props: PageProps<"/finance/settlem
             <option key={b.id} value={b.id}>{b.name}</option>
           ))}
         </Select>
-        <Button type="submit" variant="secondary">Terapkan</Button>
+        <Button type="submit">Terapkan</Button>
         <Link
           href="/finance/settlements"
-          className="inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+          className={buttonVariants({ variant: "secondary" })}
         >
           Reset
         </Link>

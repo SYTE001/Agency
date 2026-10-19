@@ -12,7 +12,7 @@ import { Pagination } from "@/components/pagination";
 import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -137,8 +137,9 @@ export default async function TasksPage(props: PageProps<"/tasks">) {
         ))}
       </div>
 
-      {/* Filter bar (GET form → server-side filtering, PLAN §32) */}
+      {/* Filter bar */}
       <form className="flex flex-wrap items-center gap-2" method="get">
+
         {filters.status ? <input type="hidden" name="status" value={filters.status} /> : null}
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -160,10 +161,10 @@ export default async function TasksPage(props: PageProps<"/tasks">) {
           <input type="checkbox" name="overdue" value="1" defaultChecked={filters.overdue} className="accent-brand" />
           Terlambat
         </label>
-        <Button type="submit" variant="secondary">Terapkan</Button>
+        <Button type="submit">Terapkan</Button>
         <Link
           href="/tasks"
-          className="inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+          className={buttonVariants({ variant: "secondary" })}
         >
           Reset
         </Link>

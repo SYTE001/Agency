@@ -23,10 +23,6 @@ function revalidateFinance() {
   for (const p of FINANCE_PATHS) revalidatePath(p);
 }
 
-// ---------------------------------------------------------------------------
-// Commission
-// ---------------------------------------------------------------------------
-
 const commissionSchema = z.object({
   creatorId: z.string().min(1, "Creator wajib dipilih"),
   campaignId: z.string().transform((v) => v || null),
@@ -48,7 +44,6 @@ export type CommissionFormState = {
   preview?: { creatorCommission: number; agencyRevenue: number; creatorShare: number };
 };
 
-/** Validate + live-preview the explicit formula (PLAN §12: never hide numbers). */
 export async function createCommissionAction(
   _prev: CommissionFormState,
   formData: FormData,
@@ -115,10 +110,6 @@ export async function createCommissionAction(
   revalidateFinance();
   redirect("/finance/commissions");
 }
-
-// ---------------------------------------------------------------------------
-// Payout
-// ---------------------------------------------------------------------------
 
 const payoutSchema = z.object({
   creatorId: z.string().min(1, "Creator wajib dipilih"),
@@ -203,10 +194,6 @@ export async function markPayoutPaidAction(payoutId: string, formData: FormData)
   revalidateFinance();
   void formData;
 }
-
-// ---------------------------------------------------------------------------
-// Settlement
-// ---------------------------------------------------------------------------
 
 function makeSettlementSchema(tz: string) {
   return z.object({

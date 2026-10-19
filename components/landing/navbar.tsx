@@ -5,6 +5,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { SessionUser } from "@/lib/auth";
 import { useLoginTransition } from "@/components/login-transition-provider";
+import { BrandLogo } from "@/components/brand-logo";
 
 const navLinks = [
   { href: "#workspace", label: "Workspace" },
@@ -47,13 +48,8 @@ export function Navbar({ user }: { user: SessionUser | null }) {
   return (
     <header className="site-head" id="siteHead" ref={headRef}>
       <div className="container head-inner">
-        <Link className="brand" href="#top" aria-label="TikTok Shop HQ">
-          <svg className="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-            <rect x="3" y="5" width="26" height="7" rx="2.6" fill="#1463FF" />
-            <rect x="3" y="14.2" width="19" height="6.4" rx="2.6" fill="#21DDFF" />
-            <rect x="3" y="22.6" width="12" height="6" rx="2.6" fill="#7214FF" opacity=".9" />
-          </svg>
-          TikTok Shop HQ<b className="dot-blue">.</b>
+        <Link className="brand" href="#top" aria-label="Agency OS">
+          <BrandLogo variant="full" theme="light" className="h-[27px] w-auto" priority />
         </Link>
 
         <nav className={cn("main-nav", open && "is-open")} id="mainNav" aria-label="Primary">

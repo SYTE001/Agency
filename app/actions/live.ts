@@ -133,8 +133,8 @@ export type LiveResultsState = {
   ok?: boolean;
 };
 
-/** Close a session by recording final GMV/viewers/orders (PLAN §31 step 9-10). */
 export async function recordLiveResultsAction(
+
   sessionId: string,
   _prev: LiveResultsState,
   formData: FormData,

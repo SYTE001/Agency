@@ -9,8 +9,6 @@ import { SettingsNav } from "@/components/settings/settings-nav";
 import { Check, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Read-only matrix of the RBAC model (PLAN §16). Roles are provisioned per
-// agency during onboarding; editing them is intentionally out of the MVP.
 const ACTIONS = ["read", "write", "manage"] as const;
 const RESOURCES = [
   "creator",
@@ -45,8 +43,9 @@ export default async function SettingsRolesPage() {
     <div className="space-y-4 p-6">
       <PageHeader
         title="Settings"
-        description="Matriks hak akses setiap role (read-only, sesuai PLAN §16)"
+        description="Matriks hak akses setiap role dalam sistem"
       />
+
 
       <SettingsNav active="roles" />
 

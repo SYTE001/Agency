@@ -23,16 +23,8 @@ const STATUS_DOT: Record<string, string> = {
   NeedsReview: "bg-warning",
 };
 
-// All calendar placement (day keys, week/month grids, "today" highlight, HH:MM
-// chips) is computed in the tenant timezone passed by the page — never the
-// server's runtime timezone. Grids iterate over "YYYY-MM-DD" keys (pure
-// calendar math) so DST transitions cannot shift a day into the wrong column.
-
-/**
- * Operational LIVE calendar (PLAN §11) — day / week / month views.
- * Purely server-rendered; navigation is plain links (?date / ?week / ?month).
- */
 export function ScheduleCalendar({
+
   sessions,
   view,
   anchor,

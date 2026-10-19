@@ -46,7 +46,7 @@ export default async function InternalReportPage(props: PageProps<"/reports/inte
           <option value="30d">30 hari</option>
           <option value="90d">90 hari</option>
         </Select>
-        <Button type="submit" variant="secondary">Tampilkan</Button>
+        <Button type="submit">Tampilkan</Button>
         <span className="text-xs text-muted-foreground">
           Periode {formatDate(r.period.start)} s/d {formatDate(r.period.end)}
         </span>

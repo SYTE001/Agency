@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-// Finance sub-navigation (PLAN §4 IA: Revenue / Commission / Settlements /
-// Creator Payout). Sidebar holds a single /finance entry; this tabs inside.
 const TABS = [
+
   { key: "overview", label: "Ringkasan", href: "/finance" },
   { key: "commissions", label: "Komisi", href: "/finance/commissions" },
   { key: "payouts", label: "Payout Creator", href: "/finance/payouts" },

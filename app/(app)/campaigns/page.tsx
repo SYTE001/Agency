@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -91,7 +91,6 @@ export default async function CampaignsPage(props: PageProps<"/campaigns">) {
         ) : null}
       </PageHeader>
 
-      {/* View tabs (PLAN §4: Active / Upcoming / Completed) */}
       <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1 w-fit">
         {VIEWS.map((v) => (
           <Link
@@ -109,7 +108,7 @@ export default async function CampaignsPage(props: PageProps<"/campaigns">) {
         ))}
       </div>
 
-      {/* Filter bar (GET form → server-side filtering, PLAN §32) */}
+      {/* Filter bar */}
       <form className="flex flex-wrap items-center gap-2" method="get">
         {view ? <input type="hidden" name="view" value={view} /> : null}
         <div className="relative">
@@ -134,10 +133,10 @@ export default async function CampaignsPage(props: PageProps<"/campaigns">) {
             <option key={s} value={s}>{s}</option>
           ))}
         </Select>
-        <Button type="submit" variant="secondary">Terapkan</Button>
+        <Button type="submit">Terapkan</Button>
         <Link
           href="/campaigns"
-          className="inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+          className={buttonVariants({ variant: "secondary" })}
         >
           Reset
         </Link>

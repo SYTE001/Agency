@@ -43,7 +43,7 @@ export function GmvChart({ data, timeZone }: { data: { date: Date; gmv: number }
           const y = chartH - h;
           return (
             <g key={d.date.getTime()}>
-              <rect x={x} y={y} width={bw} height={h} rx={1.5} className="fill-brand/80">
+              <rect x={x} y={y} width={bw} height={h} rx={1.5} className="fill-foreground/80">
                 <title>{`${dayShort(d.date, tz)} ${dayNumFmt.format(d.date)}: ${formatCompactIDR(d.gmv)}`}</title>
               </rect>
               {i % step === 0 ? (
@@ -74,7 +74,7 @@ export function Sparkline({ data, className }: { data: { date: Date; gmv: number
       {data.map((d, i) => (
         <span
           key={i}
-          className="flex-1 rounded-sm bg-brand/60"
+          className="flex-1 rounded-sm bg-foreground/60"
           style={{ height: max > 0 ? `${Math.max(8, (d.gmv / max) * 100)}%` : "8%" }}
         />
       ))}

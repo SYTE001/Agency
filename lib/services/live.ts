@@ -78,7 +78,6 @@ export async function listLiveSessions(agencyId: string, filters: LiveFilters = 
   return { sessions: rows, total: rows.length };
 }
 
-/** LIVE dashboard data (PLAN §11): live now, upcoming today, today's totals. */
 export async function getLiveDashboard(agencyId: string) {
   const liveNowPromise = prisma.liveSession.findMany({
     where: { agencyId, status: "Live" },
@@ -245,7 +244,6 @@ export async function updateLiveSession(
   return prisma.liveSession.update({ where: { id: sessionId, agencyId }, data });
 }
 
-/** Record final LIVE results in one shot (PLAN §31 step 9-10). */
 export async function recordLiveResults(
   agencyId: string,
   sessionId: string,

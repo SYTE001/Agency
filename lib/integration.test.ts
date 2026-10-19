@@ -1,20 +1,7 @@
-// DB-backed integration tests (Revisi §7).
-//
-// Proves the security properties the audit relies on, against a real database:
-//   1. cross-tenant isolation     — Agency A can never read/mutate Agency B rows
-//   2. unauthorized access / RBAC — the role→permission matrix rejects writes
-//                                   outside a role's scope
-//   3. tenant-scoped uniqueness   — Creator.username & Product.sku are unique per
-//                                   agency, NOT globally
-//   4. critical CRUD mutations    — create/update flows persist tenant-scoped rows
-//
-// Runs against a throwaway database (see lib/test-env.ts), never prisma/dev.db.
-// Set DATABASE_URL to a prepared PostgreSQL to run the same suite against the
-// production target (docs/production-readiness.md §11 step 7).
-
 import "@/lib/test-env";
 
 import { describe, it, before, after } from "node:test";
+
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -106,11 +93,7 @@ after(async () => {
   }
 });
 
-// ---------------------------------------------------------------------------
-// 1. Cross-tenant isolation
-// ---------------------------------------------------------------------------
-
-describe("cross-tenant isolation (Revisi §7.1)", () => {
+describe("cross-tenant isolation", () => {
   let creatorB: string;
   let brandB: string;
   let payoutB: string;
@@ -264,11 +247,7 @@ describe("cross-tenant isolation (Revisi §7.1)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// 1b. Session security — token resolution against the database
-// ---------------------------------------------------------------------------
-
-describe("session security (Revisi §4)", () => {
+describe("session security", () => {
   it("a valid token re-resolves the user row from the database", async () => {
     const token = await createSessionToken({
       id: "user-owner",
@@ -285,12 +264,10 @@ describe("session security (Revisi §4)", () => {
   });
 
   it("agency/role come from the DB row, not the token claims", async () => {
-    // Klaim di token bisa kedaluwarsa atau dipalsukan — resolusi sesi harus
-    // selalu membaca ulang baris user (Revisi §4: "DB re-resolve per request").
     const token = await createSessionToken({
       id: "user-viewer",
-      agencyId: AGENCY_B, // klaim palsu
-      role: "owner", // klaim palsu
+      agencyId: AGENCY_B,
+      role: "owner",
       email: "viewer@test-a.example",
       name: "Test viewer",
     });
@@ -335,11 +312,7 @@ describe("session security (Revisi §4)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// 2. Tenant-scoped uniqueness
-// ---------------------------------------------------------------------------
-
-describe("tenant-scoped uniqueness (Revisi §7.5)", () => {
+describe("tenant-scoped uniqueness", () => {
   it("allows the same creator username in two different agencies", async () => {
     await createCreator(AGENCY_A, { username: "shared_handle", displayName: "A", category: "Beauty" });
     await assert.doesNotReject(
@@ -367,11 +340,8 @@ describe("tenant-scoped uniqueness (Revisi §7.5)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// 3. Critical CRUD mutations
-// ---------------------------------------------------------------------------
+describe("critical CRUD mutations", () => {
 
-describe("critical CRUD mutations (Revisi §7.6)", () => {
   let creatorId: string;
   let brandId: string;
 
@@ -451,11 +421,7 @@ describe("critical CRUD mutations (Revisi §7.6)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// 4. RBAC matrix — unauthorized access is rejected (Revisi §7.2/§7.3)
-// ---------------------------------------------------------------------------
-
-describe("RBAC restrictions (Revisi §7.3)", () => {
+describe("RBAC restrictions", () => {
   it("owner and admin hold full access", () => {
     for (const resource of RESOURCES) {
       assert.ok(can("owner", resource, "write"), `owner must write ${resource}`);
@@ -469,7 +435,7 @@ describe("RBAC restrictions (Revisi §7.3)", () => {
     }
   });
 
-  it("finance cannot manage creators (Revisi §16 example)", () => {
+  it("finance cannot manage creators", () => {
     assert.ok(can("finance", "finance", "write"));
     assert.equal(can("finance", "creator", "write"), false);
   });
@@ -548,11 +514,7 @@ describe("role constants", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// 5. Timezone tenant-aware date filtering (Revisi §6)
-// ---------------------------------------------------------------------------
-
-describe("timezone tenant-aware day filtering (Revisi §6)", () => {
+describe("timezone tenant-aware day filtering", () => {
   // DB tetap UTC; interpretasi "hari" memakai Agency.timezone. Dengan ref
   // tetap 2026-08-17T04:00:00Z (= 2026-08-17T11:00 WIB), jendela hari WIB
   // adalah [2026-08-16T17:00:00Z, 2026-08-17T16:59:59.999Z]. Dua agensi
@@ -645,10 +607,6 @@ describe("timezone tenant-aware day filtering (Revisi §6)", () => {
     assert.ok(!times.includes("2026-08-16T18:00:00.000Z"));
   });
 });
-
-// ---------------------------------------------------------------------------
-// 6. Database constraints & Decimal precision (Revisi §2/§8)
-// ---------------------------------------------------------------------------
 
 describe("database constraints & Decimal precision", () => {
   // onDelete: Cascade dideklarasikan di schema dan dipaksakan oleh engine DB

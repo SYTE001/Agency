@@ -13,14 +13,14 @@ type Theme = "light" | "dark";
 const THEME_KEY = "taos-theme";
 
 function readTheme(): Theme {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") return "dark";
   try {
     const stored = localStorage.getItem(THEME_KEY);
     if (stored === "light" || stored === "dark") return stored;
   } catch {
-    // localStorage unavailable — fall through to media query
+    // localStorage unavailable — fall back to dark
   }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "dark";
 }
 
 function subscribe(callback: () => void) {
@@ -36,7 +36,7 @@ function subscribe(callback: () => void) {
 }
 
 const ThemeContext = createContext<{ theme: Theme; toggle: () => void }>({
-  theme: "light",
+  theme: "dark",
   toggle: () => {},
 });
 
@@ -47,7 +47,7 @@ export function useTheme() {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // useSyncExternalStore reads localStorage/matchMedia as an external store and
   // reconciles client value after hydration without a setState-in-effect.
-  const theme = useSyncExternalStore(subscribe, readTheme, () => "light" as Theme);
+  const theme = useSyncExternalStore(subscribe, readTheme, () => "dark" as Theme);
 
   const toggle = useCallback(() => {
     const next = readTheme() === "dark" ? "light" : "dark";

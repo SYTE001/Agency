@@ -188,10 +188,6 @@ export async function updateCampaignAction(
   redirect(`/campaigns/${campaignId}`);
 }
 
-// ---------------------------------------------------------------------------
-// Link / unlink creators to a campaign (PLAN §9)
-// ---------------------------------------------------------------------------
-
 const linkSchema = z.object({
   creatorId: z.string().min(1, "Pilih creator terlebih dahulu"),
   role: z.string().trim().max(60).transform((v) => v || null),
@@ -270,10 +266,6 @@ export async function removeCampaignCreatorAction(
 
   revalidatePath(`/campaigns/${campaignId}`);
 }
-
-// ---------------------------------------------------------------------------
-// Notes (PLAN §14)
-// ---------------------------------------------------------------------------
 
 export async function addCampaignNoteAction(
   campaignId: string,

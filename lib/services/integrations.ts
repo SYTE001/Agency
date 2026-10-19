@@ -1,20 +1,6 @@
 import prisma from "@/lib/prisma";
 import { CREATOR_CATEGORIES } from "@/lib/constants";
 
-/**
- * Integration layer (PLAN §19/§20 + Phase 7). The UI never talks to TikTok
- * directly; everything flows through this layer. What the MVP ships:
- *  - external IDs on creators/brands/products/campaigns (duplicate detection)
- *  - CSV import (semicolon format, same as our CSV export)
- *  - sync jobs + sync logs, persisted per Integration row
- *  - a mock TikTok provider that produces realistic-looking data
- * OAuth/partner sync is deliberately NOT in the MVP (PLAN §28).
- */
-
-// ---------------------------------------------------------------------------
-// CSV parsing — semicolon-separated with quoted fields (id-ID Excel format)
-// ---------------------------------------------------------------------------
-
 export function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -53,12 +39,6 @@ export function parseCsv(text: string): string[][] {
   if (row.some((c) => c.trim() !== "")) rows.push(row);
   return rows;
 }
-
-// ---------------------------------------------------------------------------
-// CSV import — creators & products. Upsert by externalId when present, then
-// by username/name within the agency. Rows are validated first; one bad row
-// rejects the file so partial data never sneaks in.
-// ---------------------------------------------------------------------------
 
 export type ImportResult = {
   created: number;
@@ -199,12 +179,6 @@ export async function importProductsCsv(
   return { created, updated, rows: data.length };
 }
 
-// ---------------------------------------------------------------------------
-// Sync jobs — the MVP runs synchronously (no worker queue); a job is created
-// per run, its status is persisted, and every step lands in sync_logs.
-// Failed jobs keep their logs so retry logic (Phase 7) can re-run them.
-// ---------------------------------------------------------------------------
-
 const PROVIDER = "TikTok";
 
 export async function getOrCreateIntegration(agencyId: string) {
@@ -222,16 +196,6 @@ export type SyncOutcome = {
   status: "Success" | "Failed";
   logCount: number;
 };
-
-// ---------------------------------------------------------------------------
-// Mock sync gate (Phase 3 P0 #1). The simulation must never silently mutate
-// real business data, so it only runs when BOTH hold:
-//   1. MOCK_SYNC_ENABLED=true — an explicit operator opt-in (default: off)
-//   2. NODE_ENV !== "production" — production rejects mock sync outright,
-//      even when the flag is accidentally left set
-// The check lives in this service layer so every caller is gated server-side;
-// whether the UI renders the button is UX only, never the security boundary.
-// ---------------------------------------------------------------------------
 
 export function isMockSyncEnabled(): boolean {
   if (process.env.MOCK_SYNC_ENABLED !== "true") return false;
@@ -265,17 +229,6 @@ export function computeMockCreatorMetric(c: MockMetricSource, ref: Date) {
   };
 }
 
-/**
- * Mock sync (PLAN §20 "Mock Data" first step). Simulates pulling recent
- * creator metrics from TikTok: for each synced creator (has externalId) we
- * write one simulated metric row for today with deterministic plausible
- * numbers (see computeMockCreatorMetric). Hardened in Phase 3 P0 #1:
- *  - refused unless explicitly enabled via isMockSyncEnabled() — production
- *    can never run it, and nothing is written for a refused run
- *  - campaigns are NEVER touched: actualGmv is real business data, the old
- *    random bump is gone; the only writes are SyncJob/SyncLog audit rows and
- *    simulated CreatorMetric rows
- */
 export async function runMockSync(agencyId: string): Promise<SyncOutcome> {
   if (!isMockSyncEnabled()) {
     // Thrown before any DB access: a blocked run leaves zero rows behind.

@@ -1,20 +1,7 @@
-// Focused tests for brand master data CRUD (Phase 3, P1 #5B).
-//
-// Pins the hardened service workflow:
-//   - create forces the caller's agencyId and validates status/input
-//   - edits resolve cross-tenant rows as not-found before any write
-//   - archiving is soft state (Active/Paused/Churned) — contacts, products,
-//     and settlements survive
-//   - BrandContact ownership derives through the parent brand (cross-tenant
-//     brand → contact is rejected) and stays single-primary
-//   - brand:write belongs to owner/admin ONLY per the existing matrix;
-//     every other role (incl. viewer/finance) is read-only
-//
-// Runs against a throwaway database (see lib/test-env.ts), never prisma/dev.db.
-
 import "@/lib/test-env";
 
 import { describe, it, before, after } from "node:test";
+
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -69,7 +56,8 @@ after(async () => {
   }
 });
 
-describe("brand master data CRUD (Phase 3 P1 #5B)", () => {
+describe("brand master data CRUD", () => {
+
   let brandId: string;
 
   it("create forces the caller's agencyId and applies domain defaults", async () => {

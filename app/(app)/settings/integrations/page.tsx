@@ -32,8 +32,9 @@ export default async function IntegrationsPage() {
     <div className="space-y-4 p-6">
       <PageHeader
         title="Integrasi"
-        description="Hubungkan sumber data eksternal, impor CSV, dan jalankan sinkronisasi — PLAN §19: data selalu masuk lewat integration layer, tidak pernah langsung ke TikTok"
+        description="Hubungkan sumber data eksternal, impor CSV, dan jalankan sinkronisasi."
       />
+
 
       {/* Provider connection */}
       <Card>

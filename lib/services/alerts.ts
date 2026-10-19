@@ -2,11 +2,8 @@ import prisma from "@/lib/prisma";
 import { getAgencyTimezone } from "@/lib/services/common";
 import { daysAgoStartInTz } from "@/lib/timezone";
 
-/**
- * Deterministic operational alerts (PLAN §15).
- * Every alert carries: type, message, entity ref, action ref. No AI scores.
- */
 export type Alert = {
+
   id: string;
   kind:
     | "creator_declining"

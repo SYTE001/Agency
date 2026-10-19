@@ -28,7 +28,7 @@ function statusLabel(status: string) {
 function statusTone(status: string) {
   if (status === "ContentReview") return "bg-amber-500";
   if (status === "Published") return "bg-emerald-500";
-  return "bg-[#007AFF]";
+  return "bg-foreground";
 }
 
 export function ActiveProjects({ projects }: { projects: Project[] }) {
@@ -63,7 +63,7 @@ export function ActiveProjects({ projects }: { projects: Project[] }) {
                   <button
                     type="button"
                     onClick={() => setSelected(project)}
-                    className="group grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl px-4 py-4 text-left transition-colors duration-200 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/40 sm:grid-cols-[auto_minmax(180px,1.3fr)_minmax(150px,1fr)_auto] sm:gap-5"
+                    className="group grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl px-4 py-4 text-left transition-colors duration-200 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-[auto_minmax(180px,1.3fr)_minmax(150px,1fr)_auto] sm:gap-5"
                   >
                     <Avatar name={project.brand.name} className="h-10 w-10" />
                     <span className="min-w-0">
@@ -76,7 +76,7 @@ export function ActiveProjects({ projects }: { projects: Project[] }) {
                         <span className="tabular-nums text-foreground">{progress}%</span>
                       </span>
                       <span className="block h-1 overflow-hidden rounded-full bg-muted">
-                        <span className="block h-full rounded-full bg-[#007AFF] transition-[width] duration-500" style={{ width: `${progress}%` }} />
+                        <span className="block h-full rounded-full bg-foreground transition-[width] duration-500" style={{ width: `${progress}%` }} />
                       </span>
                     </span>
                     <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
@@ -112,7 +112,7 @@ export function ActiveProjects({ projects }: { projects: Project[] }) {
                 <h2 id="project-detail-title" className="mt-1 text-2xl font-semibold tracking-tight text-foreground">{selected.name}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">{selected.brand.name}</p>
               </div>
-              <button type="button" onClick={() => setSelected(null)} className="rounded-full bg-muted p-2 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/40" aria-label="Close project details">
+              <button type="button" onClick={() => setSelected(null)} className="rounded-full bg-muted p-2 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Close project details">
                 <X className="h-4 w-4" />
               </button>
             </div>

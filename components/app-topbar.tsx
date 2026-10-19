@@ -13,21 +13,15 @@ export function AppTopbar({
   leading?: React.ReactNode;
 }) {
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/70 bg-card px-4">
+    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
       <div className="flex items-center gap-2">
         {leading}
-        <span className="hidden truncate text-sm font-semibold tracking-tight sm:inline">
-          {user.agencyName}
-        </span>
-        <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-          Agency OS
-        </span>
       </div>
 
       <div className="flex items-center gap-1">
         <CommandPalette />
         <ThemeToggle />
-        <div className="ml-2 flex items-center gap-2.5 border-l pl-3">
+        <div className="ml-2 flex items-center gap-2.5 border-l border-border pl-3">
           <Avatar name={user.name} />
           <div className="hidden leading-tight sm:block">
             <div className="text-sm font-medium">{user.name}</div>

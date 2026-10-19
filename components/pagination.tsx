@@ -41,7 +41,7 @@ export function Pagination({
           href={href(page - 1)}
           aria-label="Halaman sebelumnya"
           className={cn(
-            "flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground transition-colors",
+            "flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors",
             page <= 1 ? "pointer-events-none opacity-40" : "hover:bg-accent hover:text-foreground",
           )}
         >
@@ -66,7 +66,7 @@ export function Pagination({
           href={href(page + 1)}
           aria-label="Halaman berikutnya"
           className={cn(
-            "flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground transition-colors",
+            "flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors",
             page >= totalPages ? "pointer-events-none opacity-40" : "hover:bg-accent hover:text-foreground",
           )}
         >
@@ -83,7 +83,9 @@ function PageLink({ href, active, label }: { href: string; active: boolean; labe
       href={href}
       className={cn(
         "flex h-8 min-w-8 items-center justify-center rounded-md border px-2 text-xs font-medium transition-colors",
-        active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground",
+        active
+          ? "border-transparent bg-primary text-primary-foreground font-semibold shadow-xs"
+          : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
       )}
     >
       {label}

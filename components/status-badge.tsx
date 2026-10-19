@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import type { CreatorHealth } from "@/lib/constants";
 
 // Single shared status renderer — maps domain status strings (source of truth
@@ -65,10 +66,25 @@ const GENERIC: Record<string, { label: string; variant: Variant }> = {
 };
 
 export function StatusBadge({ status, kind = "generic" }: { status: string; kind?: "health" | "generic" }) {
-  const cfg =
-    kind === "health"
-      ? HEALTH[status as CreatorHealth] ?? { label: status, variant: "secondary" as Variant }
-      : GENERIC[status] ?? { label: status, variant: "secondary" as Variant };
+  if (kind === "health") {
+    const cfg = HEALTH[status as CreatorHealth] ?? { label: status, variant: "secondary" as Variant };
+    const dotColor =
+      status === "Healthy"
+        ? "bg-emerald-500"
+        : status === "Watch"
+          ? "bg-amber-500"
+          : status === "AtRisk"
+            ? "bg-rose-500"
+            : "bg-muted-foreground";
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-0.5 text-xs font-medium text-foreground">
+        <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", dotColor)} aria-hidden="true" />
+        {cfg.label}
+      </span>
+    );
+  }
+
+  const cfg = GENERIC[status] ?? { label: status, variant: "secondary" as Variant };
   return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
 }
 

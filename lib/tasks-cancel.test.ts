@@ -1,19 +1,7 @@
-// Focused tests for the task Cancelled workflow (Phase 3 P0 #3).
-//
-// The schema/constants always allowed Cancelled, but nothing reached it: no
-// UI action offered the transition and updateTask accepted it from any state
-// (e.g. Done → Cancelled). These tests pin the completed workflow:
-//   - cancelling works from Open/InProgress and nowhere else
-//   - the mutation stays tenant-scoped and rejects unknown ids
-//   - only task:write roles can reach it (the action's RBAC gate)
-//   - cancelled work leaves active/overdue logic immediately
-//   - cancelled status survives reads, filters, and unrelated edits
-//
-// Runs against a throwaway database (see lib/test-env.ts), never prisma/dev.db.
-
 import "@/lib/test-env";
 
 import { describe, it, before, after } from "node:test";
+
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -76,7 +64,8 @@ function seedTask(
   });
 }
 
-describe("task cancel workflow (Phase 3 P0 #3)", () => {
+describe("task cancel workflow", () => {
+
   it("an authorized user cancels an Open task", async () => {
     const t = await seedTask(AGENCY_A, "Batalkan saya", { dueDate: PAST });
     const updated = await updateTask(AGENCY_A, t.id, "actor-1", { status: "Cancelled" });

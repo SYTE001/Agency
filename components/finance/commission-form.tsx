@@ -10,12 +10,8 @@ import { formatCompactIDR, formatIDR } from "@/lib/format";
 
 const initialState: CommissionFormState = {};
 
-/**
- * Commission entry with an explicit formula breakdown (PLAN §12: "Never hide
- * financial calculations behind unexplained numbers"). "Hitung Preview"
- * validates + previews; "Simpan Komisi" persists.
- */
 export function CommissionForm({
+
   creators,
   campaigns,
 }: {

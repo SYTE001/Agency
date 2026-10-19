@@ -150,11 +150,8 @@ export async function listBrands(
   return { items: rows, total, page, pageSize, totalPages: totalPages(total, pageSize) };
 }
 
-// ---------------------------------------------------------------------------
-// Detail — answers "How much business does this client generate?" (PLAN §8)
-// ---------------------------------------------------------------------------
-
 export async function getBrandDetail(agencyId: string, brandId: string) {
+
   const brand = await prisma.brand.findFirst({
     where: { id: brandId, agencyId },
     include: { contacts: { orderBy: { isPrimary: "desc" } } },
@@ -218,11 +215,8 @@ export async function getBrandDetail(agencyId: string, brandId: string) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Mutations
-// ---------------------------------------------------------------------------
-
 export async function createBrand(
+
   agencyId: string,
   data: {
     name: string;

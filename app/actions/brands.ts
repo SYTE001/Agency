@@ -130,10 +130,6 @@ export async function updateBrandAction(
   redirect(`/brands/${updatedId}`);
 }
 
-// ---------------------------------------------------------------------------
-// Contact person (PLAN §8)
-// ---------------------------------------------------------------------------
-
 const contactSchema = z.object({
   name: z.string().trim().min(2, "Nama minimal 2 karakter").max(80),
   email: z
@@ -200,10 +196,6 @@ function toContactError(e: unknown): ContactFormState {
   if (e instanceof Error && e.message) return { error: e.message };
   return { error: "Gagal menyimpan kontak. Coba lagi." };
 }
-
-// ---------------------------------------------------------------------------
-// Notes (PLAN §14)
-// ---------------------------------------------------------------------------
 
 export async function addBrandNoteAction(
   brandId: string,

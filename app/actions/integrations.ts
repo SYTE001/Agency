@@ -74,10 +74,8 @@ export async function runSyncAction(): Promise<IntegrationFormState> {
   const user = await requireIntegrationManager();
   if (!user) return { error: "Anda tidak memiliki izin untuk mengelola integrasi." };
 
-  // Server-side opt-in gate (Phase 3 P0 #1): mock sync must be enabled
-  // explicitly and can never run in production. The service re-checks this,
-  // so the refusal holds even if the mutation is invoked from elsewhere.
   if (!isMockSyncEnabled()) {
+
     return {
       error:
         "Sinkronisasi mock dinonaktifkan. Aktifkan hanya di development/demo dengan variabel lingkungan MOCK_SYNC_ENABLED=true.",

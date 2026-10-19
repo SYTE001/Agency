@@ -1,16 +1,8 @@
-// Unit + DB-backed tests for session token hardening (Revisi §4).
-//
-// Covers the verifier's pinning (HS256 + issuer + audience), rejection of
-// tampered / wrong-secret / expired / wrong-iss / wrong-aud tokens, the
-// AUTH_SECRET policy (no hardcoded fallback in production, minimum length),
-// and the full session resolution path: a valid token must re-resolve the
-// user row server-side, and an invalid DB role must never surface as a Role.
-// Uses a throwaway database (lib/test-env.ts), never prisma/dev.db.
-
 import "@/lib/test-env";
 
 import { describe, it, before, after, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
+
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -196,7 +188,8 @@ describe("AUTH_SECRET policy", () => {
   });
 });
 
-describe("session resolution (DB re-resolve, Revisi §4.6)", () => {
+describe("session resolution and database hydration", () => {
+
   beforeEach(() => {
     process.env.AUTH_SECRET = SECRET;
     Object.assign(process.env, { NODE_ENV: "test" });

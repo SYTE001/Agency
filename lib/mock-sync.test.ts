@@ -1,20 +1,7 @@
-// Focused tests for the mock-sync hardening (Phase 3, P0 #1).
-//
-// runMockSync used to write synthetic metrics AND bump real campaign
-// actualGmv with Math.random() on every run, in every environment. These
-// tests pin the hardened contract:
-//   1. refused outright in production — even with the opt-in flag set, and
-//      without writing a single row
-//   2. refused unless MOCK_SYNC_ENABLED=true (explicit opt-in, strict value)
-//   3. when allowed (development/demo): metric generation is deterministic,
-//      campaign actualGmv is untouched, and writes stay tenant-scoped
-//   4. the RBAC gate runSyncAction enforces rejects every non owner/admin role
-//
-// Runs against a throwaway database (see lib/test-env.ts), never prisma/dev.db.
-
 import "@/lib/test-env";
 
 import { describe, it, before, after } from "node:test";
+
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -101,7 +88,8 @@ after(async () => {
   }
 });
 
-describe("mock sync environment gate (Phase 3 P0 #1)", () => {
+describe("mock sync environment gate", () => {
+
   let creatorA1: string;
   let brandA: string;
   let brandB: string;

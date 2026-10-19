@@ -1,10 +1,5 @@
-// Unit tests for the timezone day-boundary helpers (Revisi §6).
-//
-// Business-day filtering must interpret "hari" in the tenant's timezone
-// (Agency.timezone, default Asia/Jakarta) while the database stores UTC —
-// these lock the exact UTC instants for the boundaries the services use.
-
 import { describe, it } from "node:test";
+
 import assert from "node:assert/strict";
 import {
   DEFAULT_TIMEZONE,
@@ -136,11 +131,8 @@ describe("DST timezones", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Calendar-key helpers — the LIVE schedule grid & URL navigation (Phase 3 P0 #2)
-// ---------------------------------------------------------------------------
-
 describe("dateKeyInTz", () => {
+
   const instant = new Date("2026-08-17T17:30:00Z"); // 00:30 Aug 18 WIB / 13:30 Aug 17 EDT
 
   it("uses the tenant's calendar date, not UTC or the server's zone", () => {

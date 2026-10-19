@@ -3,14 +3,8 @@ import { readableResources } from "@/lib/authorization";
 import { containsInsensitive } from "@/lib/services/common";
 import type { Resource, Role } from "@/lib/constants";
 
-/**
- * Global search (PLAN §24). One query per entity type, results grouped by
- * entity and filtered server-side by the user's read permissions — a role
- * that cannot read an entity never sees its group. Tasks have no [id] page,
- * so they deep-link to the tasks list with the query pre-filled.
- */
-
 export type SearchGroup = {
+
   resource: Resource;
   label: string;
   results: { id: string; title: string; subtitle?: string; href: string }[];

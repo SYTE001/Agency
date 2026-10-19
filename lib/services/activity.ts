@@ -1,6 +1,5 @@
 import prisma from "@/lib/prisma";
 
-/** Record an activity entry on an entity (PLAN §14). Fire-and-forget. */
 export function logActivity(args: {
   agencyId: string;
   entityType: string;
@@ -21,7 +20,6 @@ export function logActivity(args: {
   });
 }
 
-/** Activity timeline for one entity, newest first. */
 export async function getActivity(entityType: string, entityId: string, agencyId: string, limit = 20) {
   return prisma.activity.findMany({
     where: { agencyId, entityType, entityId },
@@ -31,7 +29,6 @@ export async function getActivity(entityType: string, entityId: string, agencyId
   });
 }
 
-/** Notes for one entity. */
 export async function getNotes(entityType: string, entityId: string, agencyId: string) {
   return prisma.note.findMany({
     where: { agencyId, entityType, entityId },
@@ -40,7 +37,6 @@ export async function getNotes(entityType: string, entityId: string, agencyId: s
   });
 }
 
-/** Add a note to one entity (PLAN §14). */
 export function addNote(args: {
   agencyId: string;
   entityType: string;
@@ -59,8 +55,8 @@ export function addNote(args: {
   });
 }
 
-/** Tenant check for entity-scoped operations (notes, etc.). */
 export async function entityBelongsToAgency(
+
   entityType: string,
   entityId: string,
   agencyId: string,

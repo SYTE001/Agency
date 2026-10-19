@@ -1,22 +1,7 @@
-// Focused tests for product master data CRUD (Phase 3A, P1 #5C).
-//
-// Pins the hardened service workflow:
-//   - create forces the caller's agencyId and validates name/status/price
-//   - the optional brand FK must point at a brand of the SAME agency
-//   - SKU is tenant-scoped unique (@@unique([agencyId, sku])) with a friendly
-//     duplicate message; the same SKU stays legal across agencies
-//   - archiving is soft state (Active/Inactive) — daily metrics, campaign
-//     links, and content history survive an Inactive product
-//   - edits resolve cross-tenant rows as not-found before any write
-//   - prices stay Decimal-safe end to end
-//   - product:write belongs to owner/admin ONLY per the existing matrix;
-//     every other role is read-only
-//
-// Runs against a throwaway database (see lib/test-env.ts), never prisma/dev.db.
-
 import "@/lib/test-env";
 
 import { describe, it, before, after } from "node:test";
+
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -69,7 +54,8 @@ after(async () => {
   }
 });
 
-describe("product master data CRUD (Phase 3A P1 #5C)", () => {
+describe("product master data CRUD", () => {
+
   let productId: string;
   let ownBrandId: string;
   let foreignBrandId: string;

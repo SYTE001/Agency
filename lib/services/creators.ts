@@ -6,8 +6,8 @@ import { CREATOR_HEALTH, isCreatorStatus } from "@/lib/constants";
 import type { CreatorHealth } from "@/lib/constants";
 import type { Prisma } from "@/lib/prisma";
 
-// Derived fields shown in the creator table (PLAN §6)
 export type CreatorRow = {
+
   id: string;
   username: string;
   displayName: string;
@@ -175,11 +175,8 @@ function mapStaticSort(
   }
 }
 
-// ---------------------------------------------------------------------------
-// Detail
-// ---------------------------------------------------------------------------
-
 export async function getCreatorDetail(agencyId: string, creatorId: string) {
+
   const creator = await prisma.creator.findFirst({
     where: { id: creatorId, agencyId },
     include: {
@@ -266,10 +263,6 @@ export async function getCreatorDetail(agencyId: string, creatorId: string) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Health (deterministic — no AI scores, PLAN §6)
-// ---------------------------------------------------------------------------
-
 export function computeHealth(args: {
   status: string;
   gmvGrowthPct: number;
@@ -283,11 +276,8 @@ export function computeHealth(args: {
   return "Healthy";
 }
 
-// ---------------------------------------------------------------------------
-// Mutations
-// ---------------------------------------------------------------------------
-
 function assertValidMetrics(followers?: number, engagementRate?: number) {
+
   if (followers != null && (!Number.isInteger(followers) || followers < 0)) {
     throw new Error("Jumlah followers tidak valid");
   }

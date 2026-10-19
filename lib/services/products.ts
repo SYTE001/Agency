@@ -162,11 +162,8 @@ export async function getProductDetail(agencyId: string, productId: string) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Mutations
-// ---------------------------------------------------------------------------
-
 function assertValidPrice(price?: number) {
+
   if (price != null && (!Number.isFinite(price) || price < 0)) {
     throw new Error("Harga tidak boleh negatif");
   }

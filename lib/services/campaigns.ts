@@ -122,11 +122,8 @@ export async function listCampaigns(
   return { items: rows, total, page, pageSize, totalPages: totalPages(total, pageSize) };
 }
 
-// ---------------------------------------------------------------------------
-// Detail (PLAN §9)
-// ---------------------------------------------------------------------------
-
 export async function getCampaignDetail(agencyId: string, campaignId: string) {
+
   const campaign = await prisma.campaign.findFirst({
     where: { id: campaignId, agencyId },
     include: {
@@ -206,11 +203,8 @@ export async function getCampaignDetail(agencyId: string, campaignId: string) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Mutations
-// ---------------------------------------------------------------------------
-
 export async function createCampaign(
+
   agencyId: string,
   data: {
     name: string;

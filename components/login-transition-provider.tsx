@@ -34,19 +34,21 @@ function getDiscMetrics(el: HTMLElement | null) {
   const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
   const vh = typeof window !== "undefined" ? window.innerHeight : 800;
 
-  let x = Math.round(vw * 0.85);
-  let y = 36;
+  let x = Math.round(vw * 0.5);
+  let y = Math.round(vh * 0.5);
 
   if (el && typeof el.getBoundingClientRect === "function") {
     const rect = el.getBoundingClientRect();
-    x = rect.left + rect.width / 2;
-    y = rect.top + rect.height / 2;
+    if (rect.width > 0 && rect.height > 0) {
+      x = rect.left + rect.width / 2;
+      y = rect.top + rect.height / 2;
+    }
   }
 
   const dx = Math.max(x, vw - x);
   const dy = Math.max(y, vh - y);
   const radius = Math.hypot(dx, dy);
-  const diameter = Math.ceil(radius * 2.2);
+  const diameter = Math.ceil(radius * 2.5);
 
   return { x: Math.round(x), y: Math.round(y), diameter };
 }
@@ -64,11 +66,21 @@ export function LoginTransitionProvider({
   const pathname = usePathname();
   const router = useRouter();
 
+  const cleanPath = pathname?.replace(/\/$/, "") || "/";
+
   // Derive isFromTransition without setting state in effects:
   // True as long as user is on /login and transition target was /login or /login?
   const isFromTransition =
-    pathname === "/login" &&
-    (transitionTarget === "/login" || (transitionTarget?.startsWith("/login?") ?? false));
+    cleanPath === "/login" &&
+    Boolean(
+      transitionTarget &&
+        (transitionTarget === "/login" ||
+          transitionTarget === "/login/" ||
+          transitionTarget.startsWith("/login?") ||
+          transitionTarget.startsWith("/login/?") ||
+          transitionTarget.endsWith("/login") ||
+          transitionTarget.endsWith("/login/"))
+    );
 
   const isTransitioningRef = useRef(false);
   const activeButtonRef = useRef<HTMLElement | null>(null);
@@ -78,10 +90,11 @@ export function LoginTransitionProvider({
   const cleanupClasses = useCallback(() => {
     if (typeof document !== "undefined") {
       document.body.classList.remove("login-nav-in-flight");
-      if (activeButtonRef.current) {
-        activeButtonRef.current.classList.remove("btn-masuk-pressed");
-        activeButtonRef.current = null;
-      }
+      document.body.classList.remove("splash-active");
+      document.documentElement.classList.remove("splash-active");
+      const pressedBtns = document.querySelectorAll(".btn-masuk-pressed");
+      pressedBtns.forEach((btn) => btn.classList.remove("btn-masuk-pressed"));
+      activeButtonRef.current = null;
     }
   }, []);
 
@@ -90,15 +103,22 @@ export function LoginTransitionProvider({
     setPhase("idle");
     setTransitionTarget(null);
     cleanupClasses();
-    if (navigationTimerRef.current) clearTimeout(navigationTimerRef.current);
-    if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
+    if (navigationTimerRef.current) {
+      clearTimeout(navigationTimerRef.current);
+      navigationTimerRef.current = null;
+    }
+    if (safetyTimerRef.current) {
+      clearTimeout(safetyTimerRef.current);
+      safetyTimerRef.current = null;
+    }
   }, [cleanupClasses]);
 
   const startTransitionToLogin = useCallback(
     (buttonEl?: HTMLElement | null, targetUrl = "/login") => {
       // Guard against duplicate triggers or navigation while already transitioning or already on /login
       if (isTransitioningRef.current) return;
-      if (pathname === "/login") return;
+      const cleanCurrent = pathname?.replace(/\/$/, "") || "/";
+      if (cleanCurrent === "/login") return;
 
       // Accessibility: Respect prefers-reduced-motion
       const prefersReduced =
@@ -107,6 +127,12 @@ export function LoginTransitionProvider({
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
       if (prefersReduced) {
+        setTransitionTarget(targetUrl);
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem("agy_from_transition", "1");
+          } catch {}
+        }
         router.push(targetUrl);
         return;
       }
@@ -137,6 +163,9 @@ export function LoginTransitionProvider({
       }
       setPhase("expanding");
 
+      if (navigationTimerRef.current) clearTimeout(navigationTimerRef.current);
+      if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
+
       // Navigate to login destination at 180ms
       navigationTimerRef.current = setTimeout(() => {
         setPhase("navigating");
@@ -144,7 +173,6 @@ export function LoginTransitionProvider({
       }, 180);
 
       // Safety timeout: forcefully recover if navigation is interrupted or hangs
-      if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
       safetyTimerRef.current = setTimeout(() => {
         if (isTransitioningRef.current) {
           resetAll();
@@ -156,44 +184,69 @@ export function LoginTransitionProvider({
 
   // Arrived at /login destination
   useEffect(() => {
-    if (pathname === "/login" && isTransitioningRef.current) {
+    const cleanPath = pathname?.replace(/\/$/, "") || "/";
+    if (cleanPath === "/login" && isTransitioningRef.current) {
+      if (navigationTimerRef.current) {
+        clearTimeout(navigationTimerRef.current);
+        navigationTimerRef.current = null;
+      }
+      if (safetyTimerRef.current) {
+        clearTimeout(safetyTimerRef.current);
+        safetyTimerRef.current = null;
+      }
+
       setPhase("revealing");
       cleanupClasses();
 
       const revealTimer = setTimeout(() => {
         setPhase("idle");
         isTransitioningRef.current = false;
+        setTransitionTarget(null);
       }, 340);
 
-      return () => clearTimeout(revealTimer);
+      return () => {
+        clearTimeout(revealTimer);
+      };
     }
   }, [pathname, cleanupClasses]);
 
-  // Clean up session flag when outside /login
+  const prevPathRef = useRef(pathname);
+
+  // Clean up session flag and reset any active transition when navigating away from /login
   useEffect(() => {
-    if (pathname !== "/login") {
-      if (typeof window !== "undefined") {
+    const prevPath = prevPathRef.current?.replace(/\/$/, "") || "/";
+    const currentPath = pathname?.replace(/\/$/, "") || "/";
+    prevPathRef.current = pathname;
+
+    if (currentPath !== "/login") {
+      // If we just navigated away from /login, or if a transition was active and navigated to another page
+      if (prevPath === "/login" || (isTransitioningRef.current && prevPath !== currentPath)) {
+        resetAll();
+      }
+
+      if (!isTransitioningRef.current && typeof window !== "undefined") {
         try {
           sessionStorage.removeItem("agy_from_transition");
         } catch {}
       }
     }
-  }, [pathname]);
+  }, [pathname, resetAll]);
 
   // Handle browser back/forward (popstate) safely
   useEffect(() => {
     const handlePopState = () => {
-      if (isTransitioningRef.current) {
-        resetAll();
-      }
+      resetAll();
     };
     window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      resetAll();
+    };
   }, [resetAll]);
 
   // Global click capture delegation for /login CTAs on public pages + router prefetch
   useEffect(() => {
-    if (pathname === "/") {
+    if (cleanPath === "/") {
       try {
         router.prefetch("/login");
       } catch {}
@@ -213,7 +266,15 @@ export function LoginTransitionProvider({
       const href = anchor.getAttribute("href");
       if (!href) return;
 
-      if (href === "/login" || href.startsWith("/login?") || href.endsWith("/login")) {
+      const isLoginLink =
+        href === "/login" ||
+        href === "/login/" ||
+        href.startsWith("/login?") ||
+        href.startsWith("/login/?") ||
+        href.endsWith("/login") ||
+        href.endsWith("/login/");
+
+      if (isLoginLink) {
         e.preventDefault();
         startTransitionToLogin(anchor, href);
       }
@@ -223,7 +284,7 @@ export function LoginTransitionProvider({
     return () => {
       document.removeEventListener("click", handleClick, { capture: true });
     };
-  }, [pathname, router, startTransitionToLogin]);
+  }, [cleanPath, router, startTransitionToLogin]);
 
   return (
     <LoginTransitionContext.Provider

@@ -21,11 +21,17 @@ body.login-nav-in-flight main:not(.login-shell) {
 
 /* Transition container */
 .login-transition-root {
+  --brand: #10367d;
   position: fixed;
   inset: 0;
   z-index: 999998;
   pointer-events: none;
   overflow: hidden;
+}
+
+.login-transition--expanding.login-transition-root,
+.login-transition--navigating.login-transition-root {
+  pointer-events: auto;
 }
 
 /* 1. Expanding circular surface originating at clicked button */
@@ -36,7 +42,7 @@ body.login-nav-in-flight main:not(.login-shell) {
   width: var(--disc-size, 200vmax);
   height: var(--disc-size, 200vmax);
   border-radius: 50%;
-  background: var(--brand, #10367d);
+  background: #10367d;
   transform: translate3d(-50%, -50%, 0) scale(0.01);
   will-change: transform;
   pointer-events: none;
@@ -60,7 +66,7 @@ body.login-nav-in-flight main:not(.login-shell) {
   position: fixed;
   top: 0;
   bottom: 0;
-  background: var(--brand, #10367d);
+  background: #10367d;
   will-change: transform, opacity;
   pointer-events: none;
   display: none;
@@ -121,9 +127,11 @@ body.login-nav-in-flight main:not(.login-shell) {
   }
   .login-transition-curtain-right {
     left: 0;
+    right: 0;
     width: 100vw;
   }
   .login-transition--revealing .login-transition-curtain-right {
+    display: block;
     transform: translate3d(0, 0, 0);
     animation: curtainMobileSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
@@ -143,7 +151,7 @@ body.login-nav-in-flight main:not(.login-shell) {
    ============================================================ */
 .login-shell.login-shell--from-transition .brand-panel {
   opacity: 1 !important;
-  animation: loginBrandReveal 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: loginBrandReveal 0.3s cubic-bezier(0.16, 1, 0.3, 1) both !important;
 }
 
 /* Suppress internal cold-start stagger in brand panel when coming from transition */
@@ -160,7 +168,7 @@ body.login-nav-in-flight main:not(.login-shell) {
 
 .login-shell.login-shell--from-transition .form-panel {
   opacity: 1 !important;
-  animation: loginFormReveal 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: loginFormReveal 0.34s cubic-bezier(0.16, 1, 0.3, 1) both !important;
 }
 
 .login-shell.login-shell--from-transition .form-head {
@@ -189,7 +197,7 @@ body.login-nav-in-flight main:not(.login-shell) {
 
 @keyframes loginFormReveal {
   from {
-    opacity: 0;
+    opacity: 0.85;
     transform: translate3d(20px, 0, 0);
   }
   to {
@@ -211,14 +219,14 @@ body.login-nav-in-flight main:not(.login-shell) {
 
 @media (max-width: 1080px) {
   .login-shell.login-shell--from-transition .form-panel {
-    animation: loginFormRevealMobile 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: loginFormRevealMobile 0.32s cubic-bezier(0.16, 1, 0.3, 1) both !important;
   }
 }
 
 @keyframes loginFormRevealMobile {
   from {
-    opacity: 0;
-    transform: translate3d(0, 18px, 0);
+    opacity: 0.85;
+    transform: translate3d(0, 14px, 0);
   }
   to {
     opacity: 1;

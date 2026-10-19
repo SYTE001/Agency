@@ -1284,18 +1284,18 @@ html:has(.login-shell)::-webkit-scrollbar-thumb {
   opacity: 0;
 }
 
-.login-shell.login-shell--revealed .brand-panel {
+.login-shell.login-shell--revealed:not(.login-shell--from-transition) .brand-panel {
   opacity: 1;
   animation: panelSlideInLeft 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.login-shell.login-shell--revealed .form-panel {
+.login-shell.login-shell--revealed:not(.login-shell--from-transition) .form-panel {
   opacity: 1;
   animation: panelSlideInRight 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (max-width: 1080px) {
-  .login-shell.login-shell--revealed .form-panel {
+  .login-shell.login-shell--revealed:not(.login-shell--from-transition) .form-panel {
     animation: riseIn 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 }

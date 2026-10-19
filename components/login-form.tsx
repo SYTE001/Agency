@@ -18,6 +18,7 @@ export function LoginForm({ next }: { next?: string } = {}) {
 
   // Permanently remember if this mount originated from the homepage transition
   const [fromTransition] = useState(() => {
+    if (isFromTransition) return true;
     if (typeof window !== "undefined") {
       try {
         return sessionStorage.getItem("agy_from_transition") === "1";
@@ -26,7 +27,7 @@ export function LoginForm({ next }: { next?: string } = {}) {
     return false;
   });
 
-  const skipSplash = isFromTransition || fromTransition;
+  const skipSplash = fromTransition || isFromTransition;
 
   useEffect(() => {
     if (fromTransition && typeof window !== "undefined") {

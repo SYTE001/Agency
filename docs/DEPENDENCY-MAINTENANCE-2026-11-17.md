@@ -71,10 +71,10 @@ Local verification completed on 2026-11-17 unless noted otherwise:
 | `npm run typecheck` | PASS |
 | `npm run test:unit` | PASS: 2/2 on Vitest3.2.7 |
 | `npm test` | PASS: 211 passed, 0 failed, 3 explicit TODOs, 0 skipped across 47 suites |
-| Playwright local browser install | Chromium140 build1193 downloaded; headless-shell mirrors reset/stalled locally before executable extraction, so bundled-headless installation must be proven by GitHub CI |
+| Playwright local browser install | Chromium140 build1193 downloaded; headless-shell mirrors reset/stalled locally before executable extraction. GitHub CI subsequently installed the bundled Chromium/dependencies successfully on Ubuntu24.04. |
 | `npm run test:e2e -- --workers=1` | PASS: 15/15 via configured local Chrome channel and fresh isolated SQLite DB; interrupted bundled run failed before tests because headless-shell was incomplete and is not counted; intermittent dev-server ECONNRESET logs did not fail tests |
 | `npm run build` | PASS: Next16.4.6 production compile, TypeScript, static generation and route manifest |
-| GitHub Quality + Playwright jobs | Pending published maintenance PR; both are mandatory before ready status |
+| GitHub Quality + Playwright jobs | PASS on run `44057915444`: Quality and Playwright smoke tests both completed successfully; Vercel Preview Comments also passed |
 
 No skipped, TODO, interrupted browser download, blocked PostgreSQL runtime, or unrun CI check counts as passed acceptance. Full PostgreSQL runtime testing remains an existing environment limitation; this change validates PostgreSQL client generation/schema/build but does not claim a live DB connection.
 

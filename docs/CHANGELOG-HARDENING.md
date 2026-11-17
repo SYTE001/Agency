@@ -9,7 +9,7 @@ This file records Commercial Readiness & Product Hardening PRD change sets. Entr
 - Selected patched/compatible Zod 4.6.6, Playwright 1.55.1, Vitest 3.2.7, tsx 4.23.13 and React DOM types 19.2.7. Retained jsdom 26, jest-dom 6, Actions v4 and `@types/node` v20 for separate compatibility decisions.
 - Aligned the supported Node baseline to 22.14.0 across `package.json`, `.nvmrc` and `.node-version`; the previously advertised Node20 floor was incompatible with already-selected native/development dependencies.
 - Preserved all Prisma schemas/migrations and existing test coverage. CI continues to run route type generation and isolated databases; E2E remains pinned to Ubuntu 24.04 for the reviewed Playwright/runner pair.
-- Full verification and GitHub CI evidence will be recorded in [the dependency maintenance report](DEPENDENCY-MAINTENANCE-2026-11-17.md) before the pull request is considered ready. No Dependabot PR is merged or closed by this change.
+- Full local verification and GitHub run `44057915444` passed: Quality and Playwright smoke jobs both succeeded, including bundled Chromium installation on Ubuntu 24.04. No Dependabot PR is merged or closed by this change.
 
 ## PR-00 — local baseline delivered with open acceptance checks (2026-11-17)
 

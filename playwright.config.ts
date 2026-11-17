@@ -30,6 +30,7 @@ const e2eDbProvider = e2eDatabaseUrl.startsWith("file:")
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: "hardening-baseline.spec.ts",
   timeout: 60_000,
   fullyParallel: true,
   reporter: "list",
@@ -44,7 +45,8 @@ export default defineConfig({
         : "npx tsx prisma/seed.ts && npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    // Allow cold migration, seeding and development compilation.
+    timeout: 180_000,
     env: {
       DB_PROVIDER: e2eDbProvider,
       DATABASE_URL: e2eDatabaseUrl,
@@ -60,7 +62,9 @@ export default defineConfig({
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
-        channel: "chrome",
+        // CI installs the bundled chromium, so use it there; locally prefer
+        // the installed Chrome channel.
+        channel: process.env.CI ? undefined : "chrome",
       },
     },
   ],

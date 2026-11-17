@@ -24,6 +24,8 @@ Source: upstream `main` at `233dd7f403df10585f2bf6dbf2a81bfb39ccbc6d`; branch `h
 
 - CI follow-up for PR #13: the pre-commit formatter moved the test helper's ESLint suppression away from its `any` cast, causing remote lint failure. Replaced generic count casts with the narrow `count(): Promise<number>` interface in fixture/test helpers; no runtime behavior or permission change.
 
+- CI follow-up for PR #13: pinned the Playwright job to Ubuntu 24.04 after `ubuntu-latest` moved to Ubuntu 26.04, which the locked Playwright 1.51.1 cannot install browsers/dependencies on. Quality passed on GitHub after the fixture typing fix; E2E must pass on the compatible runner before merge.
+
 Product behavior and business schema are unchanged. PostgreSQL runtime/migration verification is blocked by missing local tooling. No production database, credentials, external API, deployment, or customer data was used.
 
 Remaining capture/build evidence is recorded in the baseline document. Gates A/B/C and live TikTok integration are not approved by this change set.

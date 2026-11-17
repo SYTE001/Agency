@@ -72,3 +72,6 @@ opencode.json
 qa-*.mjs
 measure.mjs
 mktoken.mts
+/test-results/
+/playwright-report/
+/.zcode/

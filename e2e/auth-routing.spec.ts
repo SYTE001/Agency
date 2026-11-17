@@ -1,17 +1,25 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 const VALID_EMAIL = "owner@agency.test";
 const VALID_PASSWORD = "localdev-owner-pass-1";
 
 test.describe("Authentication, Routing, and User Workflow", () => {
-  test("1. Unauthenticated user opening / sees landing page without auto-redirect", async ({ page }) => {
+  test("1. Unauthenticated user opening / sees landing page without auto-redirect", async ({
+    page,
+  }) => {
     await page.goto("/");
     await expect(page).toHaveURL("http://localhost:3000/");
-    await expect(page.getByRole("heading", { name: /Run Your.*TikTok Shop Agency/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /masuk/i }).first()).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Run Your.*TikTok Shop Agency/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /masuk/i }).first(),
+    ).toBeVisible();
   });
 
-  test("2. Unauthenticated user opening /login sees login page", async ({ page }) => {
+  test("2. Unauthenticated user opening /login sees login page", async ({
+    page,
+  }) => {
     await page.goto("/login");
     await expect(page).toHaveURL("http://localhost:3000/login");
     await expect(page.locator("#email")).toBeVisible();
@@ -19,20 +27,24 @@ test.describe("Authentication, Routing, and User Workflow", () => {
     await expect(page.locator("#submitBtn")).toBeVisible();
   });
 
-  test("3. Unauthenticated user opening protected routes redirects to /login with safe next param", async ({ page }) => {
+  test("3. Unauthenticated user opening protected routes redirects to /login with safe next param", async ({
+    page,
+  }) => {
     // /overview redirects cleanly to /login without noisy next parameter
     await page.goto("/overview");
-    await expect(page).toHaveURL("http://localhost:3000/login");
+    await expect(page).toHaveURL(/\/login$/);
 
     // Specific protected deep links preserve destination in next parameter
     await page.goto("/campaigns");
-    await expect(page).toHaveURL("http://localhost:3000/login?next=%2Fcampaigns");
+    await expect(page).toHaveURL(/\/login\?next=%2Fcampaigns$/);
 
     await page.goto("/finance/payouts");
-    await expect(page).toHaveURL("http://localhost:3000/login?next=%2Ffinance%2Fpayouts");
+    await expect(page).toHaveURL(/\/login\?next=%2Ffinance%2Fpayouts$/);
   });
 
-  test("4. Login failure displays error feedback and stays on login page", async ({ page }) => {
+  test("4. Login failure displays error feedback and stays on login page", async ({
+    page,
+  }) => {
     await page.goto("/login");
     await page.fill("#email", "wrong@agency.test");
     await page.fill("#password", "wrongpassword123");
@@ -42,9 +54,13 @@ test.describe("Authentication, Routing, and User Workflow", () => {
     await expect(page.locator('[role="alert"]').first()).toBeVisible();
   });
 
-  test("5. Login success with valid next redirects to requested destination", async ({ page }) => {
+  test("5. Login success with valid next redirects to requested destination", async ({
+    page,
+  }) => {
     await page.goto("/campaigns");
-    await expect(page).toHaveURL("http://localhost:3000/login?next=%2Fcampaigns");
+    await expect(page).toHaveURL(
+      "http://localhost:3000/login?next=%2Fcampaigns",
+    );
 
     await page.fill("#email", VALID_EMAIL);
     await page.fill("#password", VALID_PASSWORD);
@@ -54,7 +70,9 @@ test.describe("Authentication, Routing, and User Workflow", () => {
     expect(page.url()).toContain("/campaigns");
   });
 
-  test("6. Login with malicious external next rejects open redirect and falls back to /overview", async ({ page }) => {
+  test("6. Login with malicious external next rejects open redirect and falls back to /overview", async ({
+    page,
+  }) => {
     await page.goto("/login?next=https://evil.com/phishing");
     await page.fill("#email", VALID_EMAIL);
     await page.fill("#password", VALID_PASSWORD);
@@ -65,7 +83,9 @@ test.describe("Authentication, Routing, and User Workflow", () => {
     expect(page.url()).not.toContain("evil.com");
   });
 
-  test("7. Full login, session persistence, public landing access, and logout workflow", async ({ page }) => {
+  test("7. Full login, session persistence, public landing access, and logout workflow", async ({
+    page,
+  }) => {
     // 7A. Login
     await page.goto("/login");
     await page.fill("#email", VALID_EMAIL);
@@ -101,8 +121,17 @@ test.describe("Authentication, Routing, and User Workflow", () => {
 
     // 7G. Browser Back after logout does not reveal protected content from cache
     await page.goBack();
+    // Let the back navigation settle before issuing any new goto — a previous
+    // run navigated immediately and the goto interrupted the in-flight back
+    // navigation to "/". The prior history entry is the post-logout landing
+    // page or the login page; wait for either.
+    await page.waitForURL(
+      (u) => u.pathname === "/" || u.pathname.includes("/login"),
+    );
     // After going back, protected content must not be displayed
+    await expect(page.getByRole("button", { name: /keluar/i })).toHaveCount(0);
+    // A fresh navigation to the protected route must still bounce to /login
     await page.goto("/overview");
-    await expect(page).toHaveURL("http://localhost:3000/login");
+    await expect(page).toHaveURL(/\/login$/);
   });
 });

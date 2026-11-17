@@ -2,7 +2,7 @@
 
 ## Local setup
 
-1. Install Node.js 20.19.0 or use `.nvmrc` / `.node-version`.
+1. Install Node.js 22.14.0 or newer; `.nvmrc` and `.node-version` both select the CI/development baseline.
 2. Run `npm ci`.
 3. Copy `.env.example` to `.env` when environment values are needed.
 4. Run `npx prisma migrate deploy` for local SQLite.

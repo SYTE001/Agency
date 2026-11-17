@@ -23,45 +23,45 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.9.1",
-    "@prisma/client": "^7.9.1",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "jose": "^6.2.9",
     "lucide-react": "^1.31.0",
-    "next": "16.3.1",
+    "next": "16.4.6",
     "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.10.1",
     "tailwind-merge": "^3.6.0",
-    "zod": "^4.4.3"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
-    "@playwright/test": "^1.51.1",
-    "@prisma/adapter-better-sqlite3": "^7.9.1",
+    "@playwright/test": "1.55.1",
+    "@prisma/adapter-better-sqlite3": "7.10.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^20.19.43",
     "@types/pg": "^8.21.0",
     "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react-dom": "19.2.7",
     "better-sqlite3": "^13.0.3",
     "eslint": "^9",
-    "eslint-config-next": "16.3.1",
+    "eslint-config-next": "16.4.6",
     "husky": "^9.1.7",
     "jsdom": "^26.1.0",
     "lint-staged": "^16.4.0",
-    "prisma": "^7.9.1",
+    "prisma": "7.10.1",
     "tailwindcss": "^4",
-    "tsx": "^4.23.12",
+    "tsx": "4.23.13",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vitest": "3.2.7"
   },
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=22.14.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json}": "biome check --write"

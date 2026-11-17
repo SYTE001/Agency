@@ -42,7 +42,8 @@ jobs:
 
   e2e:
     name: Playwright smoke tests
-    # Playwright 1.51.1 supports Ubuntu 24.04; ubuntu-latest now resolves to 26.04.
+    # Playwright 1.55.1 is verified on Ubuntu 24.04; keep this runner explicit
+    # until a separately reviewed Playwright/runner upgrade is approved.
     runs-on: ubuntu-24.04
     needs: quality
     env:

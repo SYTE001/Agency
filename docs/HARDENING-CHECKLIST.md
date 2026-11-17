@@ -78,7 +78,7 @@ The source register below is a starting point. Reproduction and final resolution
 | P4-04 | Deploy/migration/rollback/support runbook | PR-09 | pending |
 | P4-05 | Measured representative load and Web Vitals | PR-09 | pending |
 | P4-06 | Auth/tenant/CRUD/finance/import E2E | PR-09 | pending |
-| P4-07 | Dependencies, headers, privacy, retention and support review | PR-09 | pending |
+| P4-07 | Dependencies, headers, privacy, retention and support review | PR-09 | dependency sub-review complete locally on `maintenance/dependency-stabilization-20261117`; published CI pending; headers/privacy/retention/support remain pending |
 | P5-01 | Secure pilot/demo request funnel | PR-10 | blocked by Gate B |
 | P5-02 | Accurate manual/CSV/sample marketing claims | PR-10 | pending |
 | P5-03 | Pilot onboarding/support runbook and SLA | PR-10 | pending |

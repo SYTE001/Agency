@@ -1,6 +1,6 @@
 # Agency OS
 
-[![CI](https://github.com/SYTE001/Agency/actions/workflows/ci.yml/badge.svg)](https://github.com/SYTE001/Agency/actions/workflows/ci.yml) [![Node](https://img.shields.io/badge/node-20.19%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![CI](https://github.com/SYTE001/Agency/actions/workflows/ci.yml/badge.svg)](https://github.com/SYTE001/Agency/actions/workflows/ci.yml) [![Node](https://img.shields.io/badge/node-22.14%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 
 [Engineering Case Study](docs/CASE_STUDY.md) · [Testing Strategy](docs/TESTING.md) · [PostgreSQL Migration Audit](docs/production-readiness.md) · [Baseline Audit](docs/baseline-audit.md)
 
@@ -45,9 +45,9 @@ This repository is an active portfolio and engineering project (`v0.1.0`):
 
 | Area | Choice |
 | --- | --- |
-| Application | Next.js 16.3.1 (App Router, Server Components, Server Actions), React 19, TypeScript 5 |
+| Application | Next.js 16.4.6 (App Router, Server Components, Server Actions), React 19, TypeScript 5 |
 | UI | Tailwind CSS 4, Lucide Icons, Recharts |
-| Data | Prisma 7.9.1, PostgreSQL (`@prisma/adapter-pg`, `pg`), SQLite (`@prisma/adapter-better-sqlite3`, `better-sqlite3`) |
+| Data | Prisma 7.10.1, PostgreSQL (`@prisma/adapter-pg`, `pg`), SQLite (`@prisma/adapter-better-sqlite3`, `better-sqlite3`) |
 | Validation & Auth | Zod 4, `jose` JWT sessions, `scrypt` password hashing (`node:crypto`), server-side RBAC |
 | Quality & Testing | ESLint 9, Biome, Vitest, Node `node:test`, Playwright |
 | Tooling & CI | GitHub Actions, Dependabot, Husky, lint-staged |
@@ -71,7 +71,7 @@ docs/                Engineering case study, testing strategy, PostgreSQL & base
 
 ## Local development
 
-Prerequisite: **Node.js `>=20.19.0`** (pinned in `.nvmrc` and `.node-version`).
+Prerequisite: **Node.js `>=22.14.0`**, pinned consistently in `.nvmrc` and `.node-version`.
 
 By default, local development can run with zero external database setup using the SQLite provider:
 
@@ -114,7 +114,7 @@ npm run build
 ```
 
 - **Unit tests (`npm run test:unit`)**: Runs Vitest (`lib/domain.vtest.ts`) for pure domain and financial formula checks.
-- **Service & integration tests (`npm test`)**: Runs 45 suites (197 tests) via `node:test`. Preloads `scripts/test-guard.mjs` and `lib/test-env.ts` so tests always execute against an isolated throwaway SQLite database in the OS temp directory (or a dedicated `/agency-os-test-db` PostgreSQL database via `TEST_DATABASE_URL`) and never touch a shared/production database.
+- **Service & integration tests (`npm test`)**: Runs 47 suites (214 registered tests: 211 passing and 3 explicit TODOs) via `node:test`. Preloads `scripts/test-guard.mjs` and `lib/test-env.ts` so tests always execute against an isolated throwaway SQLite database in the OS temp directory (or a dedicated `/agency-os-test-db` PostgreSQL database via `TEST_DATABASE_URL`) and never touch a shared/production database.
 - **End-to-end tests (`npm run test:e2e`)**: Runs Playwright (`e2e/smoke.spec.ts` and `e2e/auth-routing.spec.ts`) against an isolated SQLite test database (`file:./prisma/e2e-test.db`) with automatic migration and owner seeding, verifying landing access, login validation, safe `next` redirects, open-redirect rejection, session persistence, logout, and route protection.
 
 See [docs/TESTING.md](docs/TESTING.md) for testing boundaries and [docs/production-readiness.md](docs/production-readiness.md) for dual-provider PostgreSQL/SQLite details.

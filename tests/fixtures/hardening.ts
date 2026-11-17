@@ -371,8 +371,9 @@ const COUNT_MODELS = [
 async function countFixtureRows(prisma: PrismaClient): Promise<FixtureCounts> {
   const counts: Record<string, number> = {};
   for (const model of COUNT_MODELS) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic count across models
-    counts[model] = await (prisma as any)[model].count();
+    counts[model] = await (
+      prisma[model] as { count(): Promise<number> }
+    ).count();
   }
   return counts as FixtureCounts;
 }

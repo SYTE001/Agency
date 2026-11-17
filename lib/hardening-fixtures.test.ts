@@ -79,9 +79,11 @@ const COUNT_MODELS = Object.keys(HARDENING_EXPECTED.counts) as Array<
 
 async function fullTableCounts(): Promise<Record<string, number>> {
   return Object.fromEntries(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await Promise.all(
-      COUNT_MODELS.map(async (m) => [m, await (prisma as any)[m].count()]),
+      COUNT_MODELS.map(async (m) => [
+        m,
+        await (prisma[m] as { count(): Promise<number> }).count(),
+      ]),
     ),
   );
 }
